@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Treatment Protocols</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone:#ECE5D6;
+    --stone-deep:#E1D7C2;
+    --ink:#2B2A24;
+    --ink-soft:#5B584C;
+    --card:#F8F5EC;
+    --sage:#727F63;
+    --sage-deep:#565F49;
+    --gold:#A9824F;
+    --gold-soft:#D8C6A2;
+    --line: rgba(43,42,36,0.14);
+    --shadow: 0 10px 30px -14px rgba(43,42,36,0.35);
+    --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(120% 90% at 15% -10%, var(--stone-deep), var(--stone) 55%);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:560px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--sage-deep);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:16px;height:1px;background:var(--gold);
+  }
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(34px,9vw,44px);
+    line-height:1.02;
+    margin:10px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  h1.title em{
+    font-style:italic;
+    font-weight:500;
+    color:var(--sage-deep);
+  }
+  .sub{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    max-width:38ch;
+    line-height:1.5;
+    margin:0 0 30px;
+  }
+  .section-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:34px 0 12px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .section-label span.count{
+    color:var(--gold);
+  }
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+  .grid{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .grid + .grid{ margin-top:24px; }
+  .card-btn{
+    all:unset;
+    cursor:pointer;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    box-shadow:0 1px 0 rgba(255,255,255,0.6) inset;
+  }
+  .card-btn:active{ transform:scale(0.985); }
+  .card-btn:hover{ border-color:var(--gold-soft); box-shadow:var(--shadow); }
+  .card-btn .name{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:500;
+    letter-spacing:-0.01em;
+  }
+  .card-btn .meta{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+  .card-btn .arrow{
+    width:30px;height:30px;
+    border-radius:50%;
+    background:var(--stone);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    flex:none;
+    color:var(--sage-deep);
+    font-size:15px;
+  }
+  .ref-btn{
+    background:transparent;
+    border:1px dashed var(--line);
+  }
+  .ref-btn .name{ font-size:16.5px; color:var(--sage-deep); }
+
+  /* Detail overlay */
+  .detail{
+    position:fixed; inset:0;
+    background:var(--stone);
+    transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.22,.68,.2,1);
+    overflow-y:auto;
+    z-index:20;
+    -webkit-overflow-scrolling:touch;
+  }
+  .detail.open{ transform:translateY(0); }
+  .detail-inner{
+    max-width:560px;
+    margin:0 auto;
+    padding:20px 20px 70px;
+  }
+  .back-btn{
+    all:unset;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding:8px 4px;
+    margin-bottom:14px;
+  }
+  .back-btn:active{ color:var(--sage-deep); }
+  .back-btn .chev{
+    width:26px;height:26px;border-radius:50%;
+    background:var(--card); border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .detail h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,8vw,36px);
+    letter-spacing:-0.01em;
+    margin:4px 0 2px;
+  }
+  .detail .caption{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-bottom:24px;
+    max-width:42ch;
+    line-height:1.5;
+  }
+  .block-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 10px;
+  }
+  .tray{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:6px 16px;
+    margin-bottom:28px;
+  }
+  .tray li{
+    list-style:none;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-size:14.5px;
+    line-height:1.4;
+  }
+  .tray li:last-child{ border-bottom:none; }
+  .tray li::before{
+    content:"";
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--gold);
+    flex:none;
+    transform:translateY(-2px);
+  }
+  .tray li .note{
+    display:block;
+    font-size:12px;
+    color:var(--ink-soft);
+    font-style:italic;
+    margin-top:2px;
+  }
+  ol.steps{
+    list-style:none;
+    margin:0 0 28px;
+    padding:0 0 0 2px;
+    position:relative;
+  }
+  ol.steps::before{
+    content:"";
+    position:absolute;
+    left:15px; top:6px; bottom:6px;
+    width:1px;
+    background:var(--line);
+  }
+  ol.steps li{
+    position:relative;
+    padding:0 0 22px 42px;
+    font-size:15px;
+    line-height:1.5;
+  }
+  ol.steps li:last-child{ padding-bottom:0; }
+  ol.steps li .num{
+    position:absolute;
+    left:0; top:0;
+    width:31px;height:31px;
+    border-radius:50%;
+    background:var(--sage);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .flag{
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .callout{
+    background:var(--stone-deep);
+    border-left:3px solid var(--gold);
+    border-radius:4px 10px 10px 4px;
+    padding:12px 14px;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+  .callout b{ color:var(--sage-deep); }
+  .scan-note{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:-16px;
+    margin-bottom:24px;
+  }
+  .scan-note::before{ content:"◆"; color:var(--gold); font-size:8px; }
+
+  /* Layers diagram */
+  .layers-diagram{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    margin-bottom:22px;
+  }
+  .layer-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 14px;
+  }
+  .layer-row .n{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:#fff;
+    background:var(--sage);
+    width:24px;height:24px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .layer-row.sub .n{ background:var(--gold); font-size:10.5px; }
+  .layer-row.sub{ margin-left:26px; border-style:dashed; }
+  .layer-row .t{ font-size:13.5px; }
+  .layer-row .t small{ display:block; color:var(--ink-soft); font-size:11.5px; font-style:italic; }
+
+  .desc-toggle{
+    all:unset;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold);
+    padding:4px 0 20px;
+  }
+  .desc-toggle .car{
+    transition:transform .2s ease;
+    font-size:9px;
+  }
+  .desc-toggle.open .car{ transform:rotate(90deg); }
+  .menu-desc{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--sage-deep);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:16px 0;
+    margin:-16px 0 24px;
+  }
+  .menu-desc.hidden{ display:none; }
+  ol.steps li .routine-toggle{
+    all:unset;
+    cursor:pointer;
+    display:inline;
+    color:var(--sage-deep);
+    text-decoration:underline;
+    text-decoration-style:dashed;
+    text-decoration-color:var(--gold);
+    text-underline-offset:3px;
+  }
+  ol.steps li .routine-toggle .tap-hint{
+    display:inline-block;
+    margin-left:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.04em;
+    text-decoration:none;
+    color:var(--gold);
+    text-transform:uppercase;
+  }
+  .routine-panel{
+    margin-top:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:4px 14px;
+  }
+  .routine-panel.hidden{ display:none; }
+  .routine-row{
+    display:flex;
+    gap:10px;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .routine-row:last-child{ border-bottom:none; }
+  .routine-row .rn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:#fff;
+    background:var(--gold);
+    width:20px;height:20px;
+    border-radius:50%;
+    flex:none;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:1px;
+  }
+  .routine-row .rt{ font-size:13.5px; line-height:1.45; }
+  .routine-row .rt b{ font-family:'Fraunces',serif; font-weight:500; }
+
+  footer.credit{
+    text-align:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:40px;
+    letter-spacing:.04em;
+  }
+
+  /* Agenda entry button */
+  .agenda-entry{
+    all:unset;
+    cursor:pointer;
+    width:100%;
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    background:var(--sage);
+    color:#fff;
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:30px;
+    box-shadow:var(--shadow);
+  }
+  .agenda-entry:active{ transform:scale(0.985); }
+  .agenda-entry .ae-label{
+    display:block;
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:19px;
+    letter-spacing:-0.01em;
+  }
+  .agenda-entry .ae-sub{
+    display:block;
+    font-size:12px;
+    opacity:0.85;
+    margin-top:3px;
+  }
+  .agenda-entry .arrow{
+    background:rgba(255,255,255,0.18);
+    border-color:rgba(255,255,255,0.3);
+    color:#fff;
+  }
+
+  /* Agenda flow shared */
+  .agenda-step h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,8vw,36px);
+    letter-spacing:-0.01em;
+    margin:4px 0 2px;
+  }
+  .agenda-step .caption{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-bottom:26px;
+    max-width:42ch;
+    line-height:1.5;
+  }
+  .field{ margin-bottom:18px; }
+  .field label{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .field select, .field input{
+    all:unset;
+    box-sizing:border-box;
+    width:100%;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .field select{ cursor:pointer; }
+  .primary-btn{
+    all:unset;
+    cursor:pointer;
+    display:block;
+    width:100%;
+    text-align:center;
+    background:var(--ink);
+    color:var(--stone);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    border-radius:14px;
+    padding:16px;
+    margin-top:12px;
+  }
+  .primary-btn:active{ transform:scale(0.98); }
+  .ghost-btn{
+    all:unset;
+    cursor:pointer;
+    display:block;
+    width:100%;
+    text-align:center;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    border-radius:14px;
+    padding:14px;
+    margin-top:14px;
+  }
+
+  .slot-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+  .slot-row .slot-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.08em;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+  .slot-row .slot-time-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .slot-row .slot-time-row .slot-time{ margin-bottom:0; }
+  .duration-toggle{
+    position:relative;
+    display:inline-flex;
+    width:116px;
+    height:32px;
+    background:var(--stone);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .dur-thumb{
+    position:absolute;
+    top:3px; left:3px;
+    width:calc(50% - 3px);
+    height:calc(100% - 6px);
+    background:var(--sage);
+    border-radius:999px;
+    transition:transform .2s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 1px 4px rgba(43,42,36,0.25);
+  }
+  .duration-toggle.on-100 .dur-thumb{
+    transform:translateX(100%);
+  }
+  .dur-opt{
+    position:relative;
+    z-index:1;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.03em;
+    color:var(--ink-soft);
+    transition:color .2s ease;
+  }
+  .dur-opt.active{ color:#fff; }
+  .slot-row input, .slot-row select{
+    all:unset;
+    box-sizing:border-box;
+    width:100%;
+    background:var(--stone);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 13px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    margin-bottom:8px;
+  }
+  .slot-row select{ cursor:pointer; margin-bottom:8px; }
+  .slot-row select:last-child{ margin-bottom:0; }
+
+  .now-next{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .nn-card{
+    background:var(--ink);
+    color:var(--stone);
+    border-radius:var(--radius);
+    padding:16px 14px;
+    min-height:88px;
+  }
+  .nn-card.next{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .nn-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    opacity:0.65;
+    margin-bottom:8px;
+  }
+  .nn-client{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:16.5px;
+    line-height:1.25;
+  }
+  .nn-service{
+    font-size:12px;
+    opacity:0.8;
+    margin-top:3px;
+  }
+  .nn-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    opacity:0.6;
+    margin-top:8px;
+  }
+  .nn-empty{
+    font-size:13px;
+    opacity:0.6;
+    font-style:italic;
+  }
+
+  .agenda-list{ margin-bottom:10px; }
+  .agenda-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    margin-bottom:8px;
+    background:var(--card);
+  }
+  .agenda-row.current{
+    background:var(--sage);
+    border-color:var(--sage-deep);
+  }
+  .agenda-row.current .ar-time,
+  .agenda-row.current .ar-client,
+  .agenda-row.current .ar-service{ color:#fff; }
+  .ar-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--gold);
+    width:66px;
+    flex:none;
+  }
+  .ar-client{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:15px;
+    flex:1;
+  }
+  .ar-service{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1 class="title">Spa <em>Treatment Protocols</em></h1>
+
+  <button class="agenda-entry" id="open-agenda">
+    <span class="agenda-entry-text">
+      <span class="ae-label">Agenda</span>
+      <span class="ae-sub">Build today's appointment schedule</span>
+    </span>
+    <span class="arrow">→</span>
+  </button>
+
+  <div class="grid" id="body-grid"></div>
+
+  <div class="grid" id="kurr-grid"></div>
+
+  <div class="grid" id="ref-grid"></div>
+</div>
+
+<div class="detail" id="agenda-overlay">
+  <div class="detail-inner" id="agenda-inner"></div>
+</div>
+
+<div class="detail" id="detail">
+  <div class="detail-inner" id="detail-inner"></div>
+</div>
+
+<script>
+const FACIAL_MASSAGE_ROUTINE = [
+  {area:"Neck", detail:"Glide upward from collarbone to jaw, 3–5 times each side (opens lymphatic flow first)."},
+  {area:"Jawline", detail:"Start at chin, sweep outward along jaw to ear, then behind earlobe and down neck. 3–5 times per side."},
+  {area:"Cheeks", detail:"Long strokes from nose/mouth up toward temple, sweeping under the cheekbone. 5 times per side."},
+  {area:"Under-eyes", detail:"Very light pressure, sweep from inner corner outward to temple. 3 times per side."},
+  {area:"Brows", detail:"Glide from center of brow outward to temple, 45° angle. 5–10 times per side."},
+  {area:"Forehead", detail:"From center outward toward hairline, or bottom to top. 5–10 times."}
+];
+
+const TIME_OPTIONS = (() => {
+  const opts = [];
+  for(let m = 6*60; m <= 21*60; m += 30){
+    const h24 = Math.floor(m/60), min = m%60;
+    const ampm = h24 < 12 ? 'AM' : 'PM';
+    let h12 = h24 % 12; if(h12 === 0) h12 = 12;
+    opts.push({value:m, label:`${h12}:${min.toString().padStart(2,'0')} ${ampm}`});
+  }
+  return opts;
+})();
+
+const SERVICE_OPTIONS = {
+  "Massages":[
+    "Nature's Healer Massage","Warm Bamboo Massage","Deep Tissue Massage",
+    "Monet's Favorite Fragrance Massage","Mirbeau Signature Massage",
+    "Men's Essential Massage","Mother-To-Be Massage","Just the Essentials Massage",
+    "Ashiatsu Massage","Thai Massage"
+  ],
+  "Body Treatments":[
+    "French Sea Detox","A Walk in the Forest","Impressionist Retreat",
+    "Exotic Nourish Wrap","Mirbeau Signature Ritual","Mother-To-Be Body Polish"
+  ],
+  "Kurs":[
+    "Pure Zen Journey","Mirbeau Luxury Collection"
+  ],
+  "Couples":[
+    "The Art of Living","Mirbeau Signature Couples Massage"
+  ]
+};
+
+const ENHANCEMENT_OPTIONS = {
+  "Massage Enhancement":[
+    "CBD","Hot Stone Melter","Divine Hair and Scalp"
+  ]
+};
+
+function formatSlotTime(minutes){
+  const h24 = Math.floor(minutes/60), min = minutes%60;
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  let h12 = h24 % 12; if(h12 === 0) h12 = 12;
+  return `${h12}:${min.toString().padStart(2,'0')} ${ampm}`;
+}
+
+function buildSlots(startMin, endMin){
+  const slots = [];
+  let t = startMin;
+  while(t + 50 <= endMin){
+    slots.push({time:t, client:'', service:'', enhancement:'', duration:50, hidden:false});
+    t += 60;
+  }
+  return slots;
+}
+
+const agenda = {
+  step:'setup', // 'setup' | 'fill' | 'agenda'
+  slots:[],
+  timer:null
+};
+
+const DATA = {
+  body: [
+    {
+      id:"mirbeau",
+      name:"Mirbeau Ritual",
+      caption:"Scrub, wrap, and finishing facial.",
+      menuDescription:"Delicately slough away dry, dehydrated skin with this body exfoliation ritual enhanced with an all natural sugar scrub which preserves skin's moisture balance. Finish with a lusciously hydrating full body quench, infusing skin with warm body butter for head-to-toe healing.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"Reflect or Inspire Oil"},
+        {t:"2 oz Pure Scrub"},
+        {t:"Reflect or Inspire Whip", note:"1 oz"}
+      ],
+      steps:[
+        "Guest starts face down",
+        "Mix scrub + Aromatic Whip of guest's choice",
+        "Repeat to the posterior body, flip, repeat to anterior body",
+        "Assist guest to shower",
+        "Guest face down, moisturize body with whip. Repeat face up",
+        "Wrap guest in cocoon layers + warm bathmat on abdomen",
+        "Perform Facial Massage"
+      ]
+    },
+    {
+      id:"mother",
+      name:"Mother To Be Polish",
+      caption:"Gentle, no-shower prenatal polish.",
+      menuDescription:"Enjoy this gentle yet effective treatment that uses mild exfoliation of the body followed by ultra-hydrating organic coconut oil massaged into the skin to maximize strength, health, and elasticity, and leave the skin soft and glowing.",
+      tableMakeup:["Treatment sheet","Body cushion","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"Body Cushion"},
+        {t:"Elemis Japanese Camellia Oil"},
+        {t:"1 oz Unscented Body Polish"},
+        {t:".25 oz Quench"},
+        {t:"Elemis Milk Wash"},
+        {t:"Pure Whip"}
+      ],
+      steps:[
+        "Guest starts face down on the body cushion",
+        "Oil the skin, scrub, wash away with a pump of Milk Wash + wet hands, wipe away with hot towels",
+        "Finish each limb with application of whip",
+        "Repeat to the posterior body, flip, repeat to anterior body",
+        "Do not apply beauty elixir"
+      ],
+      callouts:[
+        "⚠️ <b>Guest Safety Warning:</b> this is a no-shower treatment."
+      ]
+    },
+    {
+      id:"forest",
+      name:"Walk in the Forest",
+      caption:"Guest-selected exfoliation with bamboo work.",
+      menuDescription:"This body treatment offers a complete sensory escape, combining a choice of sea salt or sugar scrub for a luxurious exfoliation, followed by an invigorating ritual using sculpting bamboo techniques. This treatment stimulates blood circulation for visibly more toned and revitalized skin. Perfect for those looking to escape the daily grind and reconnect with their inner harmony.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"Bamboo sticks + towel", note:"wrapped around the heater"},
+        {t:"Glow Moisturizing Essence"},
+        {t:"Balade En Forêt Tincture + 1 oz Pure oil", note:"in drizzle bottle"},
+        {t:"Gommage 2", note:"softer, pre-mixed, sugar"},
+        {t:"OR Gommage 3", note:"salt, more robust — must add 1 oz oil"},
+        {t:"Restore and Relief Oil testers"}
+      ],
+      steps:[
+        "Guest picks level of exfoliation, guest starts face down",
+        "Mix 1 tincture of Balade En Forêt into either scrub (Gommage 3 gets 1 oz Pure oil)",
+        "Scrub them face down, then face up",
+        "Escort guest to shower",
+        "Guest starts face down, apply oil",
+        "Use bamboo on back of legs, flip",
+        "Apply massage oil blend to rest of the body, bamboo the front of legs",
+        "Finish face up, spritz with moisturizing essence"
+      ]
+    },
+    {
+      id:"frenchsea",
+      name:"French Sea Detox",
+      caption:"Warmed seaweed mask treatment with a full-body finish.",
+      menuDescription:"Steeped in the traditions of French Thalassotherapy, this treatment uses nutrient dense ingredients from the Brittany coast to improve your overall well-being and nourish your skin. Your journey begins with an invigorating exfoliation to remove dead skin cells. Next, the body is enveloped in a blend of warm French seaweed, green clay and detoxifying oils. A calming scalp massage is performed while the body is wrapped, and the skin is replenished with an algae rich hydrating body oil.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Veggie \"plastic\" wrap","Blanket towel"],
+      callouts:[
+        "⚠️ <b>Guest Safety Warning:</b> confirm no shellfish/seafood allergy before starting."
+      ],
+      prep:[
+        {t:"Pure Scrub"},
+        {t:"Glow Oil / Pure Oil"},
+        {t:"Glow Moisturizing Mist"},
+        {t:"Detox Oil tincture"},
+        {t:"Seaweed Mask + hot water", note:"heated in hot cabi"},
+        {t:"Veggie \"plastic\" wrap"}
+      ],
+      steps:[
+        "Guest starts face up",
+        "Sit guest up, scrub back",
+        "Apply seaweed mask",
+        "Lay client back down",
+        "Scrub: leg, leg, arm, arm",
+        "Do breast drape, apply seaweed mask to abdomen",
+        "Cocoon wrap body in warm layers",
+        "Massage head / scalp / face with Glow Oil",
+        "Escort guest to shower",
+        "Finish with Glow Oil application to the entire body"
+      ]
+    },
+    {
+      id:"exotic",
+      name:"Exotic Nourish Wrap",
+      caption:"Frangipani scrub with a cocoon wrap finish.",
+      menuDescription:"Be transported on an exotic journey of peace and harmony featuring Polynesian Frangipani Monoi to intensely nourish dry, parched skin. Your ritual begins with a deep cleansing, mineral salt scrub that sloughs away dead skin, and encourages cellular regeneration. Enter a state of bliss as mood-balancing aromatics and conditioning oils absorb deeply into your skin, while you are wrapped in a soft warm cocoon.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"Frangipani Scrub"},
+        {t:"Elemis Milk Body Wash", note:"in the shower"},
+        {t:"1–2 oz Elemis Scrub"},
+        {t:"2 oz Pure oil", note:"in hot cabi"}
+      ],
+      steps:[
+        "Guest starts face down",
+        "Drizzle warmed oil on the body, then scrub",
+        "Repeat to the posterior body, flip, repeat to anterior body",
+        "Wrap guest in cocoon layers + warm bath mat on abdomen",
+        "Perform Facial Massage",
+        "Assist guest to shower",
+        "Finish with oil application using Frangipani Monoi oil"
+      ]
+    },
+    {
+      id:"impressionist",
+      name:"Impressionist Retreat",
+      caption:"Mud application with limb-by-limb wrapping.",
+      menuDescription:"Begin with a scent journey to choose your own bespoke fragrant oil. Hot towels prepare your skin as thermal mud is painted on and you are enveloped in warm, herbal soaked linens. The mud draws impurities from skin and toxins from the body while the lotion and oil application leave your skin cashmere-soft with a healthy glow.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"Makes Scents Oils"},
+        {t:"Spa Pantry Mud"},
+        {t:"Pure Whip"},
+        {t:"Veggie \"plastic\" wrap"},
+        {t:"5 hand towels, 4 washcloths"}
+      ],
+      steps:[
+        "Guest starts face down",
+        "Apply wet towel to the skin, then apply mud (hand towels: back, leg, leg — washcloths: anterior body)",
+        "Repeat to the posterior body, flip, repeat to anterior body, wrapping each limb in plastic",
+        "Perform breast drape, apply mud to abdomen",
+        "Wrap guest in cocoon layers + warm bathmat on abdomen",
+        "Perform Facial Massage",
+        "Assist guest to shower",
+        "Finish with application of MS Oil choice"
+      ]
+    }
+  ],
+  kurr: [
+    {
+      id:"purezen",
+      name:"Pure Zen Journey",
+      caption:"Bath soak with CBD exfoliation and massage.",
+      menuDescription:"This blissful CBD bath ritual provides deep harmony, balance, and calm for the body from head to toe. We begin with an all-natural body brush exfoliation followed by an infused rosemary and mint, Epsom salt bath, rich in vitamin E, coconut, and CBD oil designed to dissolve away tension. A bespoke massage to target and release stressed muscles with a cooling menthol rich CBD lotion and oil completes your relaxation experience, leaving your skin feeling soft and body refreshed.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Blanket towel"],
+      prep:[
+        {t:"CBD Bath Bomb", note:"4 oz Pink Himalayan Salts planned for the future"},
+        {t:"CBD Cream and Oil"},
+        {t:"Micor Mitts"}
+      ],
+      tableLinens:[
+        "Unfold the top fold of the sheets / blanket",
+        "Place a treatment sheet on top of that",
+        "Then a blanket towel",
+        "Guest gets exfoliated between the towel and sheet"
+      ],
+      steps:[
+        "Start tub. Place towel in the tub, [wording obscured] the fireplace",
+        "Have guest go under the blanket towel, on top of the Tx sheet. Guest starts face down",
+        "Use Micor Mitts and exfoliate guest: prone to supine. Place 1 pump of CBD Botanicals on neck/shoulders",
+        "Fold a little corner to open the table sheets (to show guest where to go after their bath). Fold under the client's shoulder",
+        "Place Bath Bomb (or salts in the future) into bath before you exit, give guest a 15 min bath soak",
+        "Return — guest should be in blanket and sheets. Remove the dirty top layers",
+        "Provide signature massage with the CBD Botanicals"
+      ],
+      scanNote:"Step 1 is partly obscured by damage in the original page."
+    },
+    {
+      id:"luxury",
+      name:"Luxury Collection",
+      caption:"Scrub, mud, and bath with a signature massage.",
+      menuDescription:"Enjoy a purifying and hydrating body polish with an organic mud wrap followed by a bath laden with thermal mineral crystals and Arnica. Finish with a relaxing full-body massage using your own, personally selected lotion and oil for long lasting, ultra-hydration.",
+      tableMakeup:["Protective layer on table","Treatment sheet","Blanket towel","Wooly blanket","Treatment sheet","Veggie \"plastic\" wrap","Blanket towel"],
+      prep:[
+        {t:"Reflect Bath Bomb", note:"salts planned for the future"},
+        {t:"Mud"},
+        {t:"1 oz Pure Whip"},
+        {t:"Makes Scents Oils"},
+        {t:"1 oz Unscented Scrub"},
+        {t:"8 washcloths or 5 hand towels, 4 washcloths", note:"plastic"}
+      ],
+      steps:[
+        "Set up the bath + shower",
+        "Guest starts face down",
+        "Scrub limb, wipe away with washcloth, apply the mud. Repeat to posterior body, and anterior body",
+        "Breast drape / mud abdomen",
+        "Wrap in cocoon layers, with warm bath mat on abdomen",
+        "Perform Facial Massage",
+        "Escort guest to shower, clean the table, and tell them to get right into their bath after the shower",
+        "Give them 15 minutes in the bath",
+        "Provide signature massage with selected oil choice"
+      ]
+    }
+  ],
+  ref: []
+};
+
+function iconArrow(){
+  return '<span class="arrow">→</span>';
+}
+
+function renderGrid(containerId, items, isRef=false){
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map(item => `
+    <button class="card-btn ${isRef?'ref-btn':''}" data-id="${item.id}">
+      <span>
+        <span class="name">${item.name}</span>
+        <span class="meta">${item.caption}</span>
+      </span>
+      ${iconArrow()}
+    </button>
+  `).join('');
+}
+
+renderGrid('body-grid', DATA.body);
+renderGrid('kurr-grid', DATA.kurr);
+renderGrid('ref-grid', DATA.ref, true);
+
+const ALL = [...DATA.body, ...DATA.kurr, ...DATA.ref];
+const detail = document.getElementById('detail');
+const detailInner = document.getElementById('detail-inner');
+
+function openDetail(id){
+  const item = ALL.find(i => i.id === id);
+  if(!item) return;
+
+  let html = `
+    <button class="back-btn" id="back-btn"><span class="chev">←</span> All treatments</button>
+    <h2>${item.name}</h2>
+    <p class="caption">${item.caption}</p>
+  `;
+
+  if(item.menuDescription){
+    html += `<button class="desc-toggle" id="desc-toggle"><span class="car">▸</span> See description</button>`;
+    html += `<p class="menu-desc hidden" id="desc-panel">${item.menuDescription}</p>`;
+  }
+
+  if(item.callouts){
+    html += item.callouts.map(c => `<div class="callout">${c}</div>`).join('');
+  }
+  if(item.scanNote){
+    html += `<div class="scan-note">${item.scanNote}</div>`;
+  }
+
+  if(item.prep){
+    html += `<div class="block-label">Prep</div><ul class="tray">`;
+    html += item.prep.map(p => `<li>${p.t}${p.note ? `<span class="note">${p.note}</span>` : ''}</li>`).join('');
+    html += `</ul>`;
+  }
+
+  if(item.tableMakeup){
+    html += `<div class="block-label">Table Make Up</div><div class="layers-diagram">`;
+    html += item.tableMakeup.map((t,idx) => `
+      <div class="layer-row">
+        <span class="n">${idx+1}</span>
+        <span class="t">${t}</span>
+      </div>
+    `).join('');
+    html += `</div>`;
+  }
+
+  if(item.tableLinens){
+    html += `<div class="block-label">Table Linens</div><ul class="tray">`;
+    html += item.tableLinens.map(t => `<li>${t}</li>`).join('');
+    html += `</ul>`;
+  }
+
+  if(item.layers){
+    html += `<div class="block-label">Layer Order</div><div class="layers-diagram">`;
+    html += item.layers.map(l => `
+      <div class="layer-row ${l.sub ? 'sub' : ''}">
+        <span class="n">${l.n}</span>
+        <span class="t">${l.t}${l.note ? `<small>${l.note}</small>` : ''}</span>
+      </div>
+    `).join('');
+    html += `</div>`;
+  }
+
+  if(item.steps){
+    html += `<div class="block-label">Steps</div><ol class="steps">`;
+    html += item.steps.map((s,idx) => {
+      if(s === "Perform Facial Massage"){
+        const panelId = `routine-${item.id}-${idx}`;
+        const routineRows = FACIAL_MASSAGE_ROUTINE.map((r,ri) => `
+          <div class="routine-row">
+            <span class="rn">${ri+1}</span>
+            <span class="rt"><b>${r.area}</b> — ${r.detail}</span>
+          </div>
+        `).join('');
+        return `<li><span class="num">${idx+1}</span>
+          <button class="routine-toggle" data-target="${panelId}">Perform Facial Massage <span class="tap-hint">Tap for routine</span></button>
+          <div class="routine-panel hidden" id="${panelId}">${routineRows}</div>
+        </li>`;
+      }
+      return `<li><span class="num">${idx+1}</span>${s}</li>`;
+    }).join('');
+    html += `</ol>`;
+  }
+
+  detailInner.innerHTML = html;
+  detail.classList.add('open');
+  document.getElementById('back-btn').addEventListener('click', closeDetail);
+  const descToggle = document.getElementById('desc-toggle');
+  if(descToggle){
+    descToggle.addEventListener('click', ()=>{
+      document.getElementById('desc-panel').classList.toggle('hidden');
+      descToggle.classList.toggle('open');
+      descToggle.lastChild.textContent = descToggle.classList.contains('open') ? ' Hide description' : ' See description';
+    });
+  }
+  detailInner.querySelectorAll('.routine-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = document.getElementById(btn.dataset.target);
+      if(panel) panel.classList.toggle('hidden');
+    });
+  });
+  detail.scrollTop = 0;
+}
+
+function closeDetail(){
+  detail.classList.remove('open');
+}
+
+document.querySelectorAll('.card-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> openDetail(btn.dataset.id));
+});
+
+/* ---------- Agenda ---------- */
+
+const agendaOverlay = document.getElementById('agenda-overlay');
+const agendaInner = document.getElementById('agenda-inner');
+
+function openAgenda(){
+  agenda.step = 'setup';
+  renderAgenda();
+  agendaOverlay.classList.add('open');
+  agendaOverlay.scrollTop = 0;
+}
+
+function closeAgenda(){
+  agendaOverlay.classList.remove('open');
+  if(agenda.timer){ clearInterval(agenda.timer); agenda.timer = null; }
+}
+
+document.getElementById('open-agenda').addEventListener('click', openAgenda);
+
+function renderAgenda(){
+  if(agenda.timer){ clearInterval(agenda.timer); agenda.timer = null; }
+
+  if(agenda.step === 'setup') renderAgendaSetup();
+  else if(agenda.step === 'fill') renderAgendaFill();
+  else if(agenda.step === 'agenda') renderAgendaView();
+}
+
+function renderAgendaSetup(){
+  const timeOpts = TIME_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  agendaInner.innerHTML = `
+    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Agenda</h2>
+      <p class="caption">Set your shift start and end time to build today's appointment schedule.</p>
+      <div class="field">
+        <label>Start Time</label>
+        <select id="agenda-start">${timeOpts}</select>
+      </div>
+      <div class="field">
+        <label>End Time</label>
+        <select id="agenda-end">${timeOpts}</select>
+      </div>
+      <button class="primary-btn" id="agenda-build">Build Schedule</button>
+    </div>
+  `;
+  document.getElementById('agenda-back').addEventListener('click', closeAgenda);
+  document.getElementById('agenda-start').value = 510; // 8:30 AM default
+  document.getElementById('agenda-end').value = 990;   // 4:30 PM default
+  document.getElementById('agenda-build').addEventListener('click', ()=>{
+    const startMin = parseInt(document.getElementById('agenda-start').value, 10);
+    const endMin = parseInt(document.getElementById('agenda-end').value, 10);
+    if(endMin <= startMin){
+      alert('End time must be after start time.');
+      return;
+    }
+    agenda.slots = buildSlots(startMin, endMin);
+    agenda.step = 'fill';
+    renderAgenda();
+  });
+}
+
+function serviceOptionsHtml(selected){
+  let html = `<option value="">Select service…</option>`;
+  Object.keys(SERVICE_OPTIONS).forEach(group=>{
+    html += `<optgroup label="${group}">`;
+    html += SERVICE_OPTIONS[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
+    html += `</optgroup>`;
+  });
+  return html;
+}
+
+function enhancementOptionsHtml(selected){
+  let html = `<option value="">Add enhancement (optional)…</option>`;
+  Object.keys(ENHANCEMENT_OPTIONS).forEach(group=>{
+    html += `<optgroup label="${group}">`;
+    html += ENHANCEMENT_OPTIONS[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
+    html += `</optgroup>`;
+  });
+  return html;
+}
+
+function renderAgendaFill(){
+  const rows = agenda.slots.map((slot, idx) => {
+    if(slot.hidden) return '';
+    return `
+    <div class="slot-row">
+      <div class="slot-time-row">
+        <div class="slot-time">${formatSlotTime(slot.time)}</div>
+        <div class="duration-toggle ${slot.duration===100?'on-100':''}" data-idx="${idx}">
+          <div class="dur-thumb"></div>
+          <span class="dur-opt ${slot.duration===50?'active':''}">50 min</span>
+          <span class="dur-opt ${slot.duration===100?'active':''}">100 min</span>
+        </div>
+      </div>
+      <input type="text" placeholder="Client name" data-idx="${idx}" class="agenda-client-input" value="${slot.client}">
+      <select data-idx="${idx}" class="agenda-service-select">${serviceOptionsHtml(slot.service)}</select>
+      <select data-idx="${idx}" class="agenda-enhancement-select">${enhancementOptionsHtml(slot.enhancement)}</select>
+    </div>
+  `;
+  }).join('');
+
+  agendaInner.innerHTML = `
+    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Agenda Setup</button>
+    <div class="agenda-step">
+      <h2>Today's Schedule</h2>
+      <p class="caption">Enter the client name and service for each appointment. Switch to 100 min for a longer appointment — it will absorb the next open slot.</p>
+      ${rows}
+      <button class="primary-btn" id="agenda-finish">Finish</button>
+    </div>
+  `;
+  document.getElementById('agenda-back').addEventListener('click', ()=>{
+    agenda.step = 'setup';
+    renderAgenda();
+  });
+  agendaInner.querySelectorAll('.agenda-client-input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      agenda.slots[parseInt(inp.dataset.idx,10)].client = inp.value;
+    });
+  });
+  agendaInner.querySelectorAll('.agenda-service-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      agenda.slots[parseInt(sel.dataset.idx,10)].service = sel.value;
+    });
+  });
+  agendaInner.querySelectorAll('.agenda-enhancement-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      agenda.slots[parseInt(sel.dataset.idx,10)].enhancement = sel.value;
+    });
+  });
+  agendaInner.querySelectorAll('.duration-toggle').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = parseInt(el.dataset.idx,10);
+      const newDur = agenda.slots[idx].duration === 100 ? 50 : 100;
+      setSlotDuration(idx, newDur);
+      renderAgendaFill();
+    });
+  });
+  document.getElementById('agenda-finish').addEventListener('click', ()=>{
+    agenda.step = 'agenda';
+    renderAgenda();
+  });
+}
+
+function setSlotDuration(idx, dur){
+  const slot = agenda.slots[idx];
+  const next = agenda.slots[idx+1];
+  slot.duration = dur;
+  if(dur === 100){
+    if(next){ next.hidden = true; }
+  } else {
+    if(next){
+      next.hidden = false;
+      next.client = '';
+      next.service = '';
+      next.enhancement = '';
+      next.duration = 50;
+    }
+  }
+}
+
+function currentMinutesNow(){
+  const d = new Date();
+  return d.getHours()*60 + d.getMinutes();
+}
+
+function renderAgendaView(){
+  agendaInner.innerHTML = `
+    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Today's Agenda</h2>
+      <p class="caption">Live view of your schedule.</p>
+      <div class="now-next" id="agenda-now-next"></div>
+      <div class="agenda-list" id="agenda-list"></div>
+      <button class="ghost-btn" id="agenda-edit">Edit Schedule</button>
+    </div>
+  `;
+  document.getElementById('agenda-back').addEventListener('click', closeAgenda);
+  document.getElementById('agenda-edit').addEventListener('click', ()=>{
+    agenda.step = 'fill';
+    renderAgenda();
+  });
+
+  updateAgendaLive();
+  agenda.timer = setInterval(updateAgendaLive, 30000);
+}
+
+function updateAgendaLive(){
+  const nowNextEl = document.getElementById('agenda-now-next');
+  const listEl = document.getElementById('agenda-list');
+  if(!nowNextEl || !listEl) return;
+
+  const nowMin = currentMinutesNow();
+  const visible = agenda.slots.filter(s => !s.hidden);
+  const current = visible.find(s => nowMin >= s.time && nowMin < s.time + s.duration);
+  const next = visible.find(s => s.time > (current ? current.time : nowMin - 1));
+
+  function nnCardHtml(label, slot, cls){
+    if(!slot){
+      return `<div class="nn-card ${cls}"><div class="nn-label">${label}</div><div class="nn-empty">No appointment</div></div>`;
+    }
+    const svcLine = [slot.service, slot.enhancement].filter(Boolean).join(' + ');
+    return `<div class="nn-card ${cls}">
+      <div class="nn-label">${label}</div>
+      <div class="nn-client">${slot.client || 'Open'}</div>
+      <div class="nn-service">${svcLine || '—'}</div>
+      <div class="nn-time">${formatSlotTime(slot.time)}</div>
+    </div>`;
+  }
+
+  nowNextEl.innerHTML = nnCardHtml('Now', current, 'now') + nnCardHtml('Next', next, 'next');
+
+  listEl.innerHTML = visible.map(s => {
+    const svcLine = [s.service, s.enhancement].filter(Boolean).join(' + ');
+    return `
+    <div class="agenda-row ${current && s.time===current.time ? 'current' : ''}">
+      <span class="ar-time">${formatSlotTime(s.time)}</span>
+      <span class="ar-client">${s.client || 'Open'}</span>
+      <span class="ar-service">${svcLine || '—'}</span>
+    </div>
+  `;
+  }).join('');
+}
+</script>
+
+</body>
+</html>
