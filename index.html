@@ -774,6 +774,31 @@ const agenda = {
   timer:null
 };
 
+const AGENDA_STORAGE_KEY = 'spaAgendaState_v1';
+
+function saveAgendaState(){
+  try{
+    localStorage.setItem(AGENDA_STORAGE_KEY, JSON.stringify({
+      step: agenda.step,
+      slots: agenda.slots
+    }));
+  }catch(e){ /* storage unavailable — continue without persistence */ }
+}
+
+function restoreAgendaState(){
+  try{
+    const raw = localStorage.getItem(AGENDA_STORAGE_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(parsed && Array.isArray(parsed.slots) && parsed.slots.length){
+      agenda.slots = parsed.slots;
+      agenda.step = (parsed.step === 'fill' || parsed.step === 'agenda') ? parsed.step : 'fill';
+    }
+  }catch(e){ /* corrupt or unavailable storage — start fresh */ }
+}
+
+restoreAgendaState();
+
 const DATA = {
   body: [
     {
@@ -1119,7 +1144,9 @@ const agendaOverlay = document.getElementById('agenda-overlay');
 const agendaInner = document.getElementById('agenda-inner');
 
 function openAgenda(){
-  agenda.step = 'setup';
+  if(!agenda.slots.length){
+    agenda.step = 'setup';
+  }
   renderAgenda();
   agendaOverlay.classList.add('open');
   agendaOverlay.scrollTop = 0;
@@ -1170,6 +1197,7 @@ function renderAgendaSetup(){
     }
     agenda.slots = buildSlots(startMin, endMin);
     agenda.step = 'fill';
+    saveAgendaState();
     renderAgenda();
   });
 }
@@ -1230,16 +1258,19 @@ function renderAgendaFill(){
   agendaInner.querySelectorAll('.agenda-client-input').forEach(inp=>{
     inp.addEventListener('input', ()=>{
       agenda.slots[parseInt(inp.dataset.idx,10)].client = inp.value;
+      saveAgendaState();
     });
   });
   agendaInner.querySelectorAll('.agenda-service-select').forEach(sel=>{
     sel.addEventListener('change', ()=>{
       agenda.slots[parseInt(sel.dataset.idx,10)].service = sel.value;
+      saveAgendaState();
     });
   });
   agendaInner.querySelectorAll('.agenda-enhancement-select').forEach(sel=>{
     sel.addEventListener('change', ()=>{
       agenda.slots[parseInt(sel.dataset.idx,10)].enhancement = sel.value;
+      saveAgendaState();
     });
   });
   agendaInner.querySelectorAll('.duration-toggle').forEach(el=>{
@@ -1247,11 +1278,13 @@ function renderAgendaFill(){
       const idx = parseInt(el.dataset.idx,10);
       const newDur = agenda.slots[idx].duration === 100 ? 50 : 100;
       setSlotDuration(idx, newDur);
+      saveAgendaState();
       renderAgendaFill();
     });
   });
   document.getElementById('agenda-finish').addEventListener('click', ()=>{
     agenda.step = 'agenda';
+    saveAgendaState();
     renderAgenda();
   });
 }
@@ -1287,11 +1320,20 @@ function renderAgendaView(){
       <div class="now-next" id="agenda-now-next"></div>
       <div class="agenda-list" id="agenda-list"></div>
       <button class="ghost-btn" id="agenda-edit">Edit Schedule</button>
+      <button class="ghost-btn" id="agenda-clear">Start New Day</button>
     </div>
   `;
   document.getElementById('agenda-back').addEventListener('click', closeAgenda);
   document.getElementById('agenda-edit').addEventListener('click', ()=>{
     agenda.step = 'fill';
+    saveAgendaState();
+    renderAgenda();
+  });
+  document.getElementById('agenda-clear').addEventListener('click', ()=>{
+    if(!confirm('Clear today\'s schedule and start over?')) return;
+    agenda.slots = [];
+    agenda.step = 'setup';
+    try{ localStorage.removeItem(AGENDA_STORAGE_KEY); }catch(e){}
     renderAgenda();
   });
 
