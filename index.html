@@ -670,6 +670,16 @@
     font-size:15px;
     flex:1;
   }
+  .ar-room{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:400;
+    font-size:10.5px;
+    letter-spacing:.04em;
+    color:var(--gold);
+    margin-top:2px;
+  }
+  .agenda-row.current .ar-room{ color:#fff; opacity:0.85; }
   .ar-service{
     font-size:11.5px;
     color:var(--ink-soft);
@@ -745,6 +755,11 @@ const SERVICE_OPTIONS = {
   ]
 };
 
+const ROOM_OPTIONS = [
+  "Room 0","Room 1","Room 2","Room 3","Room 4","Room 5","Room 6",
+  "Lavender Room","Water Lilies Room","Monet Room"
+];
+
 const ENHANCEMENT_OPTIONS = {
   "Massage Enhancement":[
     "CBD","Hot Stone Melter","Divine Hair and Scalp"
@@ -762,7 +777,7 @@ function buildSlots(startMin, endMin){
   const slots = [];
   let t = startMin;
   while(t + 50 <= endMin){
-    slots.push({time:t, client:'', service:'', enhancement:'', duration:50, hidden:false});
+    slots.push({time:t, client:'', client2:'', service:'', enhancement:'', room:'', duration:50, hidden:false});
     t += 60;
   }
   return slots;
@@ -1222,6 +1237,16 @@ function enhancementOptionsHtml(selected){
   return html;
 }
 
+function isCouplesService(serviceName){
+  return SERVICE_OPTIONS["Couples"].includes(serviceName);
+}
+
+function roomOptionsHtml(selected){
+  let html = `<option value="">Assign room…</option>`;
+  html += ROOM_OPTIONS.map(r => `<option value="${r}" ${r===selected?'selected':''}>${r}</option>`).join('');
+  return html;
+}
+
 function renderAgendaFill(){
   const rows = agenda.slots.map((slot, idx) => {
     if(slot.hidden) return '';
@@ -1236,6 +1261,8 @@ function renderAgendaFill(){
         </div>
       </div>
       <input type="text" placeholder="Client name" data-idx="${idx}" class="agenda-client-input" value="${slot.client}">
+      ${isCouplesService(slot.service) ? `<input type="text" placeholder="Client 2 name" data-idx="${idx}" class="agenda-client2-input" value="${slot.client2}">` : ''}
+      <select data-idx="${idx}" class="agenda-room-select">${roomOptionsHtml(slot.room)}</select>
       <select data-idx="${idx}" class="agenda-service-select">${serviceOptionsHtml(slot.service)}</select>
       <select data-idx="${idx}" class="agenda-enhancement-select">${enhancementOptionsHtml(slot.enhancement)}</select>
     </div>
@@ -1261,10 +1288,27 @@ function renderAgendaFill(){
       saveAgendaState();
     });
   });
+  agendaInner.querySelectorAll('.agenda-client2-input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      agenda.slots[parseInt(inp.dataset.idx,10)].client2 = inp.value;
+      saveAgendaState();
+    });
+  });
+  agendaInner.querySelectorAll('.agenda-room-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      agenda.slots[parseInt(sel.dataset.idx,10)].room = sel.value;
+      saveAgendaState();
+    });
+  });
   agendaInner.querySelectorAll('.agenda-service-select').forEach(sel=>{
     sel.addEventListener('change', ()=>{
-      agenda.slots[parseInt(sel.dataset.idx,10)].service = sel.value;
+      const idx = parseInt(sel.dataset.idx,10);
+      agenda.slots[idx].service = sel.value;
+      if(!isCouplesService(sel.value)){
+        agenda.slots[idx].client2 = '';
+      }
       saveAgendaState();
+      renderAgendaFill();
     });
   });
   agendaInner.querySelectorAll('.agenda-enhancement-select').forEach(sel=>{
@@ -1299,8 +1343,10 @@ function setSlotDuration(idx, dur){
     if(next){
       next.hidden = false;
       next.client = '';
+      next.client2 = '';
       next.service = '';
       next.enhancement = '';
+      next.room = '';
       next.duration = 50;
     }
   }
@@ -1356,11 +1402,12 @@ function updateAgendaLive(){
       return `<div class="nn-card ${cls}"><div class="nn-label">${label}</div><div class="nn-empty">No appointment</div></div>`;
     }
     const svcLine = [slot.service, slot.enhancement].filter(Boolean).join(' + ');
+    const clientLine = [slot.client, slot.client2].filter(Boolean).join(' & ') || 'Open';
     return `<div class="nn-card ${cls}">
       <div class="nn-label">${label}</div>
-      <div class="nn-client">${slot.client || 'Open'}</div>
+      <div class="nn-client">${clientLine}</div>
       <div class="nn-service">${svcLine || '—'}</div>
-      <div class="nn-time">${formatSlotTime(slot.time)}</div>
+      <div class="nn-time">${formatSlotTime(slot.time)}${slot.room ? ' · ' + slot.room : ''}</div>
     </div>`;
   }
 
@@ -1368,10 +1415,11 @@ function updateAgendaLive(){
 
   listEl.innerHTML = visible.map(s => {
     const svcLine = [s.service, s.enhancement].filter(Boolean).join(' + ');
+    const clientLine = [s.client, s.client2].filter(Boolean).join(' & ') || 'Open';
     return `
     <div class="agenda-row ${current && s.time===current.time ? 'current' : ''}">
       <span class="ar-time">${formatSlotTime(s.time)}</span>
-      <span class="ar-client">${s.client || 'Open'}</span>
+      <span class="ar-client">${clientLine}${s.room ? `<span class="ar-room">${s.room}</span>` : ''}</span>
       <span class="ar-service">${svcLine || '—'}</span>
     </div>
   `;
