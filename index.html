@@ -460,6 +460,19 @@
     max-width:42ch;
     line-height:1.5;
   }
+  .storage-warning{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:#F4E3D3;
+    border:1px solid #D9B48F;
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:#6B4A2A;
+    margin-bottom:22px;
+  }
   .field{ margin-bottom:18px; }
   .field label{
     display:block;
@@ -790,6 +803,19 @@ const agenda = {
 };
 
 const AGENDA_STORAGE_KEY = 'spaAgendaState_v1';
+
+function storageAvailable(){
+  try{
+    const testKey = '__storage_test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+const STORAGE_OK = storageAvailable();
 
 function saveAgendaState(){
   try{
@@ -1182,6 +1208,11 @@ function renderAgenda(){
   else if(agenda.step === 'agenda') renderAgendaView();
 }
 
+function storageWarningHtml(){
+  if(STORAGE_OK) return '';
+  return `<div class="storage-warning">⚠️ This browser can't save schedule data here — entries will be lost on reload. This is usually fixed by opening the site's deployed URL directly in your browser, rather than a preview or private/incognito window.</div>`;
+}
+
 function renderAgendaSetup(){
   const timeOpts = TIME_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
   agendaInner.innerHTML = `
@@ -1189,6 +1220,7 @@ function renderAgendaSetup(){
     <div class="agenda-step">
       <h2>Agenda</h2>
       <p class="caption">Set your shift start and end time to build today's appointment schedule.</p>
+      ${storageWarningHtml()}
       <div class="field">
         <label>Start Time</label>
         <select id="agenda-start">${timeOpts}</select>
@@ -1274,6 +1306,7 @@ function renderAgendaFill(){
     <div class="agenda-step">
       <h2>Today's Schedule</h2>
       <p class="caption">Enter the client name and service for each appointment. Switch to 100 min for a longer appointment — it will absorb the next open slot.</p>
+      ${storageWarningHtml()}
       ${rows}
       <button class="primary-btn" id="agenda-finish">Finish</button>
     </div>
@@ -1363,6 +1396,7 @@ function renderAgendaView(){
     <div class="agenda-step">
       <h2>Today's Agenda</h2>
       <p class="caption">Live view of your schedule.</p>
+      ${storageWarningHtml()}
       <div class="now-next" id="agenda-now-next"></div>
       <div class="agenda-list" id="agenda-list"></div>
       <button class="ghost-btn" id="agenda-edit">Edit Schedule</button>
