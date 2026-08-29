@@ -45,7 +45,7 @@
     max-width:560px;
     width:100%;
     margin:0 auto;
-    padding:28px 20px 60px;
+    padding:calc(28px + env(safe-area-inset-top)) 20px calc(60px + env(safe-area-inset-bottom));
     position:relative;
     overflow-x:hidden;
   }
@@ -168,7 +168,7 @@
     max-width:560px;
     width:100%;
     margin:0 auto;
-    padding:20px 20px 70px;
+    padding:calc(20px + env(safe-area-inset-top)) 20px calc(70px + env(safe-area-inset-bottom));
     overflow-x:hidden;
   }
   .back-btn{
@@ -826,6 +826,8 @@
     </span>
     <span class="arrow">→</span>
   </button>
+
+  <div id="home-schedule"></div>
 </div>
 
 <div class="detail" id="agenda-overlay">
@@ -1068,6 +1070,7 @@ function saveAgendaState(){
       slots: agenda.slots
     }));
   }catch(e){ /* storage unavailable — continue without persistence */ }
+  renderHomeScheduleList();
 }
 
 function restoreAgendaState(){
@@ -1082,7 +1085,32 @@ function restoreAgendaState(){
   }catch(e){ /* corrupt or unavailable storage — start fresh */ }
 }
 
+function renderHomeScheduleList(){
+  const container = document.getElementById('home-schedule');
+  if(!container) return;
+  const visible = agenda.slots.filter(s => !s.hidden);
+  if(!visible.length){
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `
+    <div class="section-label">Today's Schedule</div>
+    <div class="agenda-list">
+      ${visible.map(s => {
+        const svcLine = [s.service, s.enhancement].filter(Boolean).join(' + ');
+        const clientLine = [s.client, s.client2].filter(Boolean).join(' & ') || 'Open';
+        return `<div class="agenda-row">
+          <span class="ar-time">${formatSlotTime(s.time)}</span>
+          <span class="ar-client">${clientLine}${s.room ? `<span class="ar-room">${s.room}</span>` : ''}</span>
+          <span class="ar-service">${svcLine || '—'}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
 restoreAgendaState();
+renderHomeScheduleList();
 
 const DATA = {
   body: [
@@ -1761,6 +1789,7 @@ function renderAgendaView(){
     agenda.slots = [];
     agenda.step = 'setup';
     try{ localStorage.removeItem(AGENDA_STORAGE_KEY); }catch(e){}
+    renderHomeScheduleList();
     renderAgenda();
   });
 
