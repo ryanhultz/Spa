@@ -982,7 +982,7 @@
 
   <div id="home-schedule"></div>
 
-  <div class="app-version">v1.1.1</div>
+  <div class="app-version">v1.1.2</div>
 </div>
 
 <div class="detail" id="agenda-overlay">
@@ -1360,9 +1360,11 @@ async function bootstrapAuth(){
   setInterval(async ()=>{
     await refreshUsersFromServer();
     await refreshActivityFromServer();
-    checkAuthAndRender();
-    if(document.getElementById('admin-overlay').classList.contains('open') && adminUnlocked){
-      renderAdmin();
+    // Only touch the auth screen if someone is already logged in (to catch
+    // an admin removing them) — never redraw an in-progress login/create form.
+    const gate = document.getElementById('auth-gate');
+    if(gate.classList.contains('hidden')){
+      checkAuthAndRender();
     }
   }, 30000);
 }
