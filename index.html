@@ -63,12 +63,19 @@
     content:"";
     width:16px;height:1px;background:var(--gold);
   }
+  .home-header-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:22px;
+  }
   h1.title{
     font-family:'Fraunces',serif;
     font-weight:500;
     font-size:clamp(26px,7.5vw,36px);
     line-height:1.08;
-    margin:0 0 22px;
+    margin:0;
     letter-spacing:-0.01em;
   }
   h1.title em{
@@ -76,6 +83,22 @@
     font-weight:500;
     color:var(--sage-deep);
   }
+  .logout-btn{
+    all:unset;
+    cursor:pointer;
+    flex:none;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:7px 12px;
+    margin-top:6px;
+    background:var(--card);
+  }
+  .logout-btn:active{ background:var(--stone-deep); }
   .sub{
     font-size:14.5px;
     color:var(--ink-soft);
@@ -153,6 +176,86 @@
   .ref-btn .name{ font-size:16.5px; color:var(--sage-deep); }
 
   /* Detail overlay */
+  .auth-gate{
+    position:fixed; inset:0;
+    background:
+      radial-gradient(120% 90% at 15% -10%, var(--stone-deep), var(--stone) 55%);
+    z-index:100;
+    overflow-y:auto;
+    overflow-x:hidden;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    -webkit-overflow-scrolling:touch;
+  }
+  .auth-gate.hidden{ display:none; }
+  .auth-inner{
+    max-width:420px;
+    width:100%;
+    box-sizing:border-box;
+    margin:0 auto;
+    padding:calc(48px + env(safe-area-inset-top)) 24px calc(48px + env(safe-area-inset-bottom));
+  }
+  .auth-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--sage-deep);
+    margin-bottom:6px;
+  }
+  .auth-inner h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(26px,8vw,32px);
+    letter-spacing:-0.01em;
+    margin:0 0 6px;
+  }
+  .auth-inner .caption{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    margin-bottom:28px;
+  }
+  .auth-error{
+    background:#F4E3D3;
+    border:1px solid #D9B48F;
+    color:#8C4A2A;
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12.5px;
+    line-height:1.5;
+    margin-bottom:18px;
+  }
+  .auth-link-row{
+    text-align:center;
+    margin-top:18px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .auth-link-row button{
+    all:unset;
+    cursor:pointer;
+    color:var(--sage-deep);
+    text-decoration:underline;
+    text-decoration-style:dashed;
+    font-weight:600;
+  }
+  .auth-admin-link{
+    text-align:center;
+    margin-top:40px;
+  }
+  .auth-admin-link button{
+    all:unset;
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    opacity:0.6;
+  }
+
   .detail{
     position:fixed; inset:0;
     background:var(--stone);
@@ -788,12 +891,62 @@
     color:var(--ink-soft);
     text-align:right;
   }
+
+  /* Admin */
+  #admin-overlay{ z-index:150; }
+  .app-version{
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    opacity:0.55;
+    margin-top:36px;
+  }
+  .admin-user-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--card);
+    margin-bottom:8px;
+  }
+  .admin-user-name{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:15px;
+  }
+  .admin-user-actions{
+    display:flex;
+    gap:8px;
+  }
+  .admin-user-actions .ghost-btn{
+    width:auto;
+    padding:8px 12px;
+    font-size:10px;
+    margin-top:0;
+  }
 </style>
 </head>
 <body>
 
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-inner" id="auth-inner"></div>
+</div>
+
+<div class="detail" id="admin-overlay">
+  <div class="detail-inner" id="admin-inner"></div>
+</div>
+
 <div class="app">
-  <h1 class="title">Spa Therapist Operations Portal</h1>
+  <div class="home-header-row">
+    <h1 class="title">Spa Therapist Operations Portal</h1>
+    <button class="logout-btn" id="logout-btn" title="Log out">Log Out</button>
+  </div>
 
   <button class="agenda-entry" id="open-agenda">
     <span class="agenda-entry-text">
@@ -828,6 +981,8 @@
   </button>
 
   <div id="home-schedule"></div>
+
+  <div class="app-version">v1.1.0</div>
 </div>
 
 <div class="detail" id="agenda-overlay">
@@ -852,6 +1007,366 @@
 </div>
 
 <script>
+/* ============ Sync backend ============ */
+// After deploying the Worker (see the included README), paste its URL below.
+// Until then, the app falls back to local-only storage automatically.
+const SYNC_API_BASE = 'https://REPLACE-WITH-YOUR-WORKER-URL.workers.dev';
+
+let syncStatus = 'unknown'; // 'ok' | 'offline' | 'not-configured'
+
+function isSyncConfigured(){
+  return SYNC_API_BASE && !SYNC_API_BASE.includes('REPLACE-WITH-YOUR-WORKER-URL');
+}
+
+async function syncGet(key){
+  if(!isSyncConfigured()){ syncStatus = 'not-configured'; return null; }
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/data/${key}`, { cache: 'no-store' });
+    if(!res.ok) throw new Error('bad status');
+    syncStatus = 'ok';
+    return await res.json();
+  }catch(e){
+    syncStatus = 'offline';
+    return null;
+  }
+}
+
+async function syncPost(key, value){
+  if(!isSyncConfigured()) return false;
+  try{
+    await fetch(`${SYNC_API_BASE}/data/${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    });
+    syncStatus = 'ok';
+    return true;
+  }catch(e){
+    syncStatus = 'offline';
+    return false;
+  }
+}
+
+function syncStatusWarningHtml(){
+  if(syncStatus === 'ok') return '';
+  if(syncStatus === 'not-configured'){
+    return `<div class="storage-warning">⚠️ Sync isn't set up yet — running in local-only mode (this device only). See the README for how to connect the shared database.</div>`;
+  }
+  if(syncStatus === 'offline'){
+    return `<div class="storage-warning">⚠️ Can't reach the shared database right now — showing the last synced data for this device. Changes will still save locally.</div>`;
+  }
+  return '';
+}
+
+/* ============ Auth & Admin ============ */
+
+const USERS_KEY = 'stopUsers_v1';
+const ACTIVITY_KEY = 'stopActivityLog_v1';
+const CURRENT_USER_KEY = 'stopCurrentUser_v1';
+const INVITE_CODE = 'newusers1234';
+const ADMIN_PASSWORD = '1111';
+
+let authView = 'login'; // 'login' | 'create'
+let authError = '';
+let adminUnlocked = false;
+
+let usersCache = [];
+let activityCache = [];
+
+function loadUsersLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }catch(e){ return []; }
+}
+function loadActivityLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(ACTIVITY_KEY)) || []; }catch(e){ return []; }
+}
+
+async function refreshUsersFromServer(){
+  const remote = await syncGet('stop-users');
+  if(Array.isArray(remote)){
+    usersCache = remote;
+    try{ localStorage.setItem(USERS_KEY, JSON.stringify(usersCache)); }catch(e){}
+  } else {
+    usersCache = loadUsersLocalFallback();
+  }
+}
+
+async function refreshActivityFromServer(){
+  const remote = await syncGet('stop-activity');
+  if(Array.isArray(remote)){
+    activityCache = remote;
+    try{ localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityCache)); }catch(e){}
+  } else {
+    activityCache = loadActivityLocalFallback();
+  }
+}
+
+function loadUsers(){
+  return usersCache;
+}
+function saveUsers(users){
+  usersCache = users;
+  try{ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }catch(e){}
+  syncPost('stop-users', users);
+}
+function findUser(username){
+  return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
+}
+function getCurrentUser(){
+  try{ return localStorage.getItem(CURRENT_USER_KEY) || null; }catch(e){ return null; }
+}
+function setCurrentUser(username){
+  try{ localStorage.setItem(CURRENT_USER_KEY, username); }catch(e){}
+}
+function clearCurrentUser(){
+  try{ localStorage.removeItem(CURRENT_USER_KEY); }catch(e){}
+}
+function loadActivityLog(){
+  return activityCache;
+}
+function logActivity(username, action){
+  activityCache.unshift({ username, action, timestamp: new Date().toISOString() });
+  while(activityCache.length > 200) activityCache.pop();
+  try{ localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityCache)); }catch(e){}
+  syncPost('stop-activity', activityCache);
+}
+
+function checkAuthAndRender(){
+  const gate = document.getElementById('auth-gate');
+  const current = getCurrentUser();
+  if(current && findUser(current)){
+    gate.classList.add('hidden');
+  } else {
+    if(current && !findUser(current)) clearCurrentUser();
+    gate.classList.remove('hidden');
+    renderAuthView();
+  }
+}
+
+function renderAuthView(){
+  const inner = document.getElementById('auth-inner');
+  const errorHtml = authError ? `<div class="auth-error">${authError}</div>` : '';
+
+  if(authView === 'create'){
+    inner.innerHTML = `
+      <div class="auth-eyebrow">Spa Therapist Operations Portal</div>
+      <h2>Create Account</h2>
+      <p class="caption">New accounts need an invitation code from your admin.</p>
+      ${errorHtml}
+      <div class="field"><label>Username</label><input type="text" id="auth-new-username" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="auth-new-password" autocomplete="new-password"></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="auth-confirm-password" autocomplete="new-password"></div>
+      <div class="field"><label>Invitation Code</label><input type="text" id="auth-invite-code" autocomplete="off"></div>
+      <button class="primary-btn" id="auth-create-btn">Create Account</button>
+      <div class="auth-link-row">Already have an account? <button id="auth-show-login">Log in</button></div>
+    `;
+    document.getElementById('auth-create-btn').addEventListener('click', ()=>{
+      const u = document.getElementById('auth-new-username').value.trim();
+      const p = document.getElementById('auth-new-password').value;
+      const c = document.getElementById('auth-confirm-password').value;
+      const code = document.getElementById('auth-invite-code').value.trim();
+      attemptCreateAccount(u, p, c, code);
+    });
+    document.getElementById('auth-show-login').addEventListener('click', ()=>{
+      authError = ''; authView = 'login'; renderAuthView();
+    });
+  } else {
+    inner.innerHTML = `
+      <div class="auth-eyebrow">Spa Therapist Operations Portal</div>
+      <h2>Log In</h2>
+      <p class="caption">Enter your username and password to continue.</p>
+      ${syncStatusWarningHtml()}
+      ${errorHtml}
+      <div class="field"><label>Username</label><input type="text" id="auth-username" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="auth-password" autocomplete="current-password"></div>
+      <button class="primary-btn" id="auth-login-btn">Log In</button>
+      <div class="auth-link-row">New here? <button id="auth-show-create">Create an account</button></div>
+      <div class="auth-admin-link"><button id="auth-show-admin">Admin</button></div>
+    `;
+    document.getElementById('auth-login-btn').addEventListener('click', ()=>{
+      const u = document.getElementById('auth-username').value.trim();
+      const p = document.getElementById('auth-password').value;
+      attemptLogin(u, p);
+    });
+    document.getElementById('auth-show-create').addEventListener('click', ()=>{
+      authError = ''; authView = 'create'; renderAuthView();
+    });
+    document.getElementById('auth-show-admin').addEventListener('click', openAdmin);
+  }
+}
+
+function attemptLogin(username, password){
+  if(!username || !password){ authError = 'Enter a username and password.'; renderAuthView(); return; }
+  const user = findUser(username);
+  if(!user || user.password !== password){
+    authError = 'Incorrect username or password.';
+    renderAuthView();
+    return;
+  }
+  setCurrentUser(user.username);
+  logActivity(user.username, 'Logged in');
+  authError = '';
+  checkAuthAndRender();
+}
+
+function attemptCreateAccount(username, password, confirmPw, code){
+  if(!username || !password || !confirmPw){ authError = 'Fill in all fields.'; renderAuthView(); return; }
+  if(password !== confirmPw){ authError = 'Passwords do not match.'; renderAuthView(); return; }
+  if(code !== INVITE_CODE){ authError = 'Invalid invitation code.'; renderAuthView(); return; }
+  if(findUser(username)){ authError = 'That username is already taken.'; renderAuthView(); return; }
+  const users = loadUsers();
+  users.push({ username, password, createdAt: new Date().toISOString() });
+  saveUsers(users);
+  logActivity(username, 'Created account');
+  setCurrentUser(username);
+  logActivity(username, 'Logged in');
+  authError = '';
+  checkAuthAndRender();
+}
+
+function logout(){
+  const current = getCurrentUser();
+  if(current) logActivity(current, 'Logged out');
+  clearCurrentUser();
+  authView = 'login';
+  authError = '';
+  checkAuthAndRender();
+}
+
+function openAdmin(){
+  adminUnlocked = false;
+  renderAdmin();
+  document.getElementById('admin-overlay').classList.add('open');
+}
+function closeAdmin(){
+  document.getElementById('admin-overlay').classList.remove('open');
+}
+
+function renderAdmin(){
+  const inner = document.getElementById('admin-inner');
+
+  if(!adminUnlocked){
+    inner.innerHTML = `
+      <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
+      <div class="agenda-step">
+        <h2>Admin</h2>
+        <p class="caption">Enter the admin password to continue.</p>
+        <div id="admin-pw-error"></div>
+        <div class="field"><label>Admin Password</label><input type="password" id="admin-password-input"></div>
+        <button class="primary-btn" id="admin-unlock-btn">Unlock</button>
+      </div>
+    `;
+    document.getElementById('admin-back').addEventListener('click', closeAdmin);
+    const tryUnlock = ()=>{
+      const val = document.getElementById('admin-password-input').value;
+      if(val === ADMIN_PASSWORD){
+        adminUnlocked = true;
+        renderAdmin();
+      } else {
+        document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">Incorrect password.</div>`;
+      }
+    };
+    document.getElementById('admin-unlock-btn').addEventListener('click', tryUnlock);
+    document.getElementById('admin-password-input').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') tryUnlock();
+    });
+    return;
+  }
+
+  const users = loadUsers();
+  const log = loadActivityLog();
+
+  inner.innerHTML = `
+    <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
+    <div class="agenda-step">
+      <h2>Admin</h2>
+      <p class="caption">Manage users and review activity.</p>
+      ${syncStatusWarningHtml()}
+
+      <div class="block-label">Add User</div>
+      <div class="field"><label>Username</label><input type="text" id="admin-new-username"></div>
+      <div class="field"><label>Password</label><input type="text" id="admin-new-password"></div>
+      <button class="primary-btn" id="admin-add-user-btn">Add User</button>
+
+      <div class="block-label" style="margin-top:32px;">Users</div>
+      <div id="admin-user-list">
+        ${users.length ? users.map(u => `
+          <div class="admin-user-row">
+            <div class="admin-user-name">${u.username}</div>
+            <div class="admin-user-actions">
+              <button class="ghost-btn admin-reset-btn" data-username="${u.username}">Reset Password</button>
+              <button class="ghost-btn admin-remove-btn" data-username="${u.username}">Remove</button>
+            </div>
+          </div>
+        `).join('') : `<p class="caption">No users yet.</p>`}
+      </div>
+
+      <div class="block-label" style="margin-top:32px;">Activity Log</div>
+      <div class="agenda-list">
+        ${log.length ? log.slice(0,50).map(entry => `
+          <div class="agenda-row">
+            <span class="ar-time">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+            <span class="ar-client">${entry.username}</span>
+            <span class="ar-service">${entry.action}</span>
+          </div>
+        `).join('') : `<p class="caption">No activity yet.</p>`}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('admin-back').addEventListener('click', closeAdmin);
+  document.getElementById('admin-add-user-btn').addEventListener('click', ()=>{
+    const u = document.getElementById('admin-new-username').value.trim();
+    const p = document.getElementById('admin-new-password').value;
+    if(!u || !p){ alert('Enter a username and password.'); return; }
+    if(findUser(u)){ alert('That username already exists.'); return; }
+    const list = loadUsers();
+    list.push({ username: u, password: p, createdAt: new Date().toISOString() });
+    saveUsers(list);
+    logActivity('admin', `Added user "${u}"`);
+    renderAdmin();
+  });
+  inner.querySelectorAll('.admin-reset-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const username = btn.dataset.username;
+      const newPw = prompt(`New password for ${username}:`);
+      if(!newPw) return;
+      const list = loadUsers();
+      const user = list.find(u => u.username === username);
+      if(user){
+        user.password = newPw;
+        saveUsers(list);
+        logActivity('admin', `Reset password for "${username}"`);
+        alert('Password reset.');
+      }
+    });
+  });
+  inner.querySelectorAll('.admin-remove-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const username = btn.dataset.username;
+      if(!confirm(`Remove user "${username}"?`)) return;
+      const list = loadUsers().filter(u => u.username !== username);
+      saveUsers(list);
+      logActivity('admin', `Removed user "${username}"`);
+      if(getCurrentUser() === username){ clearCurrentUser(); }
+      renderAdmin();
+    });
+  });
+}
+
+async function bootstrapAuth(){
+  await Promise.all([refreshUsersFromServer(), refreshActivityFromServer()]);
+  checkAuthAndRender();
+  setInterval(async ()=>{
+    await refreshUsersFromServer();
+    await refreshActivityFromServer();
+    checkAuthAndRender();
+    if(document.getElementById('admin-overlay').classList.contains('open') && adminUnlocked){
+      renderAdmin();
+    }
+  }, 30000);
+}
+bootstrapAuth();
+
 const FACIAL_MASSAGE_ROUTINE = [
   {area:"Neck", detail:"Glide upward from collarbone to jaw, 3–5 times each side (opens lymphatic flow first)."},
   {area:"Jawline", detail:"Start at chin, sweep outward along jaw to ear, then behind earlobe and down neck. 3–5 times per side."},
@@ -1093,13 +1608,16 @@ function renderHomeScheduleList(){
     container.innerHTML = '';
     return;
   }
+  const nowMin = currentMinutesNow();
+  const current = visible.find(s => nowMin >= s.time && nowMin < s.time + s.duration);
   container.innerHTML = `
     <div class="section-label">Today's Schedule</div>
     <div class="agenda-list">
       ${visible.map(s => {
         const svcLine = [s.service, s.enhancement].filter(Boolean).join(' + ');
         const clientLine = [s.client, s.client2].filter(Boolean).join(' & ') || 'Open';
-        return `<div class="agenda-row">
+        const isCurrent = current && s.time === current.time;
+        return `<div class="agenda-row ${isCurrent ? 'current' : ''}">
           <span class="ar-time">${formatSlotTime(s.time)}</span>
           <span class="ar-client">${clientLine}${s.room ? `<span class="ar-room">${s.room}</span>` : ''}</span>
           <span class="ar-service">${svcLine || '—'}</span>
@@ -1111,6 +1629,7 @@ function renderHomeScheduleList(){
 
 restoreAgendaState();
 renderHomeScheduleList();
+setInterval(renderHomeScheduleList, 30000);
 
 const DATA = {
   body: [
@@ -1471,6 +1990,7 @@ function closeAgenda(){
 }
 
 document.getElementById('open-agenda').addEventListener('click', openAgenda);
+document.getElementById('logout-btn').addEventListener('click', logout);
 
 /* ---------- Breakroom app launch ---------- */
 
