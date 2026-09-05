@@ -982,7 +982,7 @@
 
   <div id="home-schedule"></div>
 
-  <div class="app-version">v1.1.0</div>
+  <div class="app-version">v1.1.1</div>
 </div>
 
 <div class="detail" id="agenda-overlay">
@@ -1010,7 +1010,8 @@
 /* ============ Sync backend ============ */
 // After deploying the Worker (see the included README), paste its URL below.
 // Until then, the app falls back to local-only storage automatically.
-const SYNC_API_BASE = 'https://stop-sync.ryanhultz.workers.dev/';
+const SYNC_API_BASE_RAW = 'https://stop-sync.ryanhultz.workers.dev';
+const SYNC_API_BASE = SYNC_API_BASE_RAW.replace(/\/+$/, ''); // trailing slash tolerated either way
 
 let syncStatus = 'unknown'; // 'ok' | 'offline' | 'not-configured'
 
