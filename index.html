@@ -1030,6 +1030,30 @@
     font-size:10px;
     margin-top:0;
   }
+  .perm-chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:-2px 0 14px;
+  }
+  .perm-chip{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:.04em;
+    padding:6px 11px;
+    border-radius:999px;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+  }
+  .perm-chip.active{
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    color:#fff;
+  }
   .admin-tabs{
     display:flex;
     gap:8px;
@@ -1242,7 +1266,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.7.1</div>
+    <div class="app-version">v1.8.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1527,14 +1551,34 @@ function saveUsers(users){
 function findUser(username){
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
 }
+const LOGIN_DATE_KEY = 'stopCurrentUserLoginDate_v1';
 function getCurrentUser(){
   try{ return localStorage.getItem(CURRENT_USER_KEY) || null; }catch(e){ return null; }
 }
 function setCurrentUser(username){
-  try{ localStorage.setItem(CURRENT_USER_KEY, username); }catch(e){}
+  try{
+    localStorage.setItem(CURRENT_USER_KEY, username);
+    localStorage.setItem(LOGIN_DATE_KEY, new Date().toDateString());
+  }catch(e){}
 }
 function clearCurrentUser(){
-  try{ localStorage.removeItem(CURRENT_USER_KEY); }catch(e){}
+  try{
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem(LOGIN_DATE_KEY);
+  }catch(e){}
+}
+const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity'];
+function blankPermissions(){
+  const p = {};
+  PERMISSION_KEYS.forEach(k => p[k] = false);
+  return p;
+}
+function getUserPermissions(user){
+  const base = blankPermissions();
+  if(user && user.permissions){
+    PERMISSION_KEYS.forEach(k => { base[k] = !!user.permissions[k]; });
+  }
+  return base;
 }
 function loadActivityLog(){
   return activityCache;
@@ -1549,7 +1593,17 @@ function logActivity(username, action){
 function checkAuthAndRender(){
   const gate = document.getElementById('auth-gate');
   const current = getCurrentUser();
+
   if(current && findUser(current)){
+    let loginDate = null;
+    try{ loginDate = localStorage.getItem(LOGIN_DATE_KEY); }catch(e){}
+    if(loginDate && loginDate !== new Date().toDateString()){
+      logActivity(current, 'Session expired (midnight reset)');
+      clearCurrentUser();
+      gate.classList.remove('hidden');
+      renderAuthView();
+      return;
+    }
     gate.classList.add('hidden');
   } else {
     if(current && !findUser(current)) clearCurrentUser();
@@ -1617,8 +1671,15 @@ function attemptLogin(username, password){
   const user = findUser(username);
   if(!user || user.password !== password){
     authError = 'Incorrect username or password.';
+    logActivity(username || '(blank)', 'Failed login attempt');
     renderAuthView();
     return;
+  }
+  const list = loadUsers();
+  const listUser = list.find(u => u.username === user.username);
+  if(listUser){
+    listUser.lastLogin = new Date().toISOString();
+    saveUsers(list);
   }
   setCurrentUser(user.username);
   logActivity(user.username, 'Logged in');
@@ -1632,7 +1693,8 @@ function attemptCreateAccount(username, password, confirmPw, code){
   if(code !== INVITE_CODE){ authError = 'Invalid invitation code.'; renderAuthView(); return; }
   if(findUser(username)){ authError = 'That username is already taken.'; renderAuthView(); return; }
   const users = loadUsers();
-  users.push({ username, password, createdAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  users.push({ username, password, permissions: blankPermissions(), lastLogin: now, createdAt: now });
   saveUsers(users);
   logActivity(username, 'Created account');
   setCurrentUser(username);
@@ -1651,6 +1713,7 @@ function logout(){
 }
 
 let adminTab = null; // null (menu) | 'users' | 'protocols' | 'products' | 'supplies' | 'activity'
+let adminSessionMode = null; // 'user' | 'master'
 
 const ADMIN_SECTIONS = [
   { key: 'users', name: 'Users', meta: 'Add, remove, and reset passwords' },
@@ -1661,14 +1724,41 @@ const ADMIN_SECTIONS = [
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
 ];
 
+function getEffectiveAdminPermissions(){
+  if(adminSessionMode === 'master') return { users:true, protocols:true, products:true, supplies:true, allergens:true, activity:true };
+  const current = getCurrentUser();
+  const user = current ? findUser(current) : null;
+  return getUserPermissions(user);
+}
+
+function getAdminActingUsername(){
+  const current = getCurrentUser();
+  if(adminSessionMode === 'master'){
+    return current ? `${current} (master access)` : 'Master Admin';
+  }
+  return current || 'Unknown';
+}
+
 function openAdmin(){
-  adminUnlocked = false;
   adminTab = null;
+  const current = getCurrentUser();
+  const user = current ? findUser(current) : null;
+  const perms = getUserPermissions(user);
+  const hasAnyPermission = PERMISSION_KEYS.some(k => perms[k]);
+
+  if(hasAnyPermission){
+    adminSessionMode = 'user';
+    adminUnlocked = true;
+  } else {
+    adminSessionMode = null;
+    adminUnlocked = false;
+  }
   renderAdmin();
   document.getElementById('admin-overlay').classList.add('open');
 }
 function closeAdmin(){
   document.getElementById('admin-overlay').classList.remove('open');
+  adminSessionMode = null;
 }
 
 function renderAdmin(){
@@ -1690,6 +1780,7 @@ function renderAdmin(){
       const val = document.getElementById('admin-password-input').value;
       if(val === ADMIN_PASSWORD){
         adminUnlocked = true;
+        adminSessionMode = 'master';
         renderAdmin();
       } else {
         document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">Incorrect password.</div>`;
@@ -1702,6 +1793,9 @@ function renderAdmin(){
     return;
   }
 
+  const perms = getEffectiveAdminPermissions();
+  const visibleSections = ADMIN_SECTIONS.filter(s => perms[s.key]);
+
   if(!adminTab){
     inner.innerHTML = `
       <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
@@ -1709,17 +1803,19 @@ function renderAdmin(){
         <h2>Admin</h2>
         <p class="caption">Choose a section to manage.</p>
         ${syncStatusWarningHtml()}
-        <div class="grid">
-          ${ADMIN_SECTIONS.map(s => `
-            <button class="card-btn" data-admin-tab="${s.key}">
-              <span>
-                <span class="name">${s.name}</span>
-                <span class="meta">${s.meta}</span>
-              </span>
-              ${iconArrow()}
-            </button>
-          `).join('')}
-        </div>
+        ${visibleSections.length ? `
+          <div class="grid">
+            ${visibleSections.map(s => `
+              <button class="card-btn" data-admin-tab="${s.key}">
+                <span>
+                  <span class="name">${s.name}</span>
+                  <span class="meta">${s.meta}</span>
+                </span>
+                ${iconArrow()}
+              </button>
+            `).join('')}
+          </div>
+        ` : `<p class="caption">Your account doesn't have access to any admin sections yet — ask an existing admin to grant access in Admin → Users.</p>`}
         <div class="copyright-line">© 2026 Ryan Hultz</div>
       </div>
     `;
@@ -1730,6 +1826,12 @@ function renderAdmin(){
         renderAdmin();
       });
     });
+    return;
+  }
+
+  if(!perms[adminTab]){
+    adminTab = null;
+    renderAdmin();
     return;
   }
 
@@ -1769,11 +1871,21 @@ function renderAdminUsersTab(){
     <div id="admin-user-list">
       ${users.length ? users.map(u => `
         <div class="admin-user-row">
-          <div class="admin-user-name">${u.username}</div>
+          <div class="admin-user-name">
+            ${u.username}
+            <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${u.lastLogin ? `Last login: ${new Date(u.lastLogin).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</span>
+          </div>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-reset-btn" data-username="${u.username}">Reset Password</button>
             <button class="ghost-btn admin-remove-btn" data-username="${u.username}">Remove</button>
           </div>
+        </div>
+        <div class="perm-chip-row">
+          ${PERMISSION_KEYS.map(key => {
+            const label = ADMIN_SECTIONS.find(s => s.key === key).name;
+            const active = getUserPermissions(u)[key];
+            return `<button class="perm-chip ${active ? 'active' : ''}" data-username="${u.username}" data-perm="${key}">${label}</button>`;
+          }).join('')}
         </div>
       `).join('') : `<p class="caption">No users yet.</p>`}
     </div>
@@ -1785,9 +1897,9 @@ function renderAdminUsersTab(){
     if(!u || !p){ alert('Enter a username and password.'); return; }
     if(findUser(u)){ alert('That username already exists.'); return; }
     const list = loadUsers();
-    list.push({ username: u, password: p, createdAt: new Date().toISOString() });
+    list.push({ username: u, password: p, permissions: blankPermissions(), lastLogin: null, createdAt: new Date().toISOString() });
     saveUsers(list);
-    logActivity('admin', `Added user "${u}"`);
+    logActivity(getAdminActingUsername(), `Added user "${u}"`);
     renderAdminUsersTab();
   });
   content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
@@ -1800,7 +1912,7 @@ function renderAdminUsersTab(){
       if(user){
         user.password = newPw;
         saveUsers(list);
-        logActivity('admin', `Reset password for "${username}"`);
+        logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
         alert('Password reset.');
       }
     });
@@ -1811,8 +1923,24 @@ function renderAdminUsersTab(){
       if(!confirm(`Remove user "${username}"?`)) return;
       const list = loadUsers().filter(u => u.username !== username);
       saveUsers(list);
-      logActivity('admin', `Removed user "${username}"`);
+      logActivity(getAdminActingUsername(), `Removed user "${username}"`);
       if(getCurrentUser() === username){ clearCurrentUser(); }
+      renderAdminUsersTab();
+    });
+  });
+  content.querySelectorAll('.perm-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const username = btn.dataset.username;
+      const key = btn.dataset.perm;
+      const list = loadUsers();
+      const user = list.find(u => u.username === username);
+      if(!user) return;
+      if(!user.permissions) user.permissions = blankPermissions();
+      const newVal = !user.permissions[key];
+      user.permissions[key] = newVal;
+      saveUsers(list);
+      const sectionName = ADMIN_SECTIONS.find(s => s.key === key).name;
+      logActivity(getAdminActingUsername(), `${newVal ? 'Granted' : 'Revoked'} "${sectionName}" access for "${username}"`);
       renderAdminUsersTab();
     });
   });
@@ -1856,7 +1984,7 @@ function prepRowHtml(row, idx, products){
     <div class="dynamic-row" data-idx="${idx}">
       <select class="prep-product-select" data-idx="${idx}">
         <option value="">${placeholder}</option>
-        ${products.map(p => `<option value="${p.id}" ${row.productId===p.id?'selected':''}>${p.name}</option>`).join('')}
+        ${products.map(p => `<option value="${p.id}" ${row.productId===p.id?'selected':''}>${p.brand ? `${p.brand} — ${p.name}` : p.name}</option>`).join('')}
       </select>
       <select class="prep-amount-select" data-idx="${idx}">
         <option value="">No amount</option>
@@ -2066,7 +2194,7 @@ function renderAdminProtocolsTab(){
         if(prep.length) existing.prep = prep; else delete existing.prep;
         if(steps.length) existing.steps = steps; else delete existing.steps;
         saveCustomProtocols(list);
-        logActivity('admin', `Edited protocol "${name}"`);
+        logActivity(getAdminActingUsername(), `Edited protocol "${name}"`);
       }
       editingProtocolId = null;
     } else {
@@ -2084,7 +2212,7 @@ function renderAdminProtocolsTab(){
       if(steps.length) protocol.steps = steps;
       list.push(protocol);
       saveCustomProtocols(list);
-      logActivity('admin', `Added protocol "${name}"`);
+      logActivity(getAdminActingUsername(), `Added protocol "${name}"`);
     }
     protocolFormTarget = null; // force a fresh, blank row-builder state next render
     renderAdminProtocolsTab();
@@ -2118,7 +2246,7 @@ function renderAdminProtocolsTab(){
       if(!confirm(`Remove protocol "${protocol ? protocol.name : ''}"?`)) return;
       const list = loadCustomProtocols().filter(p => p.id !== id);
       saveCustomProtocols(list);
-      logActivity('admin', `Removed protocol "${protocol ? protocol.name : id}"`);
+      logActivity(getAdminActingUsername(), `Removed protocol "${protocol ? protocol.name : id}"`);
       if(editingProtocolId === id) editingProtocolId = null;
       renderAdminProtocolsTab();
     });
@@ -2170,13 +2298,13 @@ function renderAdminAllergensTab(){
         existing.commonName = commonName;
         existing.fullName = fullName;
         saveAllergens(list);
-        logActivity('admin', `Edited allergen entry "${commonName || fullName}"`);
+        logActivity(getAdminActingUsername(), `Edited allergen entry "${commonName || fullName}"`);
       }
       editingAllergenId = null;
     } else {
       list.push({ id: makeId(), commonName, fullName, createdAt: new Date().toISOString() });
       saveAllergens(list);
-      logActivity('admin', `Added allergen entry "${commonName || fullName}"`);
+      logActivity(getAdminActingUsername(), `Added allergen entry "${commonName || fullName}"`);
     }
     prefillAllergenFullName = null;
     renderAdminAllergensTab();
@@ -2215,7 +2343,7 @@ function renderAdminAllergensTab(){
       if(!confirm(`Remove allergen entry "${label}"?`)) return;
       const list = loadAllergens().filter(a => a.id !== id);
       saveAllergens(list);
-      logActivity('admin', `Removed allergen entry "${label}"`);
+      logActivity(getAdminActingUsername(), `Removed allergen entry "${label}"`);
       if(editingAllergenId === id) editingAllergenId = null;
       renderAdminAllergensTab();
     });
@@ -2246,6 +2374,7 @@ function renderAdminProductsTab(){
 
   content.innerHTML = `
     <div class="block-label">Add Product</div>
+    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis"></div>
     <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name"></div>
     <div class="field">
       <label>Paste Ingredients</label>
@@ -2258,7 +2387,7 @@ function renderAdminProductsTab(){
       ${products.length ? products.map(p => `
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
-            <span class="admin-user-name">${p.name}</span>
+            <span class="admin-user-name">${p.name}${p.brand ? ` <span class="admin-supply-empty">— ${p.brand}</span>` : ''}</span>
             <span class="tap-hint">${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : 'No ingredients listed'}</span>
           </button>
           <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
@@ -2273,14 +2402,15 @@ function renderAdminProductsTab(){
   `;
 
   document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
+    const brand = document.getElementById('admin-new-product-brand').value.trim();
     const name = document.getElementById('admin-new-product-name').value.trim();
     const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
     if(!name){ alert('Enter a product name.'); return; }
     const ingredients = parseIngredientsText(ingredientsText);
     const list = loadProducts();
-    list.push({ id: makeId(), name, ingredients, createdAt: new Date().toISOString() });
+    list.push({ id: makeId(), brand, name, ingredients, createdAt: new Date().toISOString() });
     saveProducts(list);
-    logActivity('admin', `Added product "${name}"`);
+    logActivity(getAdminActingUsername(), `Added product "${name}"`);
     renderAdminProductsTab();
   });
   content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
@@ -2296,7 +2426,7 @@ function renderAdminProductsTab(){
       if(!confirm(`Remove product "${product ? product.name : ''}"?`)) return;
       const list = loadProducts().filter(p => p.id !== id);
       saveProducts(list);
-      logActivity('admin', `Removed product "${product ? product.name : id}"`);
+      logActivity(getAdminActingUsername(), `Removed product "${product ? product.name : id}"`);
       renderAdminProductsTab();
     });
   });
@@ -2330,7 +2460,7 @@ function renderAdminSuppliesTab(){
     const list = loadSupplies();
     list.push({ id: makeId(), name, createdAt: new Date().toISOString() });
     saveSupplies(list);
-    logActivity('admin', `Added supply "${name}"`);
+    logActivity(getAdminActingUsername(), `Added supply "${name}"`);
     renderAdminSuppliesTab();
   });
   content.querySelectorAll('.admin-remove-supply-btn').forEach(btn=>{
@@ -2340,7 +2470,7 @@ function renderAdminSuppliesTab(){
       if(!confirm(`Remove supply "${supply ? supply.name : ''}"?`)) return;
       const list = loadSupplies().filter(s => s.id !== id);
       saveSupplies(list);
-      logActivity('admin', `Removed supply "${supply ? supply.name : id}"`);
+      logActivity(getAdminActingUsername(), `Removed supply "${supply ? supply.name : id}"`);
       renderAdminSuppliesTab();
     });
   });
@@ -3159,7 +3289,7 @@ function renderProductsBrowseList(){
         <div class="grid">
           ${products.map(p => `
             <button class="card-btn products-browse-btn" data-id="${p.id}">
-              <span><span class="name">${p.name}</span></span>
+              <span><span class="name">${p.name}</span>${p.brand ? `<span class="meta">${p.brand}</span>` : ''}</span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -3191,6 +3321,7 @@ function renderProductsBrowseDetail(){
     <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Products</button>
     <div class="agenda-step">
       <h2>${product.name}</h2>
+      ${product.brand ? `<p class="caption">${product.brand}</p>` : ''}
       <div class="block-label">Ingredients</div>
       ${ingredients.length ? `
         <div class="admin-ingredient-tags">
