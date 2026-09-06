@@ -1056,6 +1056,55 @@
     margin-top:0;
     flex:none;
   }
+  .dynamic-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .dynamic-row select{
+    all:unset;
+    box-sizing:border-box;
+    flex:1;
+    min-width:0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .dynamic-row select.prep-amount-select,
+  .dynamic-row select.tmu-qty-select{
+    flex:0 0 92px;
+  }
+  .remove-row-btn{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    flex:none;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+  }
+  .remove-row-btn:active{ background:#F4E3D3; color:#8C4A2A; border-color:#D9B48F; }
+  .add-row-btn{
+    width:auto;
+    display:inline-block;
+    padding:10px 16px;
+    font-size:11px;
+    margin-top:2px;
+    margin-bottom:14px;
+  }
 </style>
 </head>
 <body>
@@ -1109,7 +1158,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.4.0</div>
+    <div class="app-version">v1.5.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1481,11 +1530,19 @@ function logout(){
   checkAuthAndRender();
 }
 
-let adminTab = 'users'; // 'users' | 'supplies' | 'activity'
+let adminTab = null; // null (menu) | 'users' | 'protocols' | 'products' | 'supplies' | 'activity'
+
+const ADMIN_SECTIONS = [
+  { key: 'users', name: 'Users', meta: 'Add, remove, and reset passwords' },
+  { key: 'protocols', name: 'Protocols', meta: 'Edit treatment prep and steps' },
+  { key: 'products', name: 'Products', meta: 'Manage ingredients' },
+  { key: 'supplies', name: 'Supplies', meta: 'Linens, towels, and more' },
+  { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
+];
 
 function openAdmin(){
   adminUnlocked = false;
-  adminTab = 'users';
+  adminTab = null;
   renderAdmin();
   document.getElementById('admin-overlay').classList.add('open');
 }
@@ -1524,28 +1581,48 @@ function renderAdmin(){
     return;
   }
 
-  inner.innerHTML = `
-    <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
-    <div class="agenda-step">
-      <h2>Admin</h2>
-      <p class="caption">Manage users, supplies, and activity.</p>
-      ${syncStatusWarningHtml()}
-      <div class="admin-tabs">
-        <button class="admin-tab-btn ${adminTab==='users'?'active':''}" data-tab="users">Users</button>
-        <button class="admin-tab-btn ${adminTab==='protocols'?'active':''}" data-tab="protocols">Protocols</button>
-        <button class="admin-tab-btn ${adminTab==='products'?'active':''}" data-tab="products">Products</button>
-        <button class="admin-tab-btn ${adminTab==='supplies'?'active':''}" data-tab="supplies">Supplies</button>
-        <button class="admin-tab-btn ${adminTab==='activity'?'active':''}" data-tab="activity">Activity Log</button>
+  if(!adminTab){
+    inner.innerHTML = `
+      <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
+      <div class="agenda-step">
+        <h2>Admin</h2>
+        <p class="caption">Choose a section to manage.</p>
+        ${syncStatusWarningHtml()}
+        <div class="grid">
+          ${ADMIN_SECTIONS.map(s => `
+            <button class="card-btn" data-admin-tab="${s.key}">
+              <span>
+                <span class="name">${s.name}</span>
+                <span class="meta">${s.meta}</span>
+              </span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
       </div>
+    `;
+    document.getElementById('admin-back').addEventListener('click', closeAdmin);
+    inner.querySelectorAll('[data-admin-tab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        adminTab = btn.dataset.adminTab;
+        renderAdmin();
+      });
+    });
+    return;
+  }
+
+  const sectionMeta = ADMIN_SECTIONS.find(s => s.key === adminTab);
+  inner.innerHTML = `
+    <button class="back-btn" id="admin-back"><span class="chev">←</span> Admin</button>
+    <div class="agenda-step">
+      <h2>${sectionMeta ? sectionMeta.name : 'Admin'}</h2>
+      ${syncStatusWarningHtml()}
       <div id="admin-tab-content"></div>
     </div>
   `;
-  document.getElementById('admin-back').addEventListener('click', closeAdmin);
-  inner.querySelectorAll('.admin-tab-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      adminTab = btn.dataset.tab;
-      renderAdmin();
-    });
+  document.getElementById('admin-back').addEventListener('click', ()=>{
+    adminTab = null;
+    renderAdmin();
   });
 
   if(adminTab === 'users') renderAdminUsersTab();
@@ -1619,15 +1696,87 @@ function renderAdminUsersTab(){
 }
 
 let editingProtocolId = null;
+let protocolFormTarget = null; // tracks which protocol the row builders currently reflect
+let protocolPrepRows = [];
+let protocolTableMakeupRows = [];
+
+const OUNCE_OPTIONS = ['¼ oz','½ oz','¾ oz','1 oz','1¼ oz','1½ oz','1¾ oz','2 oz'];
+const QUANTITY_OPTIONS = [1,2,3,4,5,6,7,8,9,10];
+
+function blankPrepRow(){ return { productId:'', amount:'', originalText:'' }; }
+function blankTableMakeupRow(){ return { supplyId:'', qty:'', originalText:'' }; }
+
+function resetProtocolFormRows(editing){
+  if(editing && editing.prep && editing.prep.length){
+    protocolPrepRows = editing.prep.map(item => ({
+      productId: '',
+      amount: '',
+      originalText: item.note ? `${item.t} (${item.note})` : item.t
+    }));
+  } else {
+    protocolPrepRows = [blankPrepRow()];
+  }
+  if(editing && editing.tableMakeup && editing.tableMakeup.length){
+    protocolTableMakeupRows = editing.tableMakeup.map(text => ({
+      supplyId: '',
+      qty: '',
+      originalText: text
+    }));
+  } else {
+    protocolTableMakeupRows = [blankTableMakeupRow()];
+  }
+}
+
+function prepRowHtml(row, idx, products){
+  const placeholder = row.originalText ? `Keep: "${row.originalText}"` : 'Select product…';
+  return `
+    <div class="dynamic-row" data-idx="${idx}">
+      <select class="prep-product-select" data-idx="${idx}">
+        <option value="">${placeholder}</option>
+        ${products.map(p => `<option value="${p.id}" ${row.productId===p.id?'selected':''}>${p.name}</option>`).join('')}
+      </select>
+      <select class="prep-amount-select" data-idx="${idx}">
+        <option value="">No amount</option>
+        ${OUNCE_OPTIONS.map(o => `<option value="${o}" ${row.amount===o?'selected':''}>${o}</option>`).join('')}
+      </select>
+      <button class="remove-row-btn" data-idx="${idx}" data-kind="prep" title="Remove row">✕</button>
+    </div>
+  `;
+}
+
+function tableMakeupRowHtml(row, idx, supplies){
+  const placeholder = row.originalText ? `Keep: "${row.originalText}"` : 'Select supply…';
+  return `
+    <div class="dynamic-row" data-idx="${idx}">
+      <select class="tmu-supply-select" data-idx="${idx}">
+        <option value="">${placeholder}</option>
+        ${supplies.map(s => `<option value="${s.id}" ${row.supplyId===s.id?'selected':''}>${s.name}</option>`).join('')}
+      </select>
+      <select class="tmu-qty-select" data-idx="${idx}">
+        <option value="">No count</option>
+        ${QUANTITY_OPTIONS.map(q => `<option value="${q}" ${String(row.qty)===String(q)?'selected':''}>${q}</option>`).join('')}
+      </select>
+      <button class="remove-row-btn" data-idx="${idx}" data-kind="tablemakeup" title="Remove row">✕</button>
+    </div>
+  `;
+}
+
 
 const PROTOCOL_SECTION_LABELS = { body: 'Body Treatments', kurr: 'Kurr Collection', custom: 'Custom' };
 
 function renderAdminProtocolsTab(){
   const content = document.getElementById('admin-tab-content');
   const protocols = loadCustomProtocols();
+  const products = loadProducts();
+  const supplies = loadSupplies();
   const editing = editingProtocolId ? protocols.find(p => p.id === editingProtocolId) : null;
 
-  const prepToText = (prep) => (prep || []).map(p => p.note ? `${p.t} | ${p.note}` : p.t).join('\n');
+  const currentTarget = editingProtocolId || 'new';
+  if(protocolFormTarget !== currentTarget){
+    resetProtocolFormRows(editing);
+    protocolFormTarget = currentTarget;
+  }
+
   const linesToText = (lines) => (lines || []).join('\n');
 
   content.innerHTML = `
@@ -1650,14 +1799,25 @@ function renderAdminProtocolsTab(){
       <label>Warnings / Callouts (optional)</label>
       <textarea id="admin-new-protocol-callouts" rows="2" placeholder="One warning per line, e.g. Confirm no known allergies before starting">${editing ? linesToText(editing.callouts) : ''}</textarea>
     </div>
+
     <div class="field">
-      <label>Table Make Up (optional)</label>
-      <textarea id="admin-new-protocol-tablemakeup" rows="3" placeholder="One layer per line, e.g.&#10;Treatment sheet&#10;Blanket towel">${editing ? linesToText(editing.tableMakeup) : ''}</textarea>
+      <label>Table Make Up</label>
+      <div id="tmu-rows">
+        ${protocolTableMakeupRows.map((row, idx) => tableMakeupRowHtml(row, idx, supplies)).join('')}
+      </div>
+      <button class="ghost-btn add-row-btn" id="add-tmu-row-btn" type="button">+ Add Layer</button>
+      ${!supplies.length ? `<p class="caption">No supplies yet — add some in Admin → Supplies first.</p>` : ''}
     </div>
+
     <div class="field">
       <label>Prep</label>
-      <textarea id="admin-new-protocol-prep" rows="4" placeholder="One item per line. Add a note after a | , e.g.&#10;2 oz Pure Scrub&#10;1 oz Whip | Reflect or Inspire">${editing ? prepToText(editing.prep) : ''}</textarea>
+      <div id="prep-rows">
+        ${protocolPrepRows.map((row, idx) => prepRowHtml(row, idx, products)).join('')}
+      </div>
+      <button class="ghost-btn add-row-btn" id="add-prep-row-btn" type="button">+ Add Prep Item</button>
+      ${!products.length ? `<p class="caption">No products yet — add some in Admin → Products first.</p>` : ''}
     </div>
+
     <div class="field">
       <label>Steps</label>
       <textarea id="admin-new-protocol-steps" rows="5" placeholder="One step per line, in order">${editing ? linesToText(editing.steps) : ''}</textarea>
@@ -1687,22 +1847,87 @@ function renderAdminProtocolsTab(){
     </div>
   `;
 
+  // Row field changes just update state — no re-render needed
+  content.querySelectorAll('.prep-product-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      protocolPrepRows[parseInt(sel.dataset.idx,10)].productId = sel.value;
+    });
+  });
+  content.querySelectorAll('.prep-amount-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      protocolPrepRows[parseInt(sel.dataset.idx,10)].amount = sel.value;
+    });
+  });
+  content.querySelectorAll('.tmu-supply-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      protocolTableMakeupRows[parseInt(sel.dataset.idx,10)].supplyId = sel.value;
+    });
+  });
+  content.querySelectorAll('.tmu-qty-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      protocolTableMakeupRows[parseInt(sel.dataset.idx,10)].qty = sel.value;
+    });
+  });
+  content.querySelectorAll('.remove-row-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = parseInt(btn.dataset.idx,10);
+      if(btn.dataset.kind === 'prep'){
+        protocolPrepRows.splice(idx,1);
+        if(!protocolPrepRows.length) protocolPrepRows.push(blankPrepRow());
+      } else {
+        protocolTableMakeupRows.splice(idx,1);
+        if(!protocolTableMakeupRows.length) protocolTableMakeupRows.push(blankTableMakeupRow());
+      }
+      renderAdminProtocolsTab();
+    });
+  });
+  document.getElementById('add-prep-row-btn').addEventListener('click', ()=>{
+    protocolPrepRows.push(blankPrepRow());
+    renderAdminProtocolsTab();
+  });
+  document.getElementById('add-tmu-row-btn').addEventListener('click', ()=>{
+    protocolTableMakeupRows.push(blankTableMakeupRow());
+    renderAdminProtocolsTab();
+  });
+
   document.getElementById('admin-add-protocol-btn').addEventListener('click', ()=>{
     const name = document.getElementById('admin-new-protocol-name').value.trim();
     const caption = document.getElementById('admin-new-protocol-caption').value.trim();
     const section = document.getElementById('admin-new-protocol-section').value;
     const description = document.getElementById('admin-new-protocol-description').value.trim();
     const calloutsText = document.getElementById('admin-new-protocol-callouts').value;
-    const tableMakeupText = document.getElementById('admin-new-protocol-tablemakeup').value;
-    const prepText = document.getElementById('admin-new-protocol-prep').value;
     const stepsText = document.getElementById('admin-new-protocol-steps').value;
 
     if(!name){ alert('Enter a protocol name.'); return; }
 
     const callouts = parseLines(calloutsText);
-    const tableMakeup = parseLines(tableMakeupText);
-    const prep = parsePrepLines(prepText);
     const steps = parseLines(stepsText);
+
+    const currentProducts = loadProducts();
+    const prep = protocolPrepRows.map(row => {
+      if(row.productId){
+        const product = currentProducts.find(p => p.id === row.productId);
+        const productName = product ? product.name : '';
+        const t = row.amount ? `${row.amount} ${productName}` : productName;
+        return t ? { t } : null;
+      } else if(row.originalText){
+        return { t: row.originalText };
+      }
+      return null;
+    }).filter(Boolean);
+
+    const currentSupplies = loadSupplies();
+    const tableMakeup = protocolTableMakeupRows.map(row => {
+      if(row.supplyId){
+        const supply = currentSupplies.find(s => s.id === row.supplyId);
+        const supplyName = supply ? supply.name : '';
+        const t = row.qty ? `${row.qty} ${supplyName}` : supplyName;
+        return t || null;
+      } else if(row.originalText){
+        return row.originalText;
+      }
+      return null;
+    }).filter(Boolean);
 
     const list = loadCustomProtocols();
 
@@ -1738,6 +1963,7 @@ function renderAdminProtocolsTab(){
       saveCustomProtocols(list);
       logActivity('admin', `Added protocol "${name}"`);
     }
+    protocolFormTarget = null; // force a fresh, blank row-builder state next render
     renderAdminProtocolsTab();
   });
 
