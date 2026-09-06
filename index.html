@@ -962,6 +962,73 @@
     font-size:10px;
     margin-top:0;
   }
+  .admin-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:24px;
+    overflow-x:auto;
+  }
+  .admin-tab-btn{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    flex:none;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:9px 14px;
+    white-space:nowrap;
+  }
+  .admin-tab-btn.active{
+    background:var(--sage);
+    color:#fff;
+    border-color:var(--sage-deep);
+  }
+  .admin-supply-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--card);
+    margin-bottom:8px;
+  }
+  .admin-supply-main{ flex:1; min-width:0; }
+  .admin-ingredient-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+  }
+  .ingredient-tag{
+    display:inline-block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--sage-deep);
+    background:var(--stone);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px 10px;
+  }
+  .admin-supply-empty{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-style:italic;
+  }
+  .admin-supply-row .ghost-btn{
+    width:auto;
+    padding:8px 12px;
+    font-size:10px;
+    margin-top:0;
+    flex:none;
+  }
 </style>
 </head>
 <body>
@@ -1015,7 +1082,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.1.3</div>
+    <div class="app-version">v1.2.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1135,6 +1202,65 @@ async function refreshActivityFromServer(){
   } else {
     activityCache = loadActivityLocalFallback();
   }
+}
+
+/* ---- Products & Supplies ---- */
+
+const PRODUCTS_KEY = 'stopProducts_v1';
+const SUPPLIES_KEY = 'stopSupplies_v1';
+const SUPPLY_CATEGORIES = ['Linens', 'Towels', 'Other Supplies'];
+
+let productsCache = [];
+let suppliesCache = [];
+
+function loadProductsLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || []; }catch(e){ return []; }
+}
+function loadSuppliesLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(SUPPLIES_KEY)) || []; }catch(e){ return []; }
+}
+
+async function refreshProductsFromServer(){
+  const remote = await syncGet('stop-products');
+  if(Array.isArray(remote)){
+    productsCache = remote;
+    try{ localStorage.setItem(PRODUCTS_KEY, JSON.stringify(productsCache)); }catch(e){}
+  } else {
+    productsCache = loadProductsLocalFallback();
+  }
+}
+async function refreshSuppliesFromServer(){
+  const remote = await syncGet('stop-supplies');
+  if(Array.isArray(remote)){
+    suppliesCache = remote;
+    try{ localStorage.setItem(SUPPLIES_KEY, JSON.stringify(suppliesCache)); }catch(e){}
+  } else {
+    suppliesCache = loadSuppliesLocalFallback();
+  }
+}
+
+function loadProducts(){ return productsCache; }
+function saveProducts(list){
+  productsCache = list;
+  try{ localStorage.setItem(PRODUCTS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-products', list);
+}
+function loadSupplies(){ return suppliesCache; }
+function saveSupplies(list){
+  suppliesCache = list;
+  try{ localStorage.setItem(SUPPLIES_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-supplies', list);
+}
+
+function parseIngredientsText(text){
+  return text
+    .split(/[\n,;]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+}
+
+function makeId(){
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
 }
 
 function loadUsers(){
@@ -1269,8 +1395,11 @@ function logout(){
   checkAuthAndRender();
 }
 
+let adminTab = 'users'; // 'users' | 'supplies' | 'activity'
+
 function openAdmin(){
   adminUnlocked = false;
+  adminTab = 'users';
   renderAdmin();
   document.getElementById('admin-overlay').classList.add('open');
 }
@@ -1309,48 +1438,57 @@ function renderAdmin(){
     return;
   }
 
-  const users = loadUsers();
-  const log = loadActivityLog();
-
   inner.innerHTML = `
     <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
     <div class="agenda-step">
       <h2>Admin</h2>
-      <p class="caption">Manage users and review activity.</p>
+      <p class="caption">Manage users, supplies, and activity.</p>
       ${syncStatusWarningHtml()}
-
-      <div class="block-label">Add User</div>
-      <div class="field"><label>Username</label><input type="text" id="admin-new-username"></div>
-      <div class="field"><label>Password</label><input type="text" id="admin-new-password"></div>
-      <button class="primary-btn" id="admin-add-user-btn">Add User</button>
-
-      <div class="block-label" style="margin-top:32px;">Users</div>
-      <div id="admin-user-list">
-        ${users.length ? users.map(u => `
-          <div class="admin-user-row">
-            <div class="admin-user-name">${u.username}</div>
-            <div class="admin-user-actions">
-              <button class="ghost-btn admin-reset-btn" data-username="${u.username}">Reset Password</button>
-              <button class="ghost-btn admin-remove-btn" data-username="${u.username}">Remove</button>
-            </div>
-          </div>
-        `).join('') : `<p class="caption">No users yet.</p>`}
+      <div class="admin-tabs">
+        <button class="admin-tab-btn ${adminTab==='users'?'active':''}" data-tab="users">Users</button>
+        <button class="admin-tab-btn ${adminTab==='supplies'?'active':''}" data-tab="supplies">Products &amp; Supplies</button>
+        <button class="admin-tab-btn ${adminTab==='activity'?'active':''}" data-tab="activity">Activity Log</button>
       </div>
+      <div id="admin-tab-content"></div>
+    </div>
+  `;
+  document.getElementById('admin-back').addEventListener('click', closeAdmin);
+  inner.querySelectorAll('.admin-tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      adminTab = btn.dataset.tab;
+      renderAdmin();
+    });
+  });
 
-      <div class="block-label" style="margin-top:32px;">Activity Log</div>
-      <div class="agenda-list">
-        ${log.length ? log.slice(0,50).map(entry => `
-          <div class="agenda-row">
-            <span class="ar-time">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
-            <span class="ar-client">${entry.username}</span>
-            <span class="ar-service">${entry.action}</span>
+  if(adminTab === 'users') renderAdminUsersTab();
+  else if(adminTab === 'supplies') renderAdminSuppliesTab();
+  else renderAdminActivityTab();
+}
+
+function renderAdminUsersTab(){
+  const content = document.getElementById('admin-tab-content');
+  const users = loadUsers();
+
+  content.innerHTML = `
+    <div class="block-label">Add User</div>
+    <div class="field"><label>Username</label><input type="text" id="admin-new-username"></div>
+    <div class="field"><label>Password</label><input type="text" id="admin-new-password"></div>
+    <button class="primary-btn" id="admin-add-user-btn">Add User</button>
+
+    <div class="block-label" style="margin-top:32px;">Users</div>
+    <div id="admin-user-list">
+      ${users.length ? users.map(u => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${u.username}</div>
+          <div class="admin-user-actions">
+            <button class="ghost-btn admin-reset-btn" data-username="${u.username}">Reset Password</button>
+            <button class="ghost-btn admin-remove-btn" data-username="${u.username}">Remove</button>
           </div>
-        `).join('') : `<p class="caption">No activity yet.</p>`}
-      </div>
+        </div>
+      `).join('') : `<p class="caption">No users yet.</p>`}
     </div>
   `;
 
-  document.getElementById('admin-back').addEventListener('click', closeAdmin);
   document.getElementById('admin-add-user-btn').addEventListener('click', ()=>{
     const u = document.getElementById('admin-new-username').value.trim();
     const p = document.getElementById('admin-new-password').value;
@@ -1360,9 +1498,9 @@ function renderAdmin(){
     list.push({ username: u, password: p, createdAt: new Date().toISOString() });
     saveUsers(list);
     logActivity('admin', `Added user "${u}"`);
-    renderAdmin();
+    renderAdminUsersTab();
   });
-  inner.querySelectorAll('.admin-reset-btn').forEach(btn=>{
+  content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const username = btn.dataset.username;
       const newPw = prompt(`New password for ${username}:`);
@@ -1377,7 +1515,7 @@ function renderAdmin(){
       }
     });
   });
-  inner.querySelectorAll('.admin-remove-btn').forEach(btn=>{
+  content.querySelectorAll('.admin-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const username = btn.dataset.username;
       if(!confirm(`Remove user "${username}"?`)) return;
@@ -1385,17 +1523,143 @@ function renderAdmin(){
       saveUsers(list);
       logActivity('admin', `Removed user "${username}"`);
       if(getCurrentUser() === username){ clearCurrentUser(); }
-      renderAdmin();
+      renderAdminUsersTab();
+    });
+  });
+}
+
+function renderAdminActivityTab(){
+  const content = document.getElementById('admin-tab-content');
+  const log = loadActivityLog();
+
+  content.innerHTML = `
+    <div class="block-label">Activity Log</div>
+    <div class="agenda-list">
+      ${log.length ? log.slice(0,50).map(entry => `
+        <div class="agenda-row">
+          <span class="ar-time">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+          <span class="ar-client">${entry.username}</span>
+          <span class="ar-service">${entry.action}</span>
+        </div>
+      `).join('') : `<p class="caption">No activity yet.</p>`}
+    </div>
+  `;
+}
+
+function renderAdminSuppliesTab(){
+  const content = document.getElementById('admin-tab-content');
+  const products = loadProducts();
+  const supplies = loadSupplies();
+
+  content.innerHTML = `
+    <div class="block-label">Add Product</div>
+    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name"></div>
+    <div class="field">
+      <label>Paste Ingredients</label>
+      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks"></textarea>
+    </div>
+    <button class="primary-btn" id="admin-add-product-btn">Add Product</button>
+
+    <div class="block-label" style="margin-top:32px;">Products</div>
+    <div id="admin-product-list">
+      ${products.length ? products.map(p => `
+        <div class="admin-supply-row">
+          <div class="admin-supply-main">
+            <div class="admin-user-name">${p.name}</div>
+            <div class="admin-ingredient-tags">
+              ${p.ingredients && p.ingredients.length
+                ? p.ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')
+                : `<span class="admin-supply-empty">No ingredients listed</span>`}
+            </div>
+          </div>
+          <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
+        </div>
+      `).join('') : `<p class="caption">No products yet.</p>`}
+    </div>
+
+    <div class="block-label" style="margin-top:32px;">Add Supply</div>
+    <div class="field"><label>Supply Name</label><input type="text" id="admin-new-supply-name"></div>
+    <div class="field">
+      <label>Category</label>
+      <select id="admin-new-supply-category">
+        ${SUPPLY_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <button class="primary-btn" id="admin-add-supply-btn">Add Supply</button>
+
+    <div class="block-label" style="margin-top:32px;">Supplies</div>
+    <div id="admin-supply-list">
+      ${supplies.length ? supplies.map(s => `
+        <div class="admin-supply-row">
+          <div class="admin-supply-main">
+            <div class="admin-user-name">${s.name}</div>
+            <span class="ingredient-tag">${s.category}</span>
+          </div>
+          <button class="ghost-btn admin-remove-supply-btn" data-id="${s.id}">Remove</button>
+        </div>
+      `).join('') : `<p class="caption">No supplies yet.</p>`}
+    </div>
+  `;
+
+  document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('admin-new-product-name').value.trim();
+    const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
+    if(!name){ alert('Enter a product name.'); return; }
+    const ingredients = parseIngredientsText(ingredientsText);
+    const list = loadProducts();
+    list.push({ id: makeId(), name, ingredients, createdAt: new Date().toISOString() });
+    saveProducts(list);
+    logActivity('admin', `Added product "${name}"`);
+    renderAdminSuppliesTab();
+  });
+  content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const product = loadProducts().find(p => p.id === id);
+      if(!confirm(`Remove product "${product ? product.name : ''}"?`)) return;
+      const list = loadProducts().filter(p => p.id !== id);
+      saveProducts(list);
+      logActivity('admin', `Removed product "${product ? product.name : id}"`);
+      renderAdminSuppliesTab();
+    });
+  });
+
+  document.getElementById('admin-add-supply-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('admin-new-supply-name').value.trim();
+    const category = document.getElementById('admin-new-supply-category').value;
+    if(!name){ alert('Enter a supply name.'); return; }
+    const list = loadSupplies();
+    list.push({ id: makeId(), name, category, createdAt: new Date().toISOString() });
+    saveSupplies(list);
+    logActivity('admin', `Added supply "${name}"`);
+    renderAdminSuppliesTab();
+  });
+  content.querySelectorAll('.admin-remove-supply-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const supply = loadSupplies().find(s => s.id === id);
+      if(!confirm(`Remove supply "${supply ? supply.name : ''}"?`)) return;
+      const list = loadSupplies().filter(s => s.id !== id);
+      saveSupplies(list);
+      logActivity('admin', `Removed supply "${supply ? supply.name : id}"`);
+      renderAdminSuppliesTab();
     });
   });
 }
 
 async function bootstrapAuth(){
-  await Promise.all([refreshUsersFromServer(), refreshActivityFromServer()]);
+  await Promise.all([
+    refreshUsersFromServer(),
+    refreshActivityFromServer(),
+    refreshProductsFromServer(),
+    refreshSuppliesFromServer()
+  ]);
   checkAuthAndRender();
   setInterval(async ()=>{
     await refreshUsersFromServer();
     await refreshActivityFromServer();
+    await refreshProductsFromServer();
+    await refreshSuppliesFromServer();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
     const gate = document.getElementById('auth-gate');
