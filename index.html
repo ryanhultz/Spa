@@ -30,6 +30,22 @@
     --radius: 18px;
   }
   *{box-sizing:border-box;}
+  html{ accent-color: var(--sage); }
+  *:focus{ outline:none; }
+  *:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(169,130,79,0.28);
+    border-color:var(--gold) !important;
+  }
+  select{
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23A9824F'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%23A9824F' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    background-size:14px;
+    padding-right:34px !important;
+  }
   html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;}
   body{
     background:
@@ -127,6 +143,33 @@
     height:1px;
     background:var(--line);
   }
+  .letter-jump{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:18px 0 8px;
+  }
+  .letter-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--sage-deep);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    text-decoration:none;
+  }
+  .letter-chip:active{ background:var(--sage); color:#fff; }
+  .card-btn.allergy-result-btn.avoid{
+    border-color:#D9B48F;
+    background:#FBF2E8;
+  }
+  .card-btn.allergy-result-btn.avoid .name{ color:#8C4A2A; }
   .grid{
     display:flex;
     flex-direction:column;
@@ -1139,6 +1182,14 @@
     <span class="arrow">→</span>
   </button>
 
+  <button class="agenda-entry" id="open-allergy-lookup">
+    <span class="agenda-entry-text">
+      <span class="ae-label">Allergy Lookup</span>
+      <span class="ae-sub">Find safe treatments by ingredient</span>
+    </span>
+    <span class="arrow">→</span>
+  </button>
+
   <a class="agenda-entry link-entry" href="https://spa.agilysys.com/Spa/appointment/newappointment" target="_blank" rel="noopener">
     <span class="agenda-entry-text">
       <span class="ae-label">Agilysys</span>
@@ -1158,7 +1209,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.5.0</div>
+    <div class="app-version">v1.6.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1166,6 +1217,10 @@
 
 <div class="detail" id="agenda-overlay">
   <div class="detail-inner" id="agenda-inner"></div>
+</div>
+
+<div class="detail" id="allergy-overlay">
+  <div class="detail-inner" id="allergy-inner"></div>
 </div>
 
 <div class="detail" id="protocols-overlay">
@@ -1398,6 +1453,32 @@ function parsePrepLines(text){
   });
 }
 
+/* ---- Allergens ---- */
+
+const ALLERGENS_KEY = 'stopAllergens_v1';
+let allergensCache = [];
+
+function loadAllergensLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(ALLERGENS_KEY)) || []; }catch(e){ return []; }
+}
+
+async function refreshAllergensFromServer(){
+  const remote = await syncGet('stop-allergens');
+  if(Array.isArray(remote)){
+    allergensCache = remote;
+    try{ localStorage.setItem(ALLERGENS_KEY, JSON.stringify(allergensCache)); }catch(e){}
+  } else {
+    allergensCache = loadAllergensLocalFallback();
+  }
+}
+
+function loadAllergens(){ return allergensCache; }
+function saveAllergens(list){
+  allergensCache = list;
+  try{ localStorage.setItem(ALLERGENS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-allergens', list);
+}
+
 function loadUsers(){
   return usersCache;
 }
@@ -1537,6 +1618,7 @@ const ADMIN_SECTIONS = [
   { key: 'protocols', name: 'Protocols', meta: 'Edit treatment prep and steps' },
   { key: 'products', name: 'Products', meta: 'Manage ingredients' },
   { key: 'supplies', name: 'Supplies', meta: 'Linens, towels, and more' },
+  { key: 'allergens', name: 'Allergies', meta: 'Add, edit, and rename known allergens' },
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
 ];
 
@@ -1629,6 +1711,7 @@ function renderAdmin(){
   else if(adminTab === 'protocols') renderAdminProtocolsTab();
   else if(adminTab === 'products') renderAdminProductsTab();
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
+  else if(adminTab === 'allergens') renderAdminAllergensTab();
   else renderAdminActivityTab();
 }
 
@@ -2002,6 +2085,87 @@ function renderAdminProtocolsTab(){
   });
 }
 
+let editingAllergenId = null;
+
+function renderAdminAllergensTab(){
+  const content = document.getElementById('admin-tab-content');
+  const allergens = loadAllergens();
+  const editing = editingAllergenId ? allergens.find(a => a.id === editingAllergenId) : null;
+
+  content.innerHTML = `
+    <div class="block-label">${editing ? `Editing Entry` : 'Add Allergen'}</div>
+    <p class="caption">Use this to give a known allergen a common name (e.g. Common Name "Coconut Oil" for Full Name "Cocos Nucifera Oil"), or to add an allergen that isn't yet in any product's ingredient list.</p>
+    <div class="field"><label>Common Name (optional)</label><input type="text" id="admin-new-allergen-common" placeholder="e.g. Coconut Oil" value="${editing ? (editing.commonName || '') : ''}"></div>
+    <div class="field"><label>Full / INCI Name (optional)</label><input type="text" id="admin-new-allergen-full" placeholder="e.g. Cocos Nucifera Oil" value="${editing ? (editing.fullName || '') : ''}"></div>
+    <button class="primary-btn" id="admin-add-allergen-btn">${editing ? 'Save Changes' : 'Add Allergen'}</button>
+    ${editing ? `<button class="ghost-btn" id="admin-cancel-allergen-btn">Cancel Edit</button>` : ''}
+
+    <div class="block-label" style="margin-top:32px;">Manual Entries</div>
+    <div id="admin-allergen-list">
+      ${allergens.length ? allergens.map(a => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${a.commonName && a.fullName ? `${a.commonName} <span class="admin-supply-empty">(${a.fullName})</span>` : (a.commonName || a.fullName)}</div>
+          <div class="admin-user-actions">
+            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id}">Edit</button>
+            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id}">Remove</button>
+          </div>
+        </div>
+      `).join('') : `<p class="caption">No manual entries yet — allergens from Products' ingredient lists still show up in the lookup automatically.</p>`}
+    </div>
+  `;
+
+  document.getElementById('admin-add-allergen-btn').addEventListener('click', ()=>{
+    const commonName = document.getElementById('admin-new-allergen-common').value.trim();
+    const fullName = document.getElementById('admin-new-allergen-full').value.trim();
+    if(!commonName && !fullName){ alert('Enter at least a common name or a full name.'); return; }
+
+    const list = loadAllergens();
+    if(editingAllergenId){
+      const existing = list.find(a => a.id === editingAllergenId);
+      if(existing){
+        existing.commonName = commonName;
+        existing.fullName = fullName;
+        saveAllergens(list);
+        logActivity('admin', `Edited allergen entry "${commonName || fullName}"`);
+      }
+      editingAllergenId = null;
+    } else {
+      list.push({ id: makeId(), commonName, fullName, createdAt: new Date().toISOString() });
+      saveAllergens(list);
+      logActivity('admin', `Added allergen entry "${commonName || fullName}"`);
+    }
+    renderAdminAllergensTab();
+  });
+
+  const cancelBtn = document.getElementById('admin-cancel-allergen-btn');
+  if(cancelBtn){
+    cancelBtn.addEventListener('click', ()=>{
+      editingAllergenId = null;
+      renderAdminAllergensTab();
+    });
+  }
+  content.querySelectorAll('.admin-edit-allergen-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingAllergenId = btn.dataset.id;
+      renderAdminAllergensTab();
+      content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  content.querySelectorAll('.admin-remove-allergen-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const allergen = loadAllergens().find(a => a.id === id);
+      const label = allergen ? (allergen.commonName || allergen.fullName) : '';
+      if(!confirm(`Remove allergen entry "${label}"?`)) return;
+      const list = loadAllergens().filter(a => a.id !== id);
+      saveAllergens(list);
+      logActivity('admin', `Removed allergen entry "${label}"`);
+      if(editingAllergenId === id) editingAllergenId = null;
+      renderAdminAllergensTab();
+    });
+  });
+}
+
 function renderAdminActivityTab(){
   const content = document.getElementById('admin-tab-content');
   const log = loadActivityLog();
@@ -2140,7 +2304,8 @@ async function bootstrapAuth(){
     refreshActivityFromServer(),
     refreshProductsFromServer(),
     refreshSuppliesFromServer(),
-    refreshCustomProtocolsFromServer()
+    refreshCustomProtocolsFromServer(),
+    refreshAllergensFromServer()
   ]);
   checkAuthAndRender();
   setInterval(async ()=>{
@@ -2149,6 +2314,7 @@ async function bootstrapAuth(){
     await refreshProductsFromServer();
     await refreshSuppliesFromServer();
     await refreshCustomProtocolsFromServer();
+    await refreshAllergensFromServer();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
     const gate = document.getElementById('auth-gate');
@@ -2691,6 +2857,221 @@ function renderProtocolGrids(){
 }
 
 renderProtocolGrids();
+
+/* ---------- Allergy Lookup ---------- */
+
+function getMergedAllergenList(){
+  const products = loadProducts();
+  const manual = loadAllergens();
+
+  const manualByFull = {};
+  manual.forEach(a => {
+    if(a.fullName) manualByFull[a.fullName.trim().toLowerCase()] = a;
+  });
+
+  const rawIngredients = new Map(); // lowercase key -> original-case text
+  products.forEach(p => (p.ingredients || []).forEach(ing => {
+    const key = ing.trim().toLowerCase();
+    if(key && !rawIngredients.has(key)) rawIngredients.set(key, ing.trim());
+  }));
+
+  const merged = new Map(); // lowercase display key -> entry
+
+  rawIngredients.forEach((original, key) => {
+    const manualMatch = manualByFull[key];
+    if(manualMatch){
+      merged.set(key, {
+        id: manualMatch.id,
+        commonName: manualMatch.commonName || '',
+        fullName: manualMatch.fullName || original
+      });
+    } else {
+      merged.set(key, { id: null, commonName: '', fullName: original });
+    }
+  });
+
+  manual.forEach(a => {
+    const key = (a.fullName || a.commonName || '').trim().toLowerCase();
+    if(key && !merged.has(key)){
+      merged.set(key, { id: a.id, commonName: a.commonName || '', fullName: a.fullName || '' });
+    }
+  });
+
+  return Array.from(merged.values());
+}
+
+function allergenDisplayName(entry){
+  if(entry.commonName && entry.fullName && entry.commonName.toLowerCase() !== entry.fullName.toLowerCase()){
+    return `${entry.commonName} (${entry.fullName})`;
+  }
+  return entry.commonName || entry.fullName;
+}
+
+function allergenSortKey(entry){
+  return (entry.commonName || entry.fullName || '').toLowerCase();
+}
+
+function getProtocolSafety(entry){
+  const products = loadProducts();
+  const searchTerms = [entry.commonName, entry.fullName]
+    .filter(Boolean)
+    .map(s => s.trim().toLowerCase());
+
+  const matchingProductNames = products
+    .filter(p => (p.ingredients || []).some(ing => searchTerms.includes(ing.trim().toLowerCase())))
+    .map(p => p.name.toLowerCase());
+
+  const safe = [];
+  const unsafe = [];
+  ALL.forEach(protocol => {
+    const prepTexts = (protocol.prep || []).map(item => item.t.toLowerCase());
+    const isUnsafe = matchingProductNames.some(name => prepTexts.some(t => t.includes(name)));
+    if(isUnsafe) unsafe.push(protocol); else safe.push(protocol);
+  });
+  return { safe, unsafe };
+}
+
+const allergyOverlay = document.getElementById('allergy-overlay');
+const allergyInner = document.getElementById('allergy-inner');
+let allergyStep = 'list'; // 'list' | 'detail'
+let allergySelectedKey = null;
+let allergySearchTerm = '';
+
+function openAllergyLookup(){
+  allergyStep = 'list';
+  allergySelectedKey = null;
+  allergySearchTerm = '';
+  renderAllergyLookup();
+  allergyOverlay.classList.add('open');
+  allergyOverlay.scrollTop = 0;
+}
+function closeAllergyLookup(){
+  allergyOverlay.classList.remove('open');
+}
+
+function renderAllergyLookup(){
+  if(allergyStep === 'detail' && allergySelectedKey){
+    renderAllergyDetail();
+  } else {
+    renderAllergyList();
+  }
+}
+
+function renderAllergyList(){
+  const all = getMergedAllergenList();
+  const filtered = allergySearchTerm
+    ? all.filter(e => allergenDisplayName(e).toLowerCase().includes(allergySearchTerm.toLowerCase()))
+    : all;
+
+  filtered.sort((a, b) => allergenSortKey(a).localeCompare(allergenSortKey(b)));
+
+  const groups = {};
+  filtered.forEach(entry => {
+    const letter = (allergenSortKey(entry)[0] || '#').toUpperCase();
+    if(!groups[letter]) groups[letter] = [];
+    groups[letter].push(entry);
+  });
+  const letters = Object.keys(groups).sort();
+
+  allergyInner.innerHTML = `
+    <button class="back-btn" id="allergy-back"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Allergy Lookup</h2>
+      <p class="caption">Find an ingredient to see which treatments are safe to recommend.</p>
+      <div class="field"><input type="text" id="allergy-search" placeholder="Search ingredients…" value="${allergySearchTerm}"></div>
+      ${letters.length ? `
+        <div class="letter-jump">
+          ${letters.map(l => `<a href="#allergy-letter-${l}" class="letter-chip">${l}</a>`).join('')}
+        </div>
+      ` : ''}
+      ${letters.length ? letters.map(letter => `
+        <div class="section-label" id="allergy-letter-${letter}">${letter}</div>
+        <div class="grid">
+          ${groups[letter].map(entry => `
+            <button class="card-btn allergen-btn" data-key="${allergenSortKey(entry)}">
+              <span><span class="name">${allergenDisplayName(entry)}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Admin → Allergies.</p>`}
+    </div>
+  `;
+
+  document.getElementById('allergy-back').addEventListener('click', closeAllergyLookup);
+  const searchInput = document.getElementById('allergy-search');
+  searchInput.addEventListener('input', ()=>{
+    allergySearchTerm = searchInput.value;
+    renderAllergyList();
+    document.getElementById('allergy-search').focus();
+    const val = document.getElementById('allergy-search').value;
+    document.getElementById('allergy-search').setSelectionRange(val.length, val.length);
+  });
+  allergyInner.querySelectorAll('.allergen-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      allergySelectedKey = btn.dataset.key;
+      allergyStep = 'detail';
+      renderAllergyLookup();
+    });
+  });
+}
+
+function renderAllergyDetail(){
+  const all = getMergedAllergenList();
+  const entry = all.find(e => allergenSortKey(e) === allergySelectedKey);
+  if(!entry){
+    allergyStep = 'list';
+    renderAllergyList();
+    return;
+  }
+  const { safe, unsafe } = getProtocolSafety(entry);
+
+  allergyInner.innerHTML = `
+    <button class="back-btn" id="allergy-back"><span class="chev">←</span> Allergy Lookup</button>
+    <div class="agenda-step">
+      <h2>${allergenDisplayName(entry)}</h2>
+      <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
+
+      <div class="block-label">✅ Recommended Treatments</div>
+      ${safe.length ? `
+        <div class="grid">
+          ${safe.map(p => `
+            <button class="card-btn allergy-result-btn" data-id="${p.id}">
+              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : `<p class="caption">No protocols found without this ingredient.</p>`}
+
+      ${unsafe.length ? `
+        <div class="block-label" style="margin-top:28px;">⚠️ Contains This Ingredient — Avoid</div>
+        <div class="grid">
+          ${unsafe.map(p => `
+            <button class="card-btn allergy-result-btn avoid" data-id="${p.id}">
+              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  document.getElementById('allergy-back').addEventListener('click', ()=>{
+    allergyStep = 'list';
+    renderAllergyLookup();
+  });
+  allergyInner.querySelectorAll('.allergy-result-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      closeAllergyLookup();
+      openProtocols();
+      openDetail(btn.dataset.id);
+    });
+  });
+}
+
+document.getElementById('open-allergy-lookup').addEventListener('click', openAllergyLookup);
 
 const detail = document.getElementById('detail');
 const detailInner = document.getElementById('detail-inner');
