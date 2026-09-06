@@ -1109,7 +1109,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.2.1</div>
+    <div class="app-version">v1.3.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1129,6 +1129,7 @@
     <div class="grid" id="body-grid"></div>
     <div class="grid" id="kurr-grid"></div>
     <div class="grid" id="ref-grid"></div>
+    <div id="custom-protocols-section"></div>
   </div>
 </div>
 
@@ -1288,6 +1289,51 @@ function parseIngredientsText(text){
 
 function makeId(){
   return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---- Custom Protocols ---- */
+
+const CUSTOM_PROTOCOLS_KEY = 'stopCustomProtocols_v1';
+let customProtocolsCache = [];
+
+function loadCustomProtocolsLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(CUSTOM_PROTOCOLS_KEY)) || []; }catch(e){ return []; }
+}
+
+async function refreshCustomProtocolsFromServer(){
+  const remote = await syncGet('stop-custom-protocols');
+  if(Array.isArray(remote)){
+    customProtocolsCache = remote;
+    try{ localStorage.setItem(CUSTOM_PROTOCOLS_KEY, JSON.stringify(customProtocolsCache)); }catch(e){}
+  } else {
+    customProtocolsCache = loadCustomProtocolsLocalFallback();
+  }
+  if(typeof rebuildAllProtocols === 'function'){
+    rebuildAllProtocols();
+  }
+}
+
+function loadCustomProtocols(){ return customProtocolsCache; }
+function saveCustomProtocols(list){
+  customProtocolsCache = list;
+  try{ localStorage.setItem(CUSTOM_PROTOCOLS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-custom-protocols', list);
+  if(typeof rebuildAllProtocols === 'function'){
+    rebuildAllProtocols();
+  }
+}
+
+function parseLines(text){
+  return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+}
+
+function parsePrepLines(text){
+  return parseLines(text).map(line => {
+    const parts = line.split('|');
+    const t = parts[0].trim();
+    const note = parts[1] ? parts[1].trim() : undefined;
+    return note ? { t, note } : { t };
+  });
 }
 
 function loadUsers(){
@@ -1473,6 +1519,7 @@ function renderAdmin(){
       ${syncStatusWarningHtml()}
       <div class="admin-tabs">
         <button class="admin-tab-btn ${adminTab==='users'?'active':''}" data-tab="users">Users</button>
+        <button class="admin-tab-btn ${adminTab==='protocols'?'active':''}" data-tab="protocols">Protocols</button>
         <button class="admin-tab-btn ${adminTab==='products'?'active':''}" data-tab="products">Products</button>
         <button class="admin-tab-btn ${adminTab==='supplies'?'active':''}" data-tab="supplies">Supplies</button>
         <button class="admin-tab-btn ${adminTab==='activity'?'active':''}" data-tab="activity">Activity Log</button>
@@ -1489,6 +1536,7 @@ function renderAdmin(){
   });
 
   if(adminTab === 'users') renderAdminUsersTab();
+  else if(adminTab === 'protocols') renderAdminProtocolsTab();
   else if(adminTab === 'products') renderAdminProductsTab();
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
   else renderAdminActivityTab();
@@ -1553,6 +1601,109 @@ function renderAdminUsersTab(){
       logActivity('admin', `Removed user "${username}"`);
       if(getCurrentUser() === username){ clearCurrentUser(); }
       renderAdminUsersTab();
+    });
+  });
+}
+
+function renderAdminProtocolsTab(){
+  const content = document.getElementById('admin-tab-content');
+  const protocols = loadCustomProtocols();
+
+  content.innerHTML = `
+    <div class="block-label">Add Protocol</div>
+    <div class="field"><label>Protocol Name</label><input type="text" id="admin-new-protocol-name"></div>
+    <div class="field"><label>Short Caption</label><input type="text" id="admin-new-protocol-caption" placeholder="One line shown on the button"></div>
+    <div class="field">
+      <label>Description (optional)</label>
+      <textarea id="admin-new-protocol-description" rows="3" placeholder="Longer guest-facing description, shown under &quot;See description&quot;"></textarea>
+    </div>
+    <div class="field">
+      <label>Warnings / Callouts (optional)</label>
+      <textarea id="admin-new-protocol-callouts" rows="2" placeholder="One warning per line, e.g. Confirm no known allergies before starting"></textarea>
+    </div>
+    <div class="field">
+      <label>Table Make Up (optional)</label>
+      <textarea id="admin-new-protocol-tablemakeup" rows="3" placeholder="One layer per line, e.g.&#10;Treatment sheet&#10;Blanket towel"></textarea>
+    </div>
+    <div class="field">
+      <label>Prep</label>
+      <textarea id="admin-new-protocol-prep" rows="4" placeholder="One item per line. Add a note after a | , e.g.&#10;2 oz Pure Scrub&#10;1 oz Whip | Reflect or Inspire"></textarea>
+    </div>
+    <div class="field">
+      <label>Steps</label>
+      <textarea id="admin-new-protocol-steps" rows="5" placeholder="One step per line, in order"></textarea>
+    </div>
+    <button class="primary-btn" id="admin-add-protocol-btn">Add Protocol</button>
+
+    <div class="block-label" style="margin-top:32px;">Custom Protocols</div>
+    <div id="admin-protocol-list">
+      ${protocols.length ? protocols.map(p => `
+        <div class="admin-supply-row product-row">
+          <button class="admin-product-toggle" data-id="${p.id}">
+            <span class="admin-user-name">${p.name}</span>
+            <span class="tap-hint">Tap for details</span>
+          </button>
+          <button class="ghost-btn admin-remove-protocol-btn" data-id="${p.id}">Remove</button>
+        </div>
+        <div class="admin-ingredient-tags hidden" id="protocol-preview-${p.id}">
+          ${p.caption ? `<span class="ingredient-tag">${p.caption}</span>` : ''}
+          ${p.prep ? p.prep.map(pr => `<span class="ingredient-tag">${pr.t}</span>`).join('') : ''}
+          ${p.steps ? `<span class="ingredient-tag">${p.steps.length} step${p.steps.length===1?'':'s'}</span>` : ''}
+        </div>
+      `).join('') : `<p class="caption">No custom protocols yet.</p>`}
+    </div>
+  `;
+
+  document.getElementById('admin-add-protocol-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('admin-new-protocol-name').value.trim();
+    const caption = document.getElementById('admin-new-protocol-caption').value.trim();
+    const description = document.getElementById('admin-new-protocol-description').value.trim();
+    const calloutsText = document.getElementById('admin-new-protocol-callouts').value;
+    const tableMakeupText = document.getElementById('admin-new-protocol-tablemakeup').value;
+    const prepText = document.getElementById('admin-new-protocol-prep').value;
+    const stepsText = document.getElementById('admin-new-protocol-steps').value;
+
+    if(!name){ alert('Enter a protocol name.'); return; }
+
+    const callouts = parseLines(calloutsText);
+    const tableMakeup = parseLines(tableMakeupText);
+    const prep = parsePrepLines(prepText);
+    const steps = parseLines(stepsText);
+
+    const protocol = {
+      id: makeId(),
+      name,
+      caption: caption || '',
+      createdAt: new Date().toISOString()
+    };
+    if(description) protocol.menuDescription = description;
+    if(callouts.length) protocol.callouts = callouts;
+    if(tableMakeup.length) protocol.tableMakeup = tableMakeup;
+    if(prep.length) protocol.prep = prep;
+    if(steps.length) protocol.steps = steps;
+
+    const list = loadCustomProtocols();
+    list.push(protocol);
+    saveCustomProtocols(list);
+    logActivity('admin', `Added protocol "${name}"`);
+    renderAdminProtocolsTab();
+  });
+
+  content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = document.getElementById(`protocol-preview-${btn.dataset.id}`);
+      if(panel) panel.classList.toggle('hidden');
+    });
+  });
+  content.querySelectorAll('.admin-remove-protocol-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const protocol = loadCustomProtocols().find(p => p.id === id);
+      if(!confirm(`Remove protocol "${protocol ? protocol.name : ''}"?`)) return;
+      const list = loadCustomProtocols().filter(p => p.id !== id);
+      saveCustomProtocols(list);
+      logActivity('admin', `Removed protocol "${protocol ? protocol.name : id}"`);
+      renderAdminProtocolsTab();
     });
   });
 }
@@ -1694,7 +1845,8 @@ async function bootstrapAuth(){
     refreshUsersFromServer(),
     refreshActivityFromServer(),
     refreshProductsFromServer(),
-    refreshSuppliesFromServer()
+    refreshSuppliesFromServer(),
+    refreshCustomProtocolsFromServer()
   ]);
   checkAuthAndRender();
   setInterval(async ()=>{
@@ -1702,6 +1854,7 @@ async function bootstrapAuth(){
     await refreshActivityFromServer();
     await refreshProductsFromServer();
     await refreshSuppliesFromServer();
+    await refreshCustomProtocolsFromServer();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
     const gate = document.getElementById('auth-gate');
@@ -2206,7 +2359,35 @@ renderGrid('body-grid', DATA.body);
 renderGrid('kurr-grid', DATA.kurr);
 renderGrid('ref-grid', DATA.ref, true);
 
-const ALL = [...DATA.body, ...DATA.kurr, ...DATA.ref];
+let ALL = [...DATA.body, ...DATA.kurr, ...DATA.ref];
+
+function rebuildAllProtocols(){
+  ALL = [...DATA.body, ...DATA.kurr, ...DATA.ref, ...customProtocolsCache];
+  renderCustomProtocolsSection();
+}
+
+function renderCustomProtocolsSection(){
+  const section = document.getElementById('custom-protocols-section');
+  if(!section) return;
+  if(!customProtocolsCache.length){
+    section.innerHTML = '';
+    return;
+  }
+  section.innerHTML = `
+    <div class="section-label">Custom Protocols</div>
+    <div class="grid">
+      ${customProtocolsCache.map(item => `
+        <button class="card-btn" data-id="${item.id}">
+          <span>
+            <span class="name">${item.name}</span>
+            <span class="meta">${item.caption || ''}</span>
+          </span>
+          ${iconArrow()}
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
 const detail = document.getElementById('detail');
 const detailInner = document.getElementById('detail-inner');
 
@@ -2311,8 +2492,9 @@ function closeDetail(){
   detail.classList.remove('open');
 }
 
-document.querySelectorAll('.card-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> openDetail(btn.dataset.id));
+document.getElementById('protocols-inner').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.card-btn');
+  if(btn) openDetail(btn.dataset.id);
 });
 
 /* ---------- Agenda ---------- */
