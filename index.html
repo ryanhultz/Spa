@@ -1266,9 +1266,9 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.8.0</div>
+    <div class="app-version">v1.9.0</div>
     <span class="home-footer-divider">·</span>
-    <button class="home-admin-link" id="home-admin-link">Admin</button>
+    <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1354,6 +1354,57 @@ function syncStatusWarningHtml(){
     return `<div class="storage-warning">⚠️ Can't reach the shared database right now — showing the last synced data for this device. Changes will still save locally.</div>`;
   }
   return '';
+}
+
+/* ---- Backup API ---- */
+
+async function fetchBackupList(){
+  if(!isSyncConfigured()) return null;
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/backups`, { cache: 'no-store' });
+    if(!res.ok) throw new Error('bad status');
+    return await res.json();
+  }catch(e){
+    return null;
+  }
+}
+
+async function createManualBackup(){
+  if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/backups`, { method: 'POST' });
+    return await res.json();
+  }catch(e){
+    return { ok: false, error: 'Could not reach the server.' };
+  }
+}
+
+async function restoreBackupByKey(key){
+  if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/backups/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok: false, error: 'Could not reach the server.' };
+  }
+}
+
+async function deleteBackupByKey(key){
+  if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/backups/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok: false, error: 'Could not reach the server.' };
+  }
 }
 
 /* ============ Auth & Admin ============ */
@@ -1567,7 +1618,7 @@ function clearCurrentUser(){
     localStorage.removeItem(LOGIN_DATE_KEY);
   }catch(e){}
 }
-const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity'];
+const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup'];
 function blankPermissions(){
   const p = {};
   PERMISSION_KEYS.forEach(k => p[k] = false);
@@ -1651,7 +1702,7 @@ function renderAuthView(){
       <div class="field"><label>Password</label><input type="password" id="auth-password" autocomplete="current-password"></div>
       <button class="primary-btn" id="auth-login-btn">Log In</button>
       <div class="auth-link-row">New here? <button id="auth-show-create">Create an account</button></div>
-      <div class="auth-admin-link"><button id="auth-show-admin">Admin</button></div>
+      <div class="auth-admin-link"><button id="auth-show-admin">Management</button></div>
       <div class="copyright-line">© 2026 Ryan Hultz</div>
     `;
     document.getElementById('auth-login-btn').addEventListener('click', ()=>{
@@ -1722,6 +1773,7 @@ const ADMIN_SECTIONS = [
   { key: 'supplies', name: 'Supplies', meta: 'Linens, towels, and more' },
   { key: 'allergens', name: 'Allergies', meta: 'Add, edit, and rename known allergens' },
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
+  { key: 'backup', name: 'Backup', meta: 'Back up and restore all data' },
 ];
 
 function getEffectiveAdminPermissions(){
@@ -1734,7 +1786,7 @@ function getEffectiveAdminPermissions(){
 function getAdminActingUsername(){
   const current = getCurrentUser();
   if(adminSessionMode === 'master'){
-    return current ? `${current} (master access)` : 'Master Admin';
+    return current ? `${current} (master access)` : 'Master Management';
   }
   return current || 'Unknown';
 }
@@ -1768,10 +1820,10 @@ function renderAdmin(){
     inner.innerHTML = `
       <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
       <div class="agenda-step">
-        <h2>Admin</h2>
-        <p class="caption">Enter the admin password to continue.</p>
+        <h2>Management</h2>
+        <p class="caption">Enter the management password to continue.</p>
         <div id="admin-pw-error"></div>
-        <div class="field"><label>Admin Password</label><input type="password" id="admin-password-input"></div>
+        <div class="field"><label>Management Password</label><input type="password" id="admin-password-input"></div>
         <button class="primary-btn" id="admin-unlock-btn">Unlock</button>
       </div>
     `;
@@ -1800,7 +1852,7 @@ function renderAdmin(){
     inner.innerHTML = `
       <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
       <div class="agenda-step">
-        <h2>Admin</h2>
+        <h2>Management</h2>
         <p class="caption">Choose a section to manage.</p>
         ${syncStatusWarningHtml()}
         ${visibleSections.length ? `
@@ -1815,7 +1867,7 @@ function renderAdmin(){
               </button>
             `).join('')}
           </div>
-        ` : `<p class="caption">Your account doesn't have access to any admin sections yet — ask an existing admin to grant access in Admin → Users.</p>`}
+        ` : `<p class="caption">Your account doesn't have access to any management sections yet — ask an existing manager to grant access in Management → Users.</p>`}
         <div class="copyright-line">© 2026 Ryan Hultz</div>
       </div>
     `;
@@ -1839,7 +1891,7 @@ function renderAdmin(){
   inner.innerHTML = `
     <button class="back-btn" id="admin-back"><span class="chev">←</span> Admin</button>
     <div class="agenda-step">
-      <h2>${sectionMeta ? sectionMeta.name : 'Admin'}</h2>
+      <h2>${sectionMeta ? sectionMeta.name : 'Management'}</h2>
       ${syncStatusWarningHtml()}
       <div id="admin-tab-content"></div>
     </div>
@@ -1854,6 +1906,7 @@ function renderAdmin(){
   else if(adminTab === 'products') renderAdminProductsTab();
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
   else if(adminTab === 'allergens') renderAdminAllergensTab();
+  else if(adminTab === 'backup') renderAdminBackupTab();
   else renderAdminActivityTab();
 }
 
@@ -2057,7 +2110,7 @@ function renderAdminProtocolsTab(){
         ${protocolTableMakeupRows.map((row, idx) => tableMakeupRowHtml(row, idx, supplies)).join('')}
       </div>
       <button class="ghost-btn add-row-btn" id="add-tmu-row-btn" type="button">+ Add Layer</button>
-      ${!supplies.length ? `<p class="caption">No supplies yet — add some in Admin → Supplies first.</p>` : ''}
+      ${!supplies.length ? `<p class="caption">No supplies yet — add some in Management → Supplies first.</p>` : ''}
     </div>
 
     <div class="field">
@@ -2066,7 +2119,7 @@ function renderAdminProtocolsTab(){
         ${protocolPrepRows.map((row, idx) => prepRowHtml(row, idx, products)).join('')}
       </div>
       <button class="ghost-btn add-row-btn" id="add-prep-row-btn" type="button">+ Add Prep Item</button>
-      ${!products.length ? `<p class="caption">No products yet — add some in Admin → Products first.</p>` : ''}
+      ${!products.length ? `<p class="caption">No products yet — add some in Management → Products first.</p>` : ''}
     </div>
 
     <div class="field">
@@ -2335,7 +2388,7 @@ function renderAdminAllergensTab(){
     btn.addEventListener('click', ()=>{
       const id = btn.dataset.id;
       if(!id){
-        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Admin → Products.`);
+        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Management → Products.`);
         return;
       }
       const allergen = loadAllergens().find(a => a.id === id);
@@ -2366,6 +2419,97 @@ function renderAdminActivityTab(){
       `).join('') : `<p class="caption">No activity yet.</p>`}
     </div>
   `;
+}
+
+function renderAdminBackupTab(){
+  const content = document.getElementById('admin-tab-content');
+
+  content.innerHTML = `
+    <div class="block-label">Back Up</div>
+    <p class="caption">Automatic daily backups are kept for 30 days. Manual backups are kept until you delete them. Restoring overwrites all current data with the selected backup.</p>
+    <button class="primary-btn" id="admin-backup-now-btn">Back Up Now</button>
+
+    <div class="block-label" style="margin-top:32px;">Available Backups</div>
+    <div id="admin-backup-list"><p class="caption">Loading…</p></div>
+  `;
+
+  document.getElementById('admin-backup-now-btn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-backup-now-btn');
+    btn.textContent = 'Backing up…';
+    const result = await createManualBackup();
+    if(result && result.ok){
+      logActivity(getAdminActingUsername(), 'Created a manual backup');
+      loadBackupListIntoTab();
+    } else {
+      alert((result && result.error) || 'Backup failed — check your connection.');
+    }
+    btn.textContent = 'Back Up Now';
+  });
+
+  loadBackupListIntoTab();
+}
+
+async function loadBackupListIntoTab(){
+  const listEl = document.getElementById('admin-backup-list');
+  if(!listEl) return;
+  const backups = await fetchBackupList();
+  if(!document.getElementById('admin-backup-list')) return; // navigated away while loading
+
+  if(backups === null){
+    listEl.innerHTML = `<p class="caption">Couldn't load backups — check your connection.</p>`;
+    return;
+  }
+  if(!backups.length){
+    listEl.innerHTML = `<p class="caption">No backups yet. Tap "Back Up Now" to create one.</p>`;
+    return;
+  }
+
+  listEl.innerHTML = backups.map(b => `
+    <div class="admin-user-row">
+      <div class="admin-user-name">
+        ${b.timestamp ? new Date(b.timestamp).toLocaleString([], {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : b.key}
+        <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${b.type === 'auto' ? 'Automatic' : 'Manual'}</span>
+      </div>
+      <div class="admin-user-actions">
+        <button class="ghost-btn admin-restore-backup-btn" data-key="${b.key}">Restore</button>
+        <button class="ghost-btn admin-delete-backup-btn" data-key="${b.key}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.admin-restore-backup-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm("Restore this backup? This overwrites ALL current data — users, protocols, products, supplies, and allergens — with this backup's version. This cannot be undone.")) return;
+      btn.textContent = 'Restoring…';
+      const result = await restoreBackupByKey(btn.dataset.key);
+      if(result && result.ok){
+        logActivity(getAdminActingUsername(), `Restored backup from ${btn.dataset.key}`);
+        await Promise.all([
+          refreshUsersFromServer(), refreshActivityFromServer(), refreshProductsFromServer(),
+          refreshSuppliesFromServer(), refreshCustomProtocolsFromServer(), refreshAllergensFromServer()
+        ]);
+        renderHomeScheduleList();
+        checkAuthAndRender();
+        alert('Backup restored — data has been refreshed.');
+        renderAdminBackupTab();
+      } else {
+        alert((result && result.error) || 'Restore failed — check your connection.');
+        btn.textContent = 'Restore';
+      }
+    });
+  });
+  listEl.querySelectorAll('.admin-delete-backup-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this backup? This cannot be undone.')) return;
+      const result = await deleteBackupByKey(btn.dataset.key);
+      if(result && result.ok){
+        logActivity(getAdminActingUsername(), `Deleted backup ${btn.dataset.key}`);
+        loadBackupListIntoTab();
+      } else {
+        alert((result && result.error) || 'Delete failed — check your connection.');
+      }
+    });
+  });
 }
 
 function renderAdminProductsTab(){
@@ -2499,7 +2643,7 @@ async function bootstrapAuth(){
     if(gate.classList.contains('hidden')){
       checkAuthAndRender();
     }
-  }, 30000);
+  }, 15 * 60 * 1000); // 15 minutes — network sync + midnight-logout check
 }
 bootstrapAuth();
 
@@ -3172,7 +3316,7 @@ function renderAllergyList(){
             </button>
           `).join('')}
         </div>
-      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Admin → Allergies.</p>`}
+      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Management → Allergies.</p>`}
     </div>
   `;
 
@@ -3294,7 +3438,7 @@ function renderProductsBrowseList(){
             </button>
           `).join('')}
         </div>
-      ` : `<p class="caption">No products yet — add some in Admin → Products.</p>`}
+      ` : `<p class="caption">No products yet — add some in Management → Products.</p>`}
     </div>
   `;
 
