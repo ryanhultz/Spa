@@ -1000,6 +1000,32 @@
     background:var(--card);
     margin-bottom:8px;
   }
+  .admin-supply-row.product-row{ margin-bottom:0; border-radius:12px 12px 0 0; }
+  .admin-supply-row.product-row + .admin-ingredient-tags:not(.hidden){
+    border:1px solid var(--line);
+    border-top:none;
+    border-radius:0 0 12px 12px;
+    background:var(--stone);
+    padding:12px 14px;
+    margin:0 0 8px;
+  }
+  .admin-product-toggle{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    flex:1;
+    min-width:0;
+    display:block;
+  }
+  .admin-product-toggle .tap-hint{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.04em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-top:3px;
+  }
   .admin-supply-main{ flex:1; min-width:0; }
   .admin-ingredient-tags{
     display:flex;
@@ -1007,6 +1033,7 @@
     gap:6px;
     margin-top:8px;
   }
+  .admin-ingredient-tags.hidden{ display:none; }
   .ingredient-tag{
     display:inline-block;
     font-family:'JetBrains Mono',monospace;
@@ -1082,7 +1109,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.2.0</div>
+    <div class="app-version">v1.2.1</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -1446,7 +1473,8 @@ function renderAdmin(){
       ${syncStatusWarningHtml()}
       <div class="admin-tabs">
         <button class="admin-tab-btn ${adminTab==='users'?'active':''}" data-tab="users">Users</button>
-        <button class="admin-tab-btn ${adminTab==='supplies'?'active':''}" data-tab="supplies">Products &amp; Supplies</button>
+        <button class="admin-tab-btn ${adminTab==='products'?'active':''}" data-tab="products">Products</button>
+        <button class="admin-tab-btn ${adminTab==='supplies'?'active':''}" data-tab="supplies">Supplies</button>
         <button class="admin-tab-btn ${adminTab==='activity'?'active':''}" data-tab="activity">Activity Log</button>
       </div>
       <div id="admin-tab-content"></div>
@@ -1461,6 +1489,7 @@ function renderAdmin(){
   });
 
   if(adminTab === 'users') renderAdminUsersTab();
+  else if(adminTab === 'products') renderAdminProductsTab();
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
   else renderAdminActivityTab();
 }
@@ -1546,10 +1575,9 @@ function renderAdminActivityTab(){
   `;
 }
 
-function renderAdminSuppliesTab(){
+function renderAdminProductsTab(){
   const content = document.getElementById('admin-tab-content');
   const products = loadProducts();
-  const supplies = loadSupplies();
 
   content.innerHTML = `
     <div class="block-label">Add Product</div>
@@ -1563,21 +1591,58 @@ function renderAdminSuppliesTab(){
     <div class="block-label" style="margin-top:32px;">Products</div>
     <div id="admin-product-list">
       ${products.length ? products.map(p => `
-        <div class="admin-supply-row">
-          <div class="admin-supply-main">
-            <div class="admin-user-name">${p.name}</div>
-            <div class="admin-ingredient-tags">
-              ${p.ingredients && p.ingredients.length
-                ? p.ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')
-                : `<span class="admin-supply-empty">No ingredients listed</span>`}
-            </div>
-          </div>
+        <div class="admin-supply-row product-row">
+          <button class="admin-product-toggle" data-id="${p.id}">
+            <span class="admin-user-name">${p.name}</span>
+            <span class="tap-hint">${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : 'No ingredients listed'}</span>
+          </button>
           <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
+        </div>
+        <div class="admin-ingredient-tags hidden" id="ingredients-${p.id}">
+          ${p.ingredients && p.ingredients.length
+            ? p.ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')
+            : ''}
         </div>
       `).join('') : `<p class="caption">No products yet.</p>`}
     </div>
+  `;
 
-    <div class="block-label" style="margin-top:32px;">Add Supply</div>
+  document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('admin-new-product-name').value.trim();
+    const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
+    if(!name){ alert('Enter a product name.'); return; }
+    const ingredients = parseIngredientsText(ingredientsText);
+    const list = loadProducts();
+    list.push({ id: makeId(), name, ingredients, createdAt: new Date().toISOString() });
+    saveProducts(list);
+    logActivity('admin', `Added product "${name}"`);
+    renderAdminProductsTab();
+  });
+  content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = document.getElementById(`ingredients-${btn.dataset.id}`);
+      if(panel) panel.classList.toggle('hidden');
+    });
+  });
+  content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const product = loadProducts().find(p => p.id === id);
+      if(!confirm(`Remove product "${product ? product.name : ''}"?`)) return;
+      const list = loadProducts().filter(p => p.id !== id);
+      saveProducts(list);
+      logActivity('admin', `Removed product "${product ? product.name : id}"`);
+      renderAdminProductsTab();
+    });
+  });
+}
+
+function renderAdminSuppliesTab(){
+  const content = document.getElementById('admin-tab-content');
+  const supplies = loadSupplies();
+
+  content.innerHTML = `
+    <div class="block-label">Add Supply</div>
     <div class="field"><label>Supply Name</label><input type="text" id="admin-new-supply-name"></div>
     <div class="field">
       <label>Category</label>
@@ -1600,29 +1665,6 @@ function renderAdminSuppliesTab(){
       `).join('') : `<p class="caption">No supplies yet.</p>`}
     </div>
   `;
-
-  document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
-    const name = document.getElementById('admin-new-product-name').value.trim();
-    const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
-    if(!name){ alert('Enter a product name.'); return; }
-    const ingredients = parseIngredientsText(ingredientsText);
-    const list = loadProducts();
-    list.push({ id: makeId(), name, ingredients, createdAt: new Date().toISOString() });
-    saveProducts(list);
-    logActivity('admin', `Added product "${name}"`);
-    renderAdminSuppliesTab();
-  });
-  content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id = btn.dataset.id;
-      const product = loadProducts().find(p => p.id === id);
-      if(!confirm(`Remove product "${product ? product.name : ''}"?`)) return;
-      const list = loadProducts().filter(p => p.id !== id);
-      saveProducts(list);
-      logActivity('admin', `Removed product "${product ? product.name : id}"`);
-      renderAdminSuppliesTab();
-    });
-  });
 
   document.getElementById('admin-add-supply-btn').addEventListener('click', ()=>{
     const name = document.getElementById('admin-new-supply-name').value.trim();
