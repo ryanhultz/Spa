@@ -1242,7 +1242,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.7.0</div>
+    <div class="app-version">v1.7.1</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
@@ -2151,7 +2151,7 @@ function renderAdminAllergensTab(){
           <div class="admin-user-name">${allergenDisplayName(a)}</div>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : a.fullName}">Edit</button>
-            ${a.id ? `<button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id}">Remove</button>` : ''}
+            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : a.fullName}">Remove</button>
           </div>
         </div>
       `).join('') : `<p class="caption">No ingredients yet — add products with ingredients first, or add an allergen manually above.</p>`}
@@ -2206,6 +2206,10 @@ function renderAdminAllergensTab(){
   content.querySelectorAll('.admin-remove-allergen-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const id = btn.dataset.id;
+      if(!id){
+        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Admin → Products.`);
+        return;
+      }
       const allergen = loadAllergens().find(a => a.id === id);
       const label = allergen ? (allergen.commonName || allergen.fullName) : '';
       if(!confirm(`Remove allergen entry "${label}"?`)) return;
