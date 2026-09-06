@@ -1,3 +1,7 @@
+<!--
+  Spa Therapist Operations Portal (STOP)
+  © 2026 Ryan Hultz. All rights reserved.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,14 +112,14 @@
     font-size:10.5px;
     letter-spacing:.08em;
     text-transform:uppercase;
-    color:var(--ink-soft);
-    border:1px solid var(--line);
+    color:#fff;
+    border:1px solid var(--sage-deep);
     border-radius:999px;
     padding:7px 12px;
     margin-top:6px;
-    background:var(--card);
+    background:var(--sage);
   }
-  .logout-btn:active{ background:var(--stone-deep); }
+  .logout-btn:active{ background:var(--sage-deep); }
   .sub{
     font-size:14.5px;
     color:var(--ink-soft);
@@ -156,20 +160,26 @@
     width:28px;
     height:28px;
     border-radius:50%;
-    background:var(--card);
-    border:1px solid var(--line);
-    color:var(--sage-deep);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    color:#fff;
     font-family:'JetBrains Mono',monospace;
     font-size:11px;
     font-weight:600;
     text-decoration:none;
   }
-  .letter-chip:active{ background:var(--sage); color:#fff; }
+  .letter-chip:active{ background:var(--sage-deep); }
   .card-btn.allergy-result-btn.avoid{
     border-color:#D9B48F;
     background:#FBF2E8;
   }
   .card-btn.allergy-result-btn.avoid .name{ color:#8C4A2A; }
+  .card-btn.allergy-result-btn.avoid .meta{ color:#8C4A2A; opacity:0.75; }
+  .card-btn.allergy-result-btn.avoid .arrow{
+    background:rgba(140,74,42,0.12);
+    border:1px solid rgba(140,74,42,0.25);
+    color:#8C4A2A;
+  }
   .grid{
     display:flex;
     flex-direction:column;
@@ -180,8 +190,8 @@
     all:unset;
     box-sizing:border-box;
     cursor:pointer;
-    background:var(--card);
-    border:1px solid var(--line);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
     border-radius:var(--radius);
     padding:16px 18px;
     display:flex;
@@ -189,36 +199,36 @@
     justify-content:space-between;
     gap:14px;
     transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-    box-shadow:0 1px 0 rgba(255,255,255,0.6) inset;
   }
-  .card-btn:active{ transform:scale(0.985); }
+  .card-btn:active{ transform:scale(0.985); background:var(--sage-deep); }
   .card-btn:hover{ border-color:var(--gold-soft); box-shadow:var(--shadow); }
   .card-btn .name{
     font-family:'Fraunces',serif;
     font-size:19px;
     font-weight:500;
     letter-spacing:-0.01em;
+    color:#fff;
   }
   .card-btn .meta{
     font-size:12px;
-    color:var(--ink-soft);
+    color:rgba(255,255,255,0.78);
     margin-top:3px;
   }
   .card-btn .arrow{
     width:30px;height:30px;
     border-radius:50%;
-    background:var(--stone);
-    border:1px solid var(--line);
+    background:rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.3);
     display:flex;align-items:center;justify-content:center;
     flex:none;
-    color:var(--sage-deep);
+    color:#fff;
     font-size:15px;
   }
   .ref-btn{
-    background:transparent;
-    border:1px dashed var(--line);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
   }
-  .ref-btn .name{ font-size:16.5px; color:var(--sage-deep); }
+  .ref-btn .name{ font-size:16.5px; color:#fff; }
 
   /* Detail overlay */
   .auth-gate{
@@ -339,8 +349,9 @@
   .back-btn:active{ color:var(--sage-deep); }
   .back-btn .chev{
     width:26px;height:26px;border-radius:50%;
-    background:var(--card); border:1px solid var(--line);
+    background:var(--sage); border:1px solid var(--sage-deep);
     display:flex;align-items:center;justify-content:center;
+    color:#fff;
   }
   .detail h2{
     font-family:'Fraunces',serif;
@@ -697,8 +708,8 @@
     display:block;
     width:100%;
     text-align:center;
-    background:var(--ink);
-    color:var(--stone);
+    background:var(--sage);
+    color:#fff;
     font-family:'JetBrains Mono',monospace;
     font-size:12.5px;
     letter-spacing:.12em;
@@ -707,7 +718,7 @@
     padding:16px;
     margin-top:12px;
   }
-  .primary-btn:active{ transform:scale(0.98); }
+  .primary-btn:active{ transform:scale(0.98); background:var(--sage-deep); }
   .ghost-btn{
     all:unset;
     box-sizing:border-box;
@@ -715,9 +726,9 @@
     display:block;
     width:100%;
     text-align:center;
-    background:transparent;
-    border:1px solid var(--line);
-    color:var(--ink-soft);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    color:#fff;
     font-family:'JetBrains Mono',monospace;
     font-size:12px;
     letter-spacing:.1em;
@@ -726,6 +737,7 @@
     padding:14px;
     margin-top:14px;
   }
+  .ghost-btn:active{ background:var(--sage-deep); }
 
   .slot-row{
     background:var(--card);
@@ -760,9 +772,9 @@
     width:30px;
     height:30px;
     border-radius:50%;
-    background:var(--card);
-    border:1px solid var(--line);
-    color:var(--ink-soft);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    color:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -962,6 +974,15 @@
     color:var(--ink-soft);
     opacity:0.55;
   }
+  .copyright-line{
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    opacity:0.45;
+    margin-top:8px;
+  }
   .home-admin-link{
     all:unset;
     box-sizing:border-box;
@@ -970,9 +991,13 @@
     font-size:10.5px;
     letter-spacing:.1em;
     text-transform:uppercase;
-    color:var(--ink-soft);
-    opacity:0.6;
+    color:#fff;
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    border-radius:999px;
+    padding:5px 11px;
   }
+  .home-admin-link:active{ background:var(--sage-deep); }
   .home-footer-divider{
     color:var(--ink-soft);
     opacity:0.4;
@@ -1131,9 +1156,9 @@
     width:30px;
     height:30px;
     border-radius:50%;
-    background:var(--card);
-    border:1px solid var(--line);
-    color:var(--ink-soft);
+    background:var(--sage);
+    border:1px solid var(--sage-deep);
+    color:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -1190,6 +1215,14 @@
     <span class="arrow">→</span>
   </button>
 
+  <button class="agenda-entry" id="open-products-browse">
+    <span class="agenda-entry-text">
+      <span class="ae-label">Products</span>
+      <span class="ae-sub">Browse products and their ingredients</span>
+    </span>
+    <span class="arrow">→</span>
+  </button>
+
   <a class="agenda-entry link-entry" href="https://spa.agilysys.com/Spa/appointment/newappointment" target="_blank" rel="noopener">
     <span class="agenda-entry-text">
       <span class="ae-label">Agilysys</span>
@@ -1209,10 +1242,11 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.6.0</div>
+    <div class="app-version">v1.7.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Admin</button>
   </div>
+  <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
 
 <div class="detail" id="agenda-overlay">
@@ -1221,6 +1255,10 @@
 
 <div class="detail" id="allergy-overlay">
   <div class="detail-inner" id="allergy-inner"></div>
+</div>
+
+<div class="detail" id="products-browse-overlay">
+  <div class="detail-inner" id="products-browse-inner"></div>
 </div>
 
 <div class="detail" id="protocols-overlay">
@@ -1340,7 +1378,6 @@ async function refreshActivityFromServer(){
 
 const PRODUCTS_KEY = 'stopProducts_v1';
 const SUPPLIES_KEY = 'stopSupplies_v1';
-const SUPPLY_CATEGORIES = ['Linens', 'Towels', 'Other Supplies'];
 
 let productsCache = [];
 let suppliesCache = [];
@@ -1537,6 +1574,7 @@ function renderAuthView(){
       <div class="field"><label>Invitation Code</label><input type="text" id="auth-invite-code" autocomplete="off"></div>
       <button class="primary-btn" id="auth-create-btn">Create Account</button>
       <div class="auth-link-row">Already have an account? <button id="auth-show-login">Log in</button></div>
+      <div class="copyright-line">© 2026 Ryan Hultz</div>
     `;
     document.getElementById('auth-create-btn').addEventListener('click', ()=>{
       const u = document.getElementById('auth-new-username').value.trim();
@@ -1560,6 +1598,7 @@ function renderAuthView(){
       <button class="primary-btn" id="auth-login-btn">Log In</button>
       <div class="auth-link-row">New here? <button id="auth-show-create">Create an account</button></div>
       <div class="auth-admin-link"><button id="auth-show-admin">Admin</button></div>
+      <div class="copyright-line">© 2026 Ryan Hultz</div>
     `;
     document.getElementById('auth-login-btn').addEventListener('click', ()=>{
       const u = document.getElementById('auth-username').value.trim();
@@ -1681,6 +1720,7 @@ function renderAdmin(){
             </button>
           `).join('')}
         </div>
+        <div class="copyright-line">© 2026 Ryan Hultz</div>
       </div>
     `;
     document.getElementById('admin-back').addEventListener('click', closeAdmin);
@@ -2087,30 +2127,34 @@ function renderAdminProtocolsTab(){
 
 let editingAllergenId = null;
 
+let prefillAllergenFullName = null;
+
 function renderAdminAllergensTab(){
   const content = document.getElementById('admin-tab-content');
-  const allergens = loadAllergens();
-  const editing = editingAllergenId ? allergens.find(a => a.id === editingAllergenId) : null;
+  const manualList = loadAllergens();
+  const merged = getMergedAllergenList().sort((a, b) => allergenSortKey(a).localeCompare(allergenSortKey(b)));
+  const editing = editingAllergenId ? manualList.find(a => a.id === editingAllergenId) : null;
+  const prefillFull = !editing && prefillAllergenFullName ? prefillAllergenFullName : '';
 
   content.innerHTML = `
     <div class="block-label">${editing ? `Editing Entry` : 'Add Allergen'}</div>
     <p class="caption">Use this to give a known allergen a common name (e.g. Common Name "Coconut Oil" for Full Name "Cocos Nucifera Oil"), or to add an allergen that isn't yet in any product's ingredient list.</p>
     <div class="field"><label>Common Name (optional)</label><input type="text" id="admin-new-allergen-common" placeholder="e.g. Coconut Oil" value="${editing ? (editing.commonName || '') : ''}"></div>
-    <div class="field"><label>Full / INCI Name (optional)</label><input type="text" id="admin-new-allergen-full" placeholder="e.g. Cocos Nucifera Oil" value="${editing ? (editing.fullName || '') : ''}"></div>
+    <div class="field"><label>Full / INCI Name (optional)</label><input type="text" id="admin-new-allergen-full" placeholder="e.g. Cocos Nucifera Oil" value="${editing ? (editing.fullName || '') : prefillFull}"></div>
     <button class="primary-btn" id="admin-add-allergen-btn">${editing ? 'Save Changes' : 'Add Allergen'}</button>
     ${editing ? `<button class="ghost-btn" id="admin-cancel-allergen-btn">Cancel Edit</button>` : ''}
 
-    <div class="block-label" style="margin-top:32px;">Manual Entries</div>
+    <div class="block-label" style="margin-top:32px;">All Ingredients</div>
     <div id="admin-allergen-list">
-      ${allergens.length ? allergens.map(a => `
+      ${merged.length ? merged.map(a => `
         <div class="admin-user-row">
-          <div class="admin-user-name">${a.commonName && a.fullName ? `${a.commonName} <span class="admin-supply-empty">(${a.fullName})</span>` : (a.commonName || a.fullName)}</div>
+          <div class="admin-user-name">${allergenDisplayName(a)}</div>
           <div class="admin-user-actions">
-            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id}">Edit</button>
-            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id}">Remove</button>
+            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : a.fullName}">Edit</button>
+            ${a.id ? `<button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id}">Remove</button>` : ''}
           </div>
         </div>
-      `).join('') : `<p class="caption">No manual entries yet — allergens from Products' ingredient lists still show up in the lookup automatically.</p>`}
+      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients first, or add an allergen manually above.</p>`}
     </div>
   `;
 
@@ -2134,6 +2178,7 @@ function renderAdminAllergensTab(){
       saveAllergens(list);
       logActivity('admin', `Added allergen entry "${commonName || fullName}"`);
     }
+    prefillAllergenFullName = null;
     renderAdminAllergensTab();
   });
 
@@ -2141,12 +2186,19 @@ function renderAdminAllergensTab(){
   if(cancelBtn){
     cancelBtn.addEventListener('click', ()=>{
       editingAllergenId = null;
+      prefillAllergenFullName = null;
       renderAdminAllergensTab();
     });
   }
   content.querySelectorAll('.admin-edit-allergen-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      editingAllergenId = btn.dataset.id;
+      if(btn.dataset.id){
+        editingAllergenId = btn.dataset.id;
+        prefillAllergenFullName = null;
+      } else {
+        editingAllergenId = null;
+        prefillAllergenFullName = btn.dataset.fullname;
+      }
       renderAdminAllergensTab();
       content.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -2253,12 +2305,6 @@ function renderAdminSuppliesTab(){
   content.innerHTML = `
     <div class="block-label">Add Supply</div>
     <div class="field"><label>Supply Name</label><input type="text" id="admin-new-supply-name"></div>
-    <div class="field">
-      <label>Category</label>
-      <select id="admin-new-supply-category">
-        ${SUPPLY_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
-      </select>
-    </div>
     <button class="primary-btn" id="admin-add-supply-btn">Add Supply</button>
 
     <div class="block-label" style="margin-top:32px;">Supplies</div>
@@ -2267,7 +2313,6 @@ function renderAdminSuppliesTab(){
         <div class="admin-supply-row">
           <div class="admin-supply-main">
             <div class="admin-user-name">${s.name}</div>
-            <span class="ingredient-tag">${s.category}</span>
           </div>
           <button class="ghost-btn admin-remove-supply-btn" data-id="${s.id}">Remove</button>
         </div>
@@ -2277,10 +2322,9 @@ function renderAdminSuppliesTab(){
 
   document.getElementById('admin-add-supply-btn').addEventListener('click', ()=>{
     const name = document.getElementById('admin-new-supply-name').value.trim();
-    const category = document.getElementById('admin-new-supply-category').value;
     if(!name){ alert('Enter a supply name.'); return; }
     const list = loadSupplies();
-    list.push({ id: makeId(), name, category, createdAt: new Date().toISOString() });
+    list.push({ id: makeId(), name, createdAt: new Date().toISOString() });
     saveSupplies(list);
     logActivity('admin', `Added supply "${name}"`);
     renderAdminSuppliesTab();
@@ -3032,7 +3076,19 @@ function renderAllergyDetail(){
       <h2>${allergenDisplayName(entry)}</h2>
       <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
 
-      <div class="block-label">✅ Recommended Treatments</div>
+      <div class="block-label">⚠️ Contains This Ingredient — Avoid</div>
+      ${unsafe.length ? `
+        <div class="grid">
+          ${unsafe.map(p => `
+            <button class="card-btn allergy-result-btn avoid" data-id="${p.id}">
+              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : `<p class="caption">No protocols contain this ingredient.</p>`}
+
+      <div class="block-label" style="margin-top:28px;">✅ Recommended Treatments</div>
       ${safe.length ? `
         <div class="grid">
           ${safe.map(p => `
@@ -3043,18 +3099,6 @@ function renderAllergyDetail(){
           `).join('')}
         </div>
       ` : `<p class="caption">No protocols found without this ingredient.</p>`}
-
-      ${unsafe.length ? `
-        <div class="block-label" style="margin-top:28px;">⚠️ Contains This Ingredient — Avoid</div>
-        <div class="grid">
-          ${unsafe.map(p => `
-            <button class="card-btn allergy-result-btn avoid" data-id="${p.id}">
-              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
-              ${iconArrow()}
-            </button>
-          `).join('')}
-        </div>
-      ` : ''}
     </div>
   `;
 
@@ -3072,6 +3116,94 @@ function renderAllergyDetail(){
 }
 
 document.getElementById('open-allergy-lookup').addEventListener('click', openAllergyLookup);
+
+/* ---------- Products Browse (read-only) ---------- */
+
+const productsBrowseOverlay = document.getElementById('products-browse-overlay');
+const productsBrowseInner = document.getElementById('products-browse-inner');
+let productsBrowseStep = 'list'; // 'list' | 'detail'
+let productsBrowseSelectedId = null;
+
+function openProductsBrowse(){
+  productsBrowseStep = 'list';
+  productsBrowseSelectedId = null;
+  renderProductsBrowse();
+  productsBrowseOverlay.classList.add('open');
+  productsBrowseOverlay.scrollTop = 0;
+}
+function closeProductsBrowse(){
+  productsBrowseOverlay.classList.remove('open');
+}
+
+function renderProductsBrowse(){
+  if(productsBrowseStep === 'detail' && productsBrowseSelectedId){
+    renderProductsBrowseDetail();
+  } else {
+    renderProductsBrowseList();
+  }
+}
+
+function renderProductsBrowseList(){
+  const products = [...loadProducts()].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+  productsBrowseInner.innerHTML = `
+    <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Products</h2>
+      <p class="caption">Tap a product to see its ingredients.</p>
+      ${products.length ? `
+        <div class="grid">
+          ${products.map(p => `
+            <button class="card-btn products-browse-btn" data-id="${p.id}">
+              <span><span class="name">${p.name}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : `<p class="caption">No products yet — add some in Admin → Products.</p>`}
+    </div>
+  `;
+
+  document.getElementById('products-browse-back').addEventListener('click', closeProductsBrowse);
+  productsBrowseInner.querySelectorAll('.products-browse-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      productsBrowseSelectedId = btn.dataset.id;
+      productsBrowseStep = 'detail';
+      renderProductsBrowse();
+    });
+  });
+}
+
+function renderProductsBrowseDetail(){
+  const product = loadProducts().find(p => p.id === productsBrowseSelectedId);
+  if(!product){
+    productsBrowseStep = 'list';
+    renderProductsBrowseList();
+    return;
+  }
+  const ingredients = [...(product.ingredients || [])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+  productsBrowseInner.innerHTML = `
+    <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Products</button>
+    <div class="agenda-step">
+      <h2>${product.name}</h2>
+      <div class="block-label">Ingredients</div>
+      ${ingredients.length ? `
+        <div class="admin-ingredient-tags">
+          ${ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')}
+        </div>
+      ` : `<p class="caption">No ingredients listed for this product.</p>`}
+    </div>
+  `;
+
+  document.getElementById('products-browse-back').addEventListener('click', ()=>{
+    productsBrowseStep = 'list';
+    renderProductsBrowse();
+  });
+}
+
+document.getElementById('open-products-browse').addEventListener('click', openProductsBrowse);
+
 
 const detail = document.getElementById('detail');
 const detailInner = document.getElementById('detail-inner');
