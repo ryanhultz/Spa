@@ -1266,7 +1266,7 @@
   <div id="home-schedule"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.9.0</div>
+    <div class="app-version">v1.10.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1295,6 +1295,7 @@
     <div class="grid" id="body-grid"></div>
     <div class="grid" id="kurr-grid"></div>
     <div class="grid" id="ref-grid"></div>
+    <div id="massages-protocols-section"></div>
     <div id="custom-protocols-section"></div>
   </div>
 </div>
@@ -2066,7 +2067,7 @@ function tableMakeupRowHtml(row, idx, supplies){
 }
 
 
-const PROTOCOL_SECTION_LABELS = { body: 'Body Treatments', kurr: 'Kurr Collection', custom: 'Custom' };
+const PROTOCOL_SECTION_LABELS = { body: 'Body Treatments', kurr: 'Kurr Collection', massages: 'Massages', custom: 'Custom' };
 
 function renderAdminProtocolsTab(){
   const content = document.getElementById('admin-tab-content');
@@ -2092,7 +2093,8 @@ function renderAdminProtocolsTab(){
       <select id="admin-new-protocol-section">
         <option value="body" ${editing && editing.section==='body' ? 'selected' : ''}>Body Treatments</option>
         <option value="kurr" ${editing && editing.section==='kurr' ? 'selected' : ''}>Kurr Collection</option>
-        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr') ? 'selected' : ''}>Custom</option>
+        <option value="massages" ${editing && editing.section==='massages' ? 'selected' : ''}>Massages</option>
+        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages') ? 'selected' : ''}>Custom</option>
       </select>
     </div>
     <div class="field">
@@ -2620,6 +2622,225 @@ function renderAdminSuppliesTab(){
   });
 }
 
+/* ---- One-time additive import: 2026-09 product & massage batch ---- */
+
+const IMPORT_2026_09_FLAG_KEY = 'stop-import-2026-09';
+
+const IMPORT_PRODUCTS_2026_09 = [
+  { brand:'Mirbeau', name:'Inspire Shower Gel', ingredients:['Water (Aqua)','Sodium C14-C16 Olefin Sulfonate','Cocamide MIPA','Cocamidopropyl Hydroxysultaine','Lauryl Lactyl Lactate','Glycerin','Eucalyptus Globulus (Eucalyptus) Leaf Oil','Citrus Aurantium Dulcis (Orange) Peel Oil','Rosmarinus Officinalis (Rosemary) Leaf Oil','Mentha Piperita (Peppermint) Leaf Oil','Guar Hydroxypropyltrimonium Chloride','Shea Butter Ethyl Esters','Tocopheryl Acetate','Pisum Sativum (Pea) Extract','Linum Usitatissimum (Flaxseed) Extract','Borago Officinalis (Borage) Extract','Calendula Officinalis Flower Extract','Chamomilla Recutita (Matricaria) Flower Extract','Achillea Millefolium (Yarrow) Extract','Aloe Barbadensis Leaf Juice','Sodium Chloride','Tetrasodium Glutamate Diacetate','Phenoxyethanol','Caprylyl Glycol','Citric Acid'] },
+  { brand:'Mirbeau', name:'Pure Lotion', ingredients:['Aqua (Water)','Organic Helianthus Annuus (Sunflower) Seed Oil','Cetearyl Alcohol (and) Polysorbate 60','Butyrospermum Parkii (Shea Butter)','Theobroma Cacao (Cocoa) Seed Butter','Phenoxyethanol (and) Caprylyl Glycol (and) Sorbic Acid'] },
+  { brand:'Mirbeau', name:'Divine Glow Oil', ingredients:['Helianthus Annuus (Sunflower) Oil','Laminaria Digitata','Cannabis Sativa (Hemp) Oil','Bakuchiol','Lavandula Angustifolia (Lavender)','Artemisia Vulgaris (Armoise)','Cananga Odorata (Ylang Ylang)','Citrus Paradisi (Grapefruit)','Citrus Aurantifolia (Lime)','Chamomilia Recutita (Blue Chamomile)','Rosa Canina Fruit Oil (Rosehip Oil)','Tocopherol (Vitamin E)'] },
+  { brand:'Mirbeau Botanicals', name:'Ache Relief Massage Oil (CBD)', ingredients:['Caprylic/Capric Triglyceride','Organic Helianthus Annuus (Sunflower) Seed Oil','Cannabis Sativa (Hemp) Seed Oil','Citrus Bergamia (Bergamot) Fruit Oil','Citrus Aurantifolia (Lime) Oil','Menthol','Tocopherol (Vitamin E)','Crystalline Cannabidiol'] },
+  { brand:'Mirbeau Botanicals', name:'Ache Relief Massage Lotion (CBD)', ingredients:['Aqua (Water)','Organic Helianthus Annuus (Sunflower) Seed Oil','Cannabis Sativa (Hemp) Seed Oil','Cetearyl Alcohol (and) Polysorbate 60','Phenoxyethanol (and) Caprylyl Glycol (and) Sorbic Acid','Sodium Carbomer','Citrus Bergamia (Bergamot) Fruit Oil','Citrus Aurantifolia (Lime) Oil','Menthol','Crystalline Cannabidiol'] },
+  { brand:'Mirbeau', name:'Reflect Massage Oil', ingredients:['Organic Carthamus Tinctorius (Safflower) Seed Oil','Caprylic/Capric Triglyceride','Simmondsia Chinensis (Jojoba) Seed Oil','Lavandula Angustifolia (Lavender) Oil','Anthemis Nobilis (Chamomile) Oil','Citrus Aurantium Bergamia (Bergamot) Oil','Amyris Balsamifera Bark Oil','Tocopherol (Vitamin E)'] },
+  { brand:'Mirbeau', name:'Inspire Massage Oil', ingredients:['Organic Carthamus Tinctorius (Safflower) Seed Oil','Caprylic/Capric Triglyceride','Simmondsia Chinensis (Jojoba) Seed Oil','Eucalyptus Globules (Eucalyptus) Leaf Oil','Citrus Aurantium Dulcis (Orange) Peel Oil','Rosmarinus Officinalis (Rosemary) Leaf Oil','Mentha Piperita (Peppermint) Leaf Oil','Tocopherol (Vitamin E)'] },
+  { brand:'Mirbeau', name:'Pure Massage Oil', ingredients:['Organic Carthamus Tinctorius (Safflower) Seed Oil','Caprylic/Capric Triglyceride','Simmondsia Chinensis (Jojoba) Seed Oil','Tocopherol (Vitamin E)'] },
+  { brand:'Mirbeau', name:'Arnica Massage Oil', ingredients:['Caprylic/Capric Triglyceride','Organic Carthamus Tinctorius (Safflower) Seed Oil','Simmondsia Chinensis (Jojoba) Seed Oil','Heterotheca Inuloides (Arnica) Flower Extract','Tocopherol (Vitamin E)'] },
+  { brand:'Mirbeau', name:'Reflect Body Whip', ingredients:['Aqua (Water)','Organic Helianthus Annuus (Sunflower) Seed Oil','Butyrospermum Parkii (Shea Butter)','Cetearyl Alcohol (and) Polysorbate 60','Theobroma Cacao (Cocoa) Seed Butter','Stearic Acid','Phenoxyethanol (and) Caprylyl Glycol (and) Sorbic Acid','Lavandula Angustifolia (Lavender) Oil','Anthemis Nobilis (Chamomile) Oil','Citrus Aurantium Bergamia (Bergamot) Oil','Amyris Balsamifera Bark Oil'] },
+  { brand:'Mirbeau', name:'Inspire Body Whip', ingredients:['Aqua (Water)','Organic Helianthus Annuus (Sunflower) Seed Oil','Cocos Nucifera (Coconut) Oil','Cetearyl Alcohol (and) Polysorbate 60','Theobroma Cacao (Cocoa) Seed Butter','Stearic Acid','Phenoxyethanol (and) Caprylyl Glycol (and) Sorbic Acid','Eucalyptus Globules (Eucalyptus) Leaf Oil','Citrus Aurantium Dulcis (Orange) Peel Oil','Rosmarinus Officinalis (Rosemary) Leaf Oil','Mentha Piperita (Peppermint) Leaf Oil'] },
+  { brand:'Mirbeau', name:'Pure Body Whip', ingredients:['Aqua (Water)','Organic Helianthus Annuus (Sunflower) Seed Oil','Butyrospermum Parkii (Shea Butter)','Cetearyl Alcohol (and) Polysorbate 60','Theobroma Cacao (Cocoa) Seed Butter','Stearic Acid','Phenoxyethanol (and) Caprylyl Glycol (and) Sorbic Acid'] },
+  { brand:'Mirbeau', name:'Pure Body Scrub', ingredients:['Organic Sucrose (Sugar)','Organic Helianthus Annuus (Sunflower) Seed Oil','Organic Carthamus Tinctorius (Safflower) Seed Oil','Tocopherol (Vitamin E)'] },
+];
+
+const IMPORT_MASSAGES_2026_09 = [
+  {
+    name:'Mirbeau Signature Massage', section:'massages',
+    caption:'Traditional Swedish massage, light-medium pressure',
+    menuDescription:"Traditional \"Swedish\" massage, focusing on relaxation. Light to medium pressure.",
+    callouts:["Guest chooses Inspire Oil (rosemary, orange, peppermint, eucalyptus) or Reflect Oil (chamomile, lavender, amyris, bergamot)"],
+    tableMakeup:['Blanket','Sheet','Sheet','Protective Cover','Bed Skirt'],
+    prep:[{t:'Signature towels'},{t:'1 Dry hand towel (neck)'},{t:'1 Wet hand towel (feet)'},{t:'1 Dry washcloth (eye cover)'},{t:'Inspire Oil or Reflect Oil'},{t:'Caudalie Beauty Elixir (finishing spray)'}],
+    steps:[
+      "Have guest choose Inspire or Reflect oil by presenting the small bottles",
+      "Have guest lie face up; optional warm towel roll under the neck for comfort",
+      "Perform hand massage for 15 minutes",
+      "Perform scalp massage, with or without oil (guest's choice), for 15 minutes",
+      "Check in with guest twice by last name — once at pickup, once at flip",
+      "Place an eye cover over the guest's eyes when face up",
+      "Perform gentle cervical neck traction with a warm dry hand towel near the end of the head/neck work",
+      "Wipe the guest's feet with a hot wet hand towel",
+      "Place robe and bathing suit across mid-section; place bathmat with slippers nearby",
+      "Finish with Caudalie Beauty Elixir, sprayed 3x above the guest's face"
+    ]
+  },
+  {
+    name:'Just The Essentials', section:'massages',
+    caption:'Scalp, hand, and foot massage only',
+    menuDescription:"Massage on just the scalp, hands, and feet, with warm oil application to the scalp.",
+    callouts:["Guests often confuse this for the full-body Signature massage — confirm before starting","Contains Inspire/Reflect Body Whip (coconut, jojoba, safflower oils) and Pure Oil (grapeseed, jojoba)"],
+    prep:[{t:'Signature towels'},{t:'1 oz Pure Oil in a drizzle bottle or flex bowl (in hot cabi)'},{t:"1 Bath towel (under the client's head)"},{t:'2 hot washcloths'},{t:'2 hot wet hand towels'}],
+    steps:[
+      "Have guest choose Inspire or Reflect oil by presenting the small bottles",
+      "Have guest lie face up (optional warm towel roll under the neck for comfort)",
+      "Foot massage for 20 minutes, then wash hands",
+      "Hand massage for 15 minutes",
+      "Scalp massage with or without oil (guest's choice) for 15 minutes",
+      "Finish with signature finishing steps"
+    ]
+  },
+  {
+    name:'Deep Tissue', section:'massages',
+    caption:'Firm, deep pressure with CBD lotion and hot towel compress',
+    menuDescription:"Signature massage focusing on relaxation and pain relief using firm-deep pressure. CBD lotion is applied to problem areas, followed by a hot towel compress to relax the back, neck, and shoulders.",
+    callouts:["Contains Arnica Oil and CBD (lime, bergamot, hemp)"],
+    prep:[{t:'Signature towels'},{t:'1 Bath towel'},{t:'1 Hot wet bathmat'},{t:'1-2 pumps Mirbeau Botanicals CBD Massage Cream'},{t:'Arnica Oil'}],
+    steps:[
+      "Perform as the signature massage, but apply CBD cream to problem areas first",
+      "Place a bath towel on the client's back, then a hot wet bathmat on top, and wrap with the sides of the bath towel",
+      "Massage the legs while the compress sits on the back",
+      "Remove the hot towel compress, rolling it up towards the sacrum, and give the guest mild compression",
+      "Finish massage and follow signature finishing steps"
+    ]
+  },
+  {
+    name:'CBD Massage Enhancement', section:'massages',
+    caption:'Add CBD oil throughout, lighter pressure',
+    menuDescription:"Same protocol as Deep Tissue, just apply less pressure and use CBD oil for the entire massage.",
+    prep:[{t:'Mirbeau Botanicals Ache Relief Massage Oil (CBD)'}],
+    steps:[
+      "Follow the Deep Tissue protocol, but apply lighter pressure throughout",
+      "Use CBD oil (not cream) for the entire massage instead of just problem areas"
+    ]
+  },
+  {
+    name:"Nature's Healer Massage", section:'massages',
+    caption:'Hot & cold stone massage',
+    menuDescription:"Hot & cold stone massage using pink Himalayan salt stones and black river stones to relax the body and melt away stress.",
+    callouts:["Never wash the Himalayan salt stones with water — clean with Decon 30 only; water will roughen and deteriorate them","Wash river stones with soap and water"],
+    prep:[{t:'Small bowl with cold water/ice for cold river stones'},{t:'Signature towels'},{t:'1 hand towel to clean salt stones with Decon 30'},{t:'1 hand towel to dry cool river stones'},{t:'1 hand towel to put clean stones on while cleaning the sanitation mat'}],
+    steps:[
+      "Massage each body part: 2 hot stones for warm-up (e.g. entire back)",
+      "Then 1 hot and 1 cold stone per subsection (e.g. right low back, left low back) — cold stone first, followed by hot stone",
+      "2 hot stones to end each area (e.g. entire back)",
+      "Revisit the area using just your hands, as with a signature massage",
+      "Flip guest, continue on the anterior body",
+      "Cold stone facial massage (no oil needed, use the small stones)",
+      "End with neck traction towel, beauty elixir, and wipe the feet"
+    ]
+  },
+  {
+    name:'"It Takes Two" Couples Massage', section:'massages',
+    caption:'Signature massage for two, same room',
+    menuDescription:"Signature massage for two people done in the same room.",
+    steps:["Perform as two simultaneous Signature Massages in the same room"]
+  },
+  {
+    name:'The Art of Living', section:'massages',
+    caption:'Elevated couples bath + scrub + massage experience',
+    menuDescription:"Our elevated couples experience — a sample of everything Mirbeau has to offer. Starts with a 20-minute bath soak in a 2-person jetted tub with a ZENTS bath truffle, champagne, and chocolate-covered strawberries. After the soak, guests receive a back scrub using Unzented body polish, washed off with Inspire body wash, then a signature massage using their chosen Makes Scents oil.",
+    callouts:["Contains Makes Scents Oils and Shea Butter"],
+    tableMakeup:['2 Bath towels (sides of tub)','Hand towel (under strawberries)','4 oz Pink Himalayan Bath Salts'],
+    prep:[{t:'2 glasses of champagne and strawberries (brought down by spa attendants)'},{t:'Bathmats near the tub (2-3)'},{t:'Makes Scents oil sampler'},{t:'2 chilled aromatherapy cold washcloths'},{t:'0.5 oz Unzented body polish to split between both therapists'},{t:'Inspire body wash'}],
+    steps:[
+      "Fill the tub with warm water (7 minutes to fill); place 2 bath towels on opposite sides, bathmats on the floor",
+      "Place champagne and strawberries within guests' reach",
+      "Bring guests into the room and provide intake; have them pick their oil choice",
+      "Tell guests you'll return in 20 minutes; give a 5-minute warning knock, then re-enter 5 minutes later",
+      "Apply a small amount of Unzented body scrub to their backs; wash away with wet hands + Inspire body wash, then wipe clean with a hot towel",
+      "Perform signature massage"
+    ]
+  },
+  {
+    name:"Men's Essential Massage", section:'massages',
+    caption:'Signature massage with OM4 oils and shave mask',
+    menuDescription:"Signature massage for men using OM4 oils and OM4 Shave Mask.",
+    callouts:["Well-being oils: Strengthen (tea tree, sage, lemongrass) or Rest (tangerine, sandalwood, cinnamon)","OM4 Shave Mask contains Aloe, Shea Butter, Coffee, Hops, Green Tea"],
+    prep:[{t:'Signature towels'},{t:'1 extra hot wet hand towel (to wrap face with shave mask)'},{t:'1 cold wet hand towel (to close pores after shave mask)'},{t:'OM4 Oils and Shave Mask'}],
+    steps:[
+      "Perform as the signature massage",
+      "When the guest is face up, apply the shave mask and wrap the face in a hot towel for 8-10 minutes (can be done anytime after flipping)",
+      "Wipe the mask off, then cold-compress the pores with a cold hand towel",
+      "Finish service as normal"
+    ]
+  },
+  {
+    name:"Monet's Favorite Fragrance Massage", section:'massages',
+    caption:'Signature massage with Makes Scents aromatherapy oils',
+    menuDescription:"Signature massage with Makes Scents Oils.",
+    callouts:["Check the allergen book — Renew, Restore, Relax, or Revive oils"],
+    prep:[{t:'Signature towels'},{t:'1 hanging towel with a spray of Eucalyptus'}],
+    steps:["Perform as a signature massage, but with aromatherapy oils"]
+  },
+  {
+    name:'Mother To Be Massage', section:'massages',
+    caption:'Prenatal massage using cushions or side-lying pillows',
+    menuDescription:"Pregnancy massage using cushions or pillows to promote relaxation and increase blood flow. Guests are face down on cushions, or side-lying using pillows.",
+    callouts:["Contains Frangipani Monoi Oil (flower extracts, coconut oil) and Japanese Camellia Oil (camellia oil, almond oil)","0-34 weeks: face down on cushions. 35-40 weeks: side-lying with pillows","⚠️ Ask the guest how many weeks pregnant and their positioning preference before starting"],
+    prep:[{t:'Signature towels'},{t:'Pregnancy cushions or pillows'},{t:'Frangipani Monoi Oil or Japanese Camellia Oil'}],
+    steps:["Perform prep and protocol the same as a Signature Massage, with the addition of pregnancy cushions or pillows"]
+  },
+  {
+    name:'2026 Autumn Restore Seasonal Massage', section:'massages',
+    caption:'Seasonal massage with Restore oil, hot stones, and warm Quench for the feet',
+    menuDescription:"A seasonal massage featuring Restore and Pure oil, hot stones along the entire body, and a warmed Quench foot treatment.",
+    prep:[{t:'Restore and Pure Oil'},{t:'0.25 oz Quench (heated in hot cabi)'},{t:'2 hot wet washcloths (for feet, after Quench application)'},{t:'Regular signature towels'},{t:'2 hot stones'}],
+    steps:[
+      "Start with inhalations of Restore oil",
+      "Perform signature massage with hot stones along the entire body",
+      "When the guest is supine, massage feet with heated Quench and Restore oil, then wipe away product with two hot washcloths",
+      "Resume massage and finish with Mirbeau finishing steps as usual"
+    ]
+  },
+  {
+    name:'Thermabliss Hot Stone Enhancement', section:'massages',
+    caption:'Portable hot stone add-on',
+    menuDescription:"Portable hot stone add-on for guests who would like some extra heat applied to their massage.",
+    prep:[{t:'1 wet cold washcloth or hand towel'},{t:'1 dry washcloth or hand towel'},{t:'1 Thermabliss Mineral Charge packet per stone'},{t:'Warm water'}],
+    steps:[
+      "5 minutes prior to session, activate the stone by mixing 1 charge packet with warm water, using the empty packet as a measuring cup, then pour into the stone",
+      "Stones generate their own heat for about 30-60 minutes without an external heat source",
+      "If a stone is too hot to touch, place it in the cold washcloth to cool it, then set on the dry washcloth before use on the guest",
+      "Never let the stone stay stationary on the guest's skin — it will continue heating and can cause burns",
+      "Empty minerals into the trash and rinse the stone after use"
+    ]
+  },
+  {
+    name:'Divine Hair and Scalp Enhancement', section:'massages',
+    caption:'Warm Divine Glow Oil scalp treatment',
+    menuDescription:"Drizzle warmed Divine Glow Oil onto the scalp, provide a scalp massage, and wrap the hair in a hot towel to finish.",
+    prep:[{t:'Divine Glow Oil in an applicator bottle, warmed in hot cabi'},{t:'1 hand towel (under the head before oil application)'},{t:'1 dry hot hand towel or pillow case (to wrap head after oil application)'}],
+    steps:["Drizzle warmed Divine Glow Oil onto the scalp","Provide a scalp massage","Wrap hair in a hot towel to finish"]
+  },
+];
+
+async function runImport2026_09(){
+  const alreadyDone = await syncGet(IMPORT_2026_09_FLAG_KEY);
+  if(alreadyDone === true) return;
+
+  const existingProducts = loadProducts();
+  const existingNames = new Set(existingProducts.map(p => `${(p.brand||'').toLowerCase()}|${p.name.toLowerCase()}`));
+  let productsChanged = false;
+  IMPORT_PRODUCTS_2026_09.forEach(p => {
+    const key = `${p.brand.toLowerCase()}|${p.name.toLowerCase()}`;
+    if(!existingNames.has(key)){
+      existingProducts.push({ id: makeId(), brand: p.brand, name: p.name, ingredients: p.ingredients, createdAt: new Date().toISOString() });
+      existingNames.add(key);
+      productsChanged = true;
+    }
+  });
+  if(productsChanged){
+    saveProducts(existingProducts);
+  }
+
+  const existingProtocols = loadCustomProtocols();
+  const existingProtocolNames = new Set(existingProtocols.map(p => p.name.toLowerCase()));
+  let protocolsChanged = false;
+  IMPORT_MASSAGES_2026_09.forEach(m => {
+    const key = m.name.toLowerCase();
+    if(!existingProtocolNames.has(key)){
+      existingProtocols.push({ id: makeId(), createdAt: new Date().toISOString(), ...m });
+      existingProtocolNames.add(key);
+      protocolsChanged = true;
+    }
+  });
+  if(protocolsChanged){
+    saveCustomProtocols(existingProtocols);
+  }
+
+  await syncPost(IMPORT_2026_09_FLAG_KEY, true);
+  logActivity('System', `Imported ${IMPORT_PRODUCTS_2026_09.length} products and ${IMPORT_MASSAGES_2026_09.length} massage protocols (2026-09 batch)`);
+}
+
 async function bootstrapAuth(){
   await Promise.all([
     refreshUsersFromServer(),
@@ -2629,6 +2850,7 @@ async function bootstrapAuth(){
     refreshCustomProtocolsFromServer(),
     refreshAllergensFromServer()
   ]);
+  await runImport2026_09();
   checkAuthAndRender();
   setInterval(async ()=>{
     await refreshUsersFromServer();
@@ -3160,10 +3382,24 @@ function rebuildAllProtocols(){
 function renderProtocolGrids(){
   const bodyItems = customProtocolsCache.filter(p => p.section === 'body');
   const kurrItems = customProtocolsCache.filter(p => p.section === 'kurr');
-  const customItems = customProtocolsCache.filter(p => p.section !== 'body' && p.section !== 'kurr');
+  const massageItems = customProtocolsCache.filter(p => p.section === 'massages');
+  const customItems = customProtocolsCache.filter(p => p.section !== 'body' && p.section !== 'kurr' && p.section !== 'massages');
 
   renderGrid('body-grid', bodyItems);
   renderGrid('kurr-grid', kurrItems);
+
+  const massagesSection = document.getElementById('massages-protocols-section');
+  if(massagesSection){
+    if(!massageItems.length){
+      massagesSection.innerHTML = '';
+    } else {
+      massagesSection.innerHTML = `
+        <div class="section-label">Massages</div>
+        <div class="grid" id="massages-grid"></div>
+      `;
+      renderGrid('massages-grid', massageItems);
+    }
+  }
 
   const section = document.getElementById('custom-protocols-section');
   if(!section) return;
