@@ -1215,6 +1215,8 @@
     <button class="logout-btn" id="logout-btn" title="Log out">Log Out</button>
   </div>
 
+  <div id="home-schedule"></div>
+
   <button class="agenda-entry" id="open-agenda">
     <span class="agenda-entry-text">
       <span class="ae-label">Agenda</span>
@@ -1263,10 +1265,8 @@
     <span class="arrow">→</span>
   </button>
 
-  <div id="home-schedule"></div>
-
   <div class="home-footer">
-    <div class="app-version">v1.10.0</div>
+    <div class="app-version">v1.11.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1305,6 +1305,72 @@
 </div>
 
 <script>
+/* ============ Error reporting (must be first — catches everything below) ============ */
+
+const ERRORS_KEY = 'stopErrors_v1';
+let errorsCache = [];
+let stopErrorFallbackShown = false;
+
+function loadErrorsLocalFallback(){
+  try{ return JSON.parse(localStorage.getItem(ERRORS_KEY)) || []; }catch(e){ return []; }
+}
+
+function logError(message, location){
+  const current = (function(){ try{ return localStorage.getItem('stopCurrentUser_v1') || 'Unknown'; }catch(e){ return 'Unknown'; } })();
+  errorsCache.unshift({
+    message: String(message == null ? 'Unknown error' : message).slice(0, 500),
+    location: String(location || '').slice(0, 200),
+    username: current,
+    timestamp: new Date().toISOString()
+  });
+  while(errorsCache.length > 100) errorsCache.pop();
+  try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
+  try{
+    if(typeof SYNC_API_BASE !== 'undefined'){
+      fetch(`${SYNC_API_BASE}/data/stop-errors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(errorsCache)
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+function showErrorFallback(message){
+  if(stopErrorFallbackShown) return; // don't stack multiple overlays from a burst of errors
+  stopErrorFallbackShown = true;
+  const overlay = document.createElement('div');
+  overlay.id = 'stop-error-fallback';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#ECE5D6;display:flex;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,sans-serif;text-align:center;';
+  overlay.innerHTML = `
+    <div>
+      <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+      <div style="font-family:Georgia,serif;font-size:20px;margin-bottom:8px;color:#2B2A24;">Something went wrong</div>
+      <div style="font-size:13px;color:#5B584C;margin-bottom:20px;max-width:280px;">The app hit an unexpected error. Reloading usually fixes it.</div>
+      <button id="stop-error-reload-btn" style="background:#727F63;color:#fff;border:none;border-radius:14px;padding:14px 28px;font-size:13px;cursor:pointer;">Reload App</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('stop-error-reload-btn').addEventListener('click', function(){ location.reload(); });
+}
+
+window.addEventListener('error', function(event){
+  logError(event.message, (event.filename || '') + ':' + (event.lineno || ''));
+  showErrorFallback(event.message);
+});
+window.addEventListener('unhandledrejection', function(event){
+  logError(String(event.reason && event.reason.message ? event.reason.message : event.reason), 'unhandled promise rejection');
+  showErrorFallback('A background task failed unexpectedly.');
+});
+
+/* ============ Service worker (faster loads + Android install prompt) ============ */
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js').catch(function(){});
+  });
+}
+
 /* ============ Sync backend ============ */
 // After deploying the Worker (see the included README), paste its URL below.
 // Until then, the app falls back to local-only storage automatically.
@@ -1333,13 +1399,16 @@ async function syncGet(key){
 async function syncPost(key, value){
   if(!isSyncConfigured()) return false;
   try{
-    await fetch(`${SYNC_API_BASE}/data/${key}`, {
+    const token = (typeof getActiveAuthToken === 'function') ? getActiveAuthToken() : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if(token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${SYNC_API_BASE}/data/${key}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(value)
     });
     syncStatus = 'ok';
-    return true;
+    return res.ok;
   }catch(e){
     syncStatus = 'offline';
     return false;
@@ -1359,10 +1428,17 @@ function syncStatusWarningHtml(){
 
 /* ---- Backup API ---- */
 
+function authHeaders(extra){
+  const token = (typeof getActiveAuthToken === 'function') ? getActiveAuthToken() : null;
+  const headers = { ...(extra || {}) };
+  if(token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
 async function fetchBackupList(){
   if(!isSyncConfigured()) return null;
   try{
-    const res = await fetch(`${SYNC_API_BASE}/backups`, { cache: 'no-store' });
+    const res = await fetch(`${SYNC_API_BASE}/backups`, { cache: 'no-store', headers: authHeaders() });
     if(!res.ok) throw new Error('bad status');
     return await res.json();
   }catch(e){
@@ -1373,7 +1449,7 @@ async function fetchBackupList(){
 async function createManualBackup(){
   if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
   try{
-    const res = await fetch(`${SYNC_API_BASE}/backups`, { method: 'POST' });
+    const res = await fetch(`${SYNC_API_BASE}/backups`, { method: 'POST', headers: authHeaders() });
     return await res.json();
   }catch(e){
     return { ok: false, error: 'Could not reach the server.' };
@@ -1385,7 +1461,7 @@ async function restoreBackupByKey(key){
   try{
     const res = await fetch(`${SYNC_API_BASE}/backups/restore`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ key })
     });
     return await res.json();
@@ -1399,7 +1475,7 @@ async function deleteBackupByKey(key){
   try{
     const res = await fetch(`${SYNC_API_BASE}/backups/delete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ key })
     });
     return await res.json();
@@ -1409,12 +1485,14 @@ async function deleteBackupByKey(key){
 }
 
 /* ============ Auth & Admin ============ */
+// The invitation code and master password are no longer stored here —
+// they live only on the Worker as encrypted Secrets, and are checked
+// server-side via /auth/signup and /auth/master. See README.md.
 
 const USERS_KEY = 'stopUsers_v1';
 const ACTIVITY_KEY = 'stopActivityLog_v1';
 const CURRENT_USER_KEY = 'stopCurrentUser_v1';
-const INVITE_CODE = 'newusers1234';
-const ADMIN_PASSWORD = '1111';
+const SESSION_TOKEN_KEY = 'stopSessionToken_v1';
 
 let authView = 'login'; // 'login' | 'create'
 let authError = '';
@@ -1447,6 +1525,16 @@ async function refreshActivityFromServer(){
     try{ localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityCache)); }catch(e){}
   } else {
     activityCache = loadActivityLocalFallback();
+  }
+}
+
+async function refreshErrorsFromServer(){
+  const remote = await syncGet('stop-errors');
+  if(Array.isArray(remote)){
+    errorsCache = remote;
+    try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
+  } else {
+    errorsCache = loadErrorsLocalFallback();
   }
 }
 
@@ -1604,22 +1692,48 @@ function findUser(username){
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
 }
 const LOGIN_DATE_KEY = 'stopCurrentUserLoginDate_v1';
+const MASTER_TOKEN_KEY = 'stopMasterToken_v1';
+
 function getCurrentUser(){
   try{ return localStorage.getItem(CURRENT_USER_KEY) || null; }catch(e){ return null; }
 }
-function setCurrentUser(username){
+function setCurrentUser(username, token){
   try{
     localStorage.setItem(CURRENT_USER_KEY, username);
     localStorage.setItem(LOGIN_DATE_KEY, new Date().toDateString());
+    if(token) localStorage.setItem(SESSION_TOKEN_KEY, token);
   }catch(e){}
 }
 function clearCurrentUser(){
   try{
     localStorage.removeItem(CURRENT_USER_KEY);
     localStorage.removeItem(LOGIN_DATE_KEY);
+    localStorage.removeItem(SESSION_TOKEN_KEY);
   }catch(e){}
 }
-const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup'];
+function getSessionToken(){
+  try{ return localStorage.getItem(SESSION_TOKEN_KEY) || null; }catch(e){ return null; }
+}
+function getMasterToken(){
+  try{ return localStorage.getItem(MASTER_TOKEN_KEY) || null; }catch(e){ return null; }
+}
+function setMasterToken(token){
+  try{ localStorage.setItem(MASTER_TOKEN_KEY, token); }catch(e){}
+}
+function clearMasterToken(){
+  try{ localStorage.removeItem(MASTER_TOKEN_KEY); }catch(e){}
+}
+// The token to use for the CURRENT admin session — master token if the
+// user unlocked via the master password this session, otherwise their
+// own logged-in session token.
+function getActiveAuthToken(){
+  if(typeof adminSessionMode !== 'undefined' && adminSessionMode === 'master'){
+    return getMasterToken();
+  }
+  return getSessionToken();
+}
+
+const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup','errors'];
 function blankPermissions(){
   const p = {};
   PERMISSION_KEYS.forEach(k => p[k] = false);
@@ -1718,40 +1832,78 @@ function renderAuthView(){
   }
 }
 
-function attemptLogin(username, password){
+async function attemptLogin(username, password){
   if(!username || !password){ authError = 'Enter a username and password.'; renderAuthView(); return; }
-  const user = findUser(username);
-  if(!user || user.password !== password){
-    authError = 'Incorrect username or password.';
+
+  if(!isSyncConfigured()){
+    authError = "Can't verify login — sync isn't set up yet on this device. See the README.";
+    renderAuthView();
+    return;
+  }
+
+  let result;
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    result = await res.json();
+  }catch(e){
+    authError = "Couldn't reach the server. Check your connection and try again.";
+    renderAuthView();
+    return;
+  }
+
+  if(!result || !result.ok){
+    authError = (result && result.error) || 'Incorrect username or password.';
     logActivity(username || '(blank)', 'Failed login attempt');
     renderAuthView();
     return;
   }
-  const list = loadUsers();
-  const listUser = list.find(u => u.username === user.username);
-  if(listUser){
-    listUser.lastLogin = new Date().toISOString();
-    saveUsers(list);
-  }
-  setCurrentUser(user.username);
-  logActivity(user.username, 'Logged in');
+
+  setCurrentUser(result.username, result.token);
+  logActivity(result.username, 'Logged in');
   authError = '';
+  await refreshUsersFromServer();
   checkAuthAndRender();
 }
 
-function attemptCreateAccount(username, password, confirmPw, code){
+async function attemptCreateAccount(username, password, confirmPw, code){
   if(!username || !password || !confirmPw){ authError = 'Fill in all fields.'; renderAuthView(); return; }
   if(password !== confirmPw){ authError = 'Passwords do not match.'; renderAuthView(); return; }
-  if(code !== INVITE_CODE){ authError = 'Invalid invitation code.'; renderAuthView(); return; }
-  if(findUser(username)){ authError = 'That username is already taken.'; renderAuthView(); return; }
-  const users = loadUsers();
-  const now = new Date().toISOString();
-  users.push({ username, password, permissions: blankPermissions(), lastLogin: now, createdAt: now });
-  saveUsers(users);
+
+  if(!isSyncConfigured()){
+    authError = "Can't create an account — sync isn't set up yet on this device. See the README.";
+    renderAuthView();
+    return;
+  }
+
+  let result;
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, inviteCode: code })
+    });
+    result = await res.json();
+  }catch(e){
+    authError = "Couldn't reach the server. Check your connection and try again.";
+    renderAuthView();
+    return;
+  }
+
+  if(!result || !result.ok){
+    authError = (result && result.error) || 'Could not create that account.';
+    renderAuthView();
+    return;
+  }
+
   logActivity(username, 'Created account');
-  setCurrentUser(username);
-  logActivity(username, 'Logged in');
+  setCurrentUser(result.username, result.token);
+  logActivity(result.username, 'Logged in');
   authError = '';
+  await refreshUsersFromServer();
   checkAuthAndRender();
 }
 
@@ -1759,6 +1911,8 @@ function logout(){
   const current = getCurrentUser();
   if(current) logActivity(current, 'Logged out');
   clearCurrentUser();
+  clearMasterToken();
+  adminSessionMode = null;
   authView = 'login';
   authError = '';
   checkAuthAndRender();
@@ -1775,6 +1929,7 @@ const ADMIN_SECTIONS = [
   { key: 'allergens', name: 'Allergies', meta: 'Add, edit, and rename known allergens' },
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
   { key: 'backup', name: 'Backup', meta: 'Back up and restore all data' },
+  { key: 'errors', name: 'Error Log', meta: 'Review recent app errors' },
 ];
 
 function getEffectiveAdminPermissions(){
@@ -1829,14 +1984,35 @@ function renderAdmin(){
       </div>
     `;
     document.getElementById('admin-back').addEventListener('click', closeAdmin);
-    const tryUnlock = ()=>{
+    const tryUnlock = async ()=>{
       const val = document.getElementById('admin-password-input').value;
-      if(val === ADMIN_PASSWORD){
+      const btn = document.getElementById('admin-unlock-btn');
+      if(!isSyncConfigured()){
+        document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">Can't verify — sync isn't set up yet on this device. See the README.</div>`;
+        return;
+      }
+      btn.textContent = 'Checking…';
+      let result;
+      try{
+        const res = await fetch(`${SYNC_API_BASE}/auth/master`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: val })
+        });
+        result = await res.json();
+      }catch(e){
+        document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">Couldn't reach the server. Check your connection.</div>`;
+        btn.textContent = 'Unlock';
+        return;
+      }
+      if(result && result.ok){
+        setMasterToken(result.token);
         adminUnlocked = true;
         adminSessionMode = 'master';
         renderAdmin();
       } else {
-        document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">Incorrect password.</div>`;
+        document.getElementById('admin-pw-error').innerHTML = `<div class="auth-error">${(result && result.error) || 'Incorrect password.'}</div>`;
+        btn.textContent = 'Unlock';
       }
     };
     document.getElementById('admin-unlock-btn').addEventListener('click', tryUnlock);
@@ -1908,6 +2084,7 @@ function renderAdmin(){
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
   else if(adminTab === 'allergens') renderAdminAllergensTab();
   else if(adminTab === 'backup') renderAdminBackupTab();
+  else if(adminTab === 'errors') renderAdminErrorsTab();
   else renderAdminActivityTab();
 }
 
@@ -2423,6 +2600,39 @@ function renderAdminActivityTab(){
   `;
 }
 
+function renderAdminErrorsTab(){
+  const content = document.getElementById('admin-tab-content');
+  const log = errorsCache;
+
+  content.innerHTML = `
+    <div class="block-label">Error Log</div>
+    <p class="caption">Unexpected app errors, newest first, with who was using it and when.</p>
+    <div id="admin-error-list">
+      ${log.length ? log.slice(0,50).map(entry => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">
+            ${entry.message}
+            <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} · ${entry.username}${entry.location ? ' · ' + entry.location : ''}</span>
+          </div>
+        </div>
+      `).join('') : `<p class="caption">No errors logged — that's a good sign.</p>`}
+    </div>
+    ${log.length ? `<button class="ghost-btn" id="admin-clear-errors-btn">Clear Error Log</button>` : ''}
+  `;
+
+  const clearBtn = document.getElementById('admin-clear-errors-btn');
+  if(clearBtn){
+    clearBtn.addEventListener('click', ()=>{
+      if(!confirm('Clear the error log? This cannot be undone.')) return;
+      errorsCache = [];
+      try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
+      syncPost('stop-errors', errorsCache);
+      logActivity(getAdminActingUsername(), 'Cleared the error log');
+      renderAdminErrorsTab();
+    });
+  }
+}
+
 function renderAdminBackupTab(){
   const content = document.getElementById('admin-tab-content');
 
@@ -2845,6 +3055,7 @@ async function bootstrapAuth(){
   await Promise.all([
     refreshUsersFromServer(),
     refreshActivityFromServer(),
+    refreshErrorsFromServer(),
     refreshProductsFromServer(),
     refreshSuppliesFromServer(),
     refreshCustomProtocolsFromServer(),
@@ -2855,6 +3066,7 @@ async function bootstrapAuth(){
   setInterval(async ()=>{
     await refreshUsersFromServer();
     await refreshActivityFromServer();
+    await refreshErrorsFromServer();
     await refreshProductsFromServer();
     await refreshSuppliesFromServer();
     await refreshCustomProtocolsFromServer();
@@ -3418,44 +3630,88 @@ renderProtocolGrids();
 
 /* ---------- Allergy Lookup ---------- */
 
+function extractBotanicalKey(text){
+  const idx = text.indexOf('(');
+  if(idx === -1) return text.trim().toLowerCase();
+  return text.slice(0, idx).trim().toLowerCase();
+}
+
+function extractCommonNameFromText(text){
+  const m = text.match(/\(([^)]+)\)/);
+  return m ? m[1].trim() : '';
+}
+
 function getMergedAllergenList(){
   const products = loadProducts();
   const manual = loadAllergens();
 
-  const manualByFull = {};
-  manual.forEach(a => {
-    if(a.fullName) manualByFull[a.fullName.trim().toLowerCase()] = a;
-  });
+  // Step 1: group every raw ingredient variant by its botanical (Latin) key —
+  // e.g. "Lavandula Angustifolia (Lavender) Oil" and "...Flower Extract"
+  // and the plain "...(Lavender)" all share the botanical key
+  // "lavandula angustifolia", so they group together automatically.
+  const groups = new Map(); // botanicalKey -> { variants:Set<string>, commonName:string, manualId:string|null }
 
-  const rawIngredients = new Map(); // lowercase key -> original-case text
   products.forEach(p => (p.ingredients || []).forEach(ing => {
-    const key = ing.trim().toLowerCase();
-    if(key && !rawIngredients.has(key)) rawIngredients.set(key, ing.trim());
+    const text = ing.trim();
+    if(!text) return;
+    const key = extractBotanicalKey(text);
+    if(!groups.has(key)){
+      groups.set(key, { variants: new Set(), commonName: extractCommonNameFromText(text), manualId: null });
+    }
+    groups.get(key).variants.add(text.toLowerCase());
   }));
 
-  const merged = new Map(); // lowercase display key -> entry
-
-  rawIngredients.forEach((original, key) => {
-    const manualMatch = manualByFull[key];
-    if(manualMatch){
-      merged.set(key, {
-        id: manualMatch.id,
-        commonName: manualMatch.commonName || '',
-        fullName: manualMatch.fullName || original
-      });
-    } else {
-      merged.set(key, { id: null, commonName: '', fullName: original });
-    }
-  });
-
+  // Step 2: apply manual common-name assignments. An admin only needs to
+  // alias ONE variant (or just the plain botanical name) and it now applies
+  // to every variant sharing that botanical key.
   manual.forEach(a => {
-    const key = (a.fullName || a.commonName || '').trim().toLowerCase();
-    if(key && !merged.has(key)){
-      merged.set(key, { id: a.id, commonName: a.commonName || '', fullName: a.fullName || '' });
+    if(!a.fullName) return;
+    const key = extractBotanicalKey(a.fullName.trim());
+    if(groups.has(key)){
+      const g = groups.get(key);
+      g.commonName = a.commonName || g.commonName;
+      g.manualId = a.id;
+    } else {
+      // Pure manual addition not tied to any product ingredient yet
+      groups.set(key, { variants: new Set([a.fullName.trim().toLowerCase()]), commonName: a.commonName || '', manualId: a.id });
     }
   });
 
-  return Array.from(merged.values());
+  // Step 3: fallback merge — if two different botanical keys ended up with
+  // the same common name (e.g. a synonym Latin name for the same plant),
+  // fold them into one entry.
+  const byCommonName = new Map(); // lowercase common name -> merged group
+  const noCommonName = [];
+
+  groups.forEach((g, botanicalKey) => {
+    const commonKey = (g.commonName || '').trim().toLowerCase();
+    if(!commonKey){
+      noCommonName.push({ botanicalKey, ...g });
+      return;
+    }
+    if(byCommonName.has(commonKey)){
+      const existing = byCommonName.get(commonKey);
+      g.variants.forEach(v => existing.variants.add(v));
+      if(g.manualId) existing.manualId = g.manualId;
+    } else {
+      byCommonName.set(commonKey, { botanicalKey, ...g });
+    }
+  });
+
+  const finalGroups = [...byCommonName.values(), ...noCommonName];
+
+  return finalGroups.map(g => {
+    const variantList = Array.from(g.variants);
+    // Prefer the shortest variant as the representative full name — usually
+    // the plain "Latin (Common)" form without an extra Oil/Extract suffix.
+    const representative = variantList.sort((a, b) => a.length - b.length)[0] || g.botanicalKey;
+    return {
+      id: g.manualId,
+      commonName: g.commonName || '',
+      fullName: representative,
+      matchKeys: variantList
+    };
+  });
 }
 
 function allergenDisplayName(entry){
@@ -3471,12 +3727,10 @@ function allergenSortKey(entry){
 
 function getProtocolSafety(entry){
   const products = loadProducts();
-  const searchTerms = [entry.commonName, entry.fullName]
-    .filter(Boolean)
-    .map(s => s.trim().toLowerCase());
+  const searchTerms = new Set((entry.matchKeys || [entry.fullName]).map(s => s.trim().toLowerCase()));
 
   const matchingProductNames = products
-    .filter(p => (p.ingredients || []).some(ing => searchTerms.includes(ing.trim().toLowerCase())))
+    .filter(p => (p.ingredients || []).some(ing => searchTerms.has(ing.trim().toLowerCase())))
     .map(p => p.name.toLowerCase());
 
   const safe = [];
