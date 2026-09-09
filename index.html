@@ -1266,7 +1266,7 @@
   </button>
 
   <div class="home-footer">
-    <div class="app-version">v1.11.2</div>
+    <div class="app-version">v1.12.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1457,6 +1457,41 @@ function authHeaders(extra){
   const headers = { ...(extra || {}) };
   if(token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
+}
+
+// Creates a user, or patches just the given field(s) on an existing one —
+// never touches any other user's record. Replaces the old pattern of
+// reading the whole user list and writing it all back.
+async function upsertUserOnServer(username, fields){
+  if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/users/upsert`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username, ...fields })
+    });
+    let body = null;
+    try{ body = await res.json(); }catch(e){}
+    return { ok: res.ok, status: res.status, error: (body && body.error) ? body.error : null };
+  }catch(e){
+    return { ok:false, status:0, error:"Couldn't reach the server." };
+  }
+}
+
+async function deleteUserOnServer(username){
+  if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/users/delete`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username })
+    });
+    let body = null;
+    try{ body = await res.json(); }catch(e){}
+    return { ok: res.ok, status: res.status, error: (body && body.error) ? body.error : null };
+  }catch(e){
+    return { ok:false, status:0, error:"Couldn't reach the server." };
+  }
 }
 
 async function fetchBackupList(){
@@ -1706,11 +1741,6 @@ function saveAllergens(list){
 
 function loadUsers(){
   return usersCache;
-}
-async function saveUsers(users){
-  usersCache = users;
-  try{ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }catch(e){}
-  return await syncPostChecked('stop-users', users);
 }
 function findUser(username){
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
@@ -2150,17 +2180,15 @@ function renderAdminUsersTab(){
     const u = document.getElementById('admin-new-username').value.trim();
     const p = document.getElementById('admin-new-password').value;
     if(!u || !p){ alert('Enter a username and password.'); return; }
-    await refreshUsersFromServer(); // get the current server state right before writing
+    await refreshUsersFromServer();
     if(findUser(u)){ alert('That username already exists.'); return; }
-    const list = loadUsers();
-    list.push({ username: u, password: p, permissions: blankPermissions(), lastLogin: null, createdAt: new Date().toISOString() });
-    const result = await saveUsers(list);
+    const result = await upsertUserOnServer(u, { password: p, permissions: blankPermissions() });
     if(!result.ok){
-      alert(`Couldn't save the new user — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
-      await refreshUsersFromServer();
+      alert(`Couldn't add the user — the server rejected it (${result.error || 'error ' + result.status}).`);
     } else {
       logActivity(getAdminActingUsername(), `Added user "${u}"`);
     }
+    await refreshUsersFromServer();
     renderAdminUsersTab();
   });
   content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
@@ -2168,20 +2196,14 @@ function renderAdminUsersTab(){
       const username = btn.dataset.username;
       const newPw = prompt(`New password for ${username}:`);
       if(!newPw) return;
-      await refreshUsersFromServer(); // get the current server state right before writing
-      const list = loadUsers();
-      const user = list.find(u => u.username === username);
-      if(user){
-        user.password = newPw;
-        const result = await saveUsers(list);
-        if(!result.ok){
-          alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
-          await refreshUsersFromServer();
-        } else {
-          logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
-          alert('Password reset.');
-        }
+      const result = await upsertUserOnServer(username, { password: newPw });
+      if(!result.ok){
+        alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
+      } else {
+        logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
+        alert('Password reset.');
       }
+      await refreshUsersFromServer();
       renderAdminUsersTab();
     });
   });
@@ -2189,16 +2211,14 @@ function renderAdminUsersTab(){
     btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       if(!confirm(`Remove user "${username}"?`)) return;
-      await refreshUsersFromServer(); // get the current server state right before writing
-      const list = loadUsers().filter(u => u.username !== username);
-      const result = await saveUsers(list);
+      const result = await deleteUserOnServer(username);
       if(!result.ok){
-        alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
-        await refreshUsersFromServer();
+        alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}).`);
       } else {
         logActivity(getAdminActingUsername(), `Removed user "${username}"`);
         if(getCurrentUser() === username){ clearCurrentUser(); }
       }
+      await refreshUsersFromServer();
       renderAdminUsersTab();
     });
   });
@@ -2206,21 +2226,20 @@ function renderAdminUsersTab(){
     btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       const key = btn.dataset.perm;
-      await refreshUsersFromServer(); // get the current server state right before writing
-      const list = loadUsers();
-      const user = list.find(u => u.username === username);
+      await refreshUsersFromServer();
+      const user = findUser(username);
       if(!user) return;
-      if(!user.permissions) user.permissions = blankPermissions();
-      const newVal = !user.permissions[key];
-      user.permissions[key] = newVal;
-      const result = await saveUsers(list);
+      const updatedPermissions = getUserPermissions(user);
+      const newVal = !updatedPermissions[key];
+      updatedPermissions[key] = newVal;
+      const result = await upsertUserOnServer(username, { permissions: updatedPermissions });
       if(!result.ok){
-        alert(`Couldn't update permissions — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
-        await refreshUsersFromServer();
+        alert(`Couldn't update permissions — the server rejected it (${result.error || 'error ' + result.status}).`);
       } else {
         const sectionName = ADMIN_SECTIONS.find(s => s.key === key).name;
         logActivity(getAdminActingUsername(), `${newVal ? 'Granted' : 'Revoked'} "${sectionName}" access for "${username}"`);
       }
+      await refreshUsersFromServer();
       renderAdminUsersTab();
     });
   });
