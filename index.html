@@ -1266,7 +1266,7 @@
   </button>
 
   <div class="home-footer">
-    <div class="app-version">v1.11.1</div>
+    <div class="app-version">v1.11.2</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1412,6 +1412,30 @@ async function syncPost(key, value){
   }catch(e){
     syncStatus = 'offline';
     return false;
+  }
+}
+
+// Same as syncPost, but returns the server's actual status/error instead
+// of collapsing everything down to true/false — used anywhere we need to
+// tell the person WHY a save failed, not just that it did.
+async function syncPostChecked(key, value){
+  if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  try{
+    const token = (typeof getActiveAuthToken === 'function') ? getActiveAuthToken() : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if(token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${SYNC_API_BASE}/data/${key}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(value)
+    });
+    syncStatus = 'ok';
+    let body = null;
+    try{ body = await res.json(); }catch(e){}
+    return { ok: res.ok, status: res.status, error: (body && body.error) ? body.error : null };
+  }catch(e){
+    syncStatus = 'offline';
+    return { ok:false, status:0, error:"Couldn't reach the server." };
   }
 }
 
@@ -1683,10 +1707,10 @@ function saveAllergens(list){
 function loadUsers(){
   return usersCache;
 }
-function saveUsers(users){
+async function saveUsers(users){
   usersCache = users;
   try{ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }catch(e){}
-  syncPost('stop-users', users);
+  return await syncPostChecked('stop-users', users);
 }
 function findUser(username){
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
@@ -2130,8 +2154,13 @@ function renderAdminUsersTab(){
     if(findUser(u)){ alert('That username already exists.'); return; }
     const list = loadUsers();
     list.push({ username: u, password: p, permissions: blankPermissions(), lastLogin: null, createdAt: new Date().toISOString() });
-    saveUsers(list);
-    logActivity(getAdminActingUsername(), `Added user "${u}"`);
+    const result = await saveUsers(list);
+    if(!result.ok){
+      alert(`Couldn't save the new user — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
+      await refreshUsersFromServer();
+    } else {
+      logActivity(getAdminActingUsername(), `Added user "${u}"`);
+    }
     renderAdminUsersTab();
   });
   content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
@@ -2144,9 +2173,14 @@ function renderAdminUsersTab(){
       const user = list.find(u => u.username === username);
       if(user){
         user.password = newPw;
-        saveUsers(list);
-        logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
-        alert('Password reset.');
+        const result = await saveUsers(list);
+        if(!result.ok){
+          alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
+          await refreshUsersFromServer();
+        } else {
+          logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
+          alert('Password reset.');
+        }
       }
       renderAdminUsersTab();
     });
@@ -2157,9 +2191,14 @@ function renderAdminUsersTab(){
       if(!confirm(`Remove user "${username}"?`)) return;
       await refreshUsersFromServer(); // get the current server state right before writing
       const list = loadUsers().filter(u => u.username !== username);
-      saveUsers(list);
-      logActivity(getAdminActingUsername(), `Removed user "${username}"`);
-      if(getCurrentUser() === username){ clearCurrentUser(); }
+      const result = await saveUsers(list);
+      if(!result.ok){
+        alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
+        await refreshUsersFromServer();
+      } else {
+        logActivity(getAdminActingUsername(), `Removed user "${username}"`);
+        if(getCurrentUser() === username){ clearCurrentUser(); }
+      }
       renderAdminUsersTab();
     });
   });
@@ -2174,9 +2213,14 @@ function renderAdminUsersTab(){
       if(!user.permissions) user.permissions = blankPermissions();
       const newVal = !user.permissions[key];
       user.permissions[key] = newVal;
-      saveUsers(list);
-      const sectionName = ADMIN_SECTIONS.find(s => s.key === key).name;
-      logActivity(getAdminActingUsername(), `${newVal ? 'Granted' : 'Revoked'} "${sectionName}" access for "${username}"`);
+      const result = await saveUsers(list);
+      if(!result.ok){
+        alert(`Couldn't update permissions — the server rejected it (${result.error || 'error ' + result.status}). Try logging out and back in, then try again.`);
+        await refreshUsersFromServer();
+      } else {
+        const sectionName = ADMIN_SECTIONS.find(s => s.key === key).name;
+        logActivity(getAdminActingUsername(), `${newVal ? 'Granted' : 'Revoked'} "${sectionName}" access for "${username}"`);
+      }
       renderAdminUsersTab();
     });
   });
