@@ -1141,6 +1141,18 @@
     color:var(--ink-soft);
     font-style:italic;
   }
+  .ingredient-plain-list{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+  }
+  .ingredient-plain-item{
+    font-size:13px;
+    color:var(--ink);
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .ingredient-plain-item:last-child{ border-bottom:none; }
   .admin-supply-row .ghost-btn{
     width:auto;
     padding:8px 12px;
@@ -1266,7 +1278,7 @@
   </button>
 
   <div class="home-footer">
-    <div class="app-version">v1.12.0</div>
+    <div class="app-version">v1.13.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -2142,9 +2154,19 @@ function renderAdmin(){
   else renderAdminActivityTab();
 }
 
+let viewingUserUsername = null; // null = list view; a username = detail view
+
 function renderAdminUsersTab(){
+  if(viewingUserUsername){
+    renderAdminUserDetail();
+  } else {
+    renderAdminUsersList();
+  }
+}
+
+function renderAdminUsersList(){
   const content = document.getElementById('admin-tab-content');
-  const users = loadUsers();
+  const users = [...loadUsers()].sort((a,b) => a.username.toLowerCase().localeCompare(b.username.toLowerCase()));
 
   content.innerHTML = `
     <div class="block-label">Add User</div>
@@ -2155,23 +2177,13 @@ function renderAdminUsersTab(){
     <div class="block-label" style="margin-top:32px;">Users</div>
     <div id="admin-user-list">
       ${users.length ? users.map(u => `
-        <div class="admin-user-row">
-          <div class="admin-user-name">
-            ${u.username}
-            <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${u.lastLogin ? `Last login: ${new Date(u.lastLogin).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</span>
-          </div>
-          <div class="admin-user-actions">
-            <button class="ghost-btn admin-reset-btn" data-username="${u.username}">Reset Password</button>
-            <button class="ghost-btn admin-remove-btn" data-username="${u.username}">Remove</button>
-          </div>
-        </div>
-        <div class="perm-chip-row">
-          ${PERMISSION_KEYS.map(key => {
-            const label = ADMIN_SECTIONS.find(s => s.key === key).name;
-            const active = getUserPermissions(u)[key];
-            return `<button class="perm-chip ${active ? 'active' : ''}" data-username="${u.username}" data-perm="${key}">${label}</button>`;
-          }).join('')}
-        </div>
+        <button class="card-btn admin-user-list-btn" data-username="${u.username}">
+          <span>
+            <span class="name">${u.username}</span>
+            <span class="meta">${u.lastLogin ? `Last login: ${new Date(u.lastLogin).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</span>
+          </span>
+          ${iconArrow()}
+        </button>
       `).join('') : `<p class="caption">No users yet.</p>`}
     </div>
   `;
@@ -2191,45 +2203,53 @@ function renderAdminUsersTab(){
     await refreshUsersFromServer();
     renderAdminUsersTab();
   });
-  content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const username = btn.dataset.username;
-      const newPw = prompt(`New password for ${username}:`);
-      if(!newPw) return;
-      const result = await upsertUserOnServer(username, { password: newPw });
-      if(!result.ok){
-        alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
-      } else {
-        logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
-        alert('Password reset.');
-      }
-      await refreshUsersFromServer();
+  content.querySelectorAll('.admin-user-list-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      viewingUserUsername = btn.dataset.username;
       renderAdminUsersTab();
     });
   });
-  content.querySelectorAll('.admin-remove-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const username = btn.dataset.username;
-      if(!confirm(`Remove user "${username}"?`)) return;
-      const result = await deleteUserOnServer(username);
-      if(!result.ok){
-        alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}).`);
-      } else {
-        logActivity(getAdminActingUsername(), `Removed user "${username}"`);
-        if(getCurrentUser() === username){ clearCurrentUser(); }
-      }
-      await refreshUsersFromServer();
-      renderAdminUsersTab();
-    });
+}
+
+function renderAdminUserDetail(){
+  const content = document.getElementById('admin-tab-content');
+  const user = findUser(viewingUserUsername);
+  if(!user){
+    viewingUserUsername = null;
+    renderAdminUsersList();
+    return;
+  }
+
+  content.innerHTML = `
+    <button class="back-btn" id="admin-user-detail-back"><span class="chev">←</span> Users</button>
+    <div class="block-label">${user.username}</div>
+    <p class="caption">${user.lastLogin ? `Last login: ${new Date(user.lastLogin).toLocaleString([], {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</p>
+
+    <div class="block-label" style="margin-top:24px;">Permissions</div>
+    <div class="perm-chip-row">
+      ${PERMISSION_KEYS.map(key => {
+        const label = ADMIN_SECTIONS.find(s => s.key === key).name;
+        const active = getUserPermissions(user)[key];
+        return `<button class="perm-chip ${active ? 'active' : ''}" data-username="${user.username}" data-perm="${key}">${label}</button>`;
+      }).join('')}
+    </div>
+
+    <button class="ghost-btn admin-reset-btn" data-username="${user.username}" style="margin-top:24px;">Reset Password</button>
+    <button class="ghost-btn admin-remove-btn" data-username="${user.username}">Remove User</button>
+  `;
+
+  document.getElementById('admin-user-detail-back').addEventListener('click', ()=>{
+    viewingUserUsername = null;
+    renderAdminUsersTab();
   });
   content.querySelectorAll('.perm-chip').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       const key = btn.dataset.perm;
       await refreshUsersFromServer();
-      const user = findUser(username);
-      if(!user) return;
-      const updatedPermissions = getUserPermissions(user);
+      const u = findUser(username);
+      if(!u) return;
+      const updatedPermissions = getUserPermissions(u);
       const newVal = !updatedPermissions[key];
       updatedPermissions[key] = newVal;
       const result = await upsertUserOnServer(username, { permissions: updatedPermissions });
@@ -2243,6 +2263,34 @@ function renderAdminUsersTab(){
       renderAdminUsersTab();
     });
   });
+  content.querySelector('.admin-reset-btn').addEventListener('click', async ()=>{
+    const username = user.username;
+    const newPw = prompt(`New password for ${username}:`);
+    if(!newPw) return;
+    const result = await upsertUserOnServer(username, { password: newPw });
+    if(!result.ok){
+      alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
+    } else {
+      logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
+      alert('Password reset.');
+    }
+    await refreshUsersFromServer();
+    renderAdminUsersTab();
+  });
+  content.querySelector('.admin-remove-btn').addEventListener('click', async ()=>{
+    const username = user.username;
+    if(!confirm(`Remove user "${username}"?`)) return;
+    const result = await deleteUserOnServer(username);
+    if(!result.ok){
+      alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}).`);
+    } else {
+      logActivity(getAdminActingUsername(), `Removed user "${username}"`);
+      if(getCurrentUser() === username){ clearCurrentUser(); }
+      viewingUserUsername = null;
+    }
+    await refreshUsersFromServer();
+    renderAdminUsersTab();
+  });
 }
 
 let editingProtocolId = null;
@@ -2250,7 +2298,10 @@ let protocolFormTarget = null; // tracks which protocol the row builders current
 let protocolPrepRows = [];
 let protocolTableMakeupRows = [];
 
-const OUNCE_OPTIONS = ['¼ oz','½ oz','¾ oz','1 oz','1¼ oz','1½ oz','1¾ oz','2 oz'];
+const OUNCE_OPTIONS = [
+  '¼ oz','½ oz','¾ oz','1 oz','1¼ oz','1½ oz','1¾ oz','2 oz',
+  '2½ oz','3 oz','3½ oz','4 oz','4½ oz','5 oz','5½ oz','6 oz','6½ oz','7 oz','7½ oz','8 oz'
+];
 const QUANTITY_OPTIONS = [1,2,3,4,5,6,7,8,9,10];
 
 function blankPrepRow(){ return { productId:'', amount:'', originalText:'' }; }
@@ -2314,6 +2365,15 @@ function tableMakeupRowHtml(row, idx, supplies){
 
 const PROTOCOL_SECTION_LABELS = { body: 'Body Treatments', kurr: 'Kurr Collection', massages: 'Massages', custom: 'Custom' };
 
+// A protocol counts as a couples treatment if explicitly flagged, or (for
+// protocols that predate the flag) if its name clearly says so.
+function isCouplesProtocol(p){
+  if(!p) return false;
+  if(p.couples === true) return true;
+  if(p.couples === false) return false;
+  return /couples/i.test(p.name) || p.name === 'The Art of Living';
+}
+
 function renderAdminProtocolsTab(){
   const content = document.getElementById('admin-tab-content');
   const protocols = loadCustomProtocols();
@@ -2341,6 +2401,19 @@ function renderAdminProtocolsTab(){
         <option value="massages" ${editing && editing.section==='massages' ? 'selected' : ''}>Massages</option>
         <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages') ? 'selected' : ''}>Custom</option>
       </select>
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select id="admin-new-protocol-kind">
+        <option value="full" ${(!editing || (editing.kind||'full')==='full') ? 'selected' : ''}>Full Treatment</option>
+        <option value="enhancement" ${editing && editing.kind==='enhancement' ? 'selected' : ''}>Enhancement</option>
+      </select>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:normal;">
+        <input type="checkbox" id="admin-new-protocol-couples" style="width:auto;" ${isCouplesProtocol(editing) ? 'checked' : ''}>
+        This is a couples treatment (two guests, two names)
+      </label>
     </div>
     <div class="field">
       <label>Description (optional)</label>
@@ -2382,7 +2455,7 @@ function renderAdminProtocolsTab(){
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
             <span class="admin-user-name">${p.name}</span>
-            <span class="tap-hint">${PROTOCOL_SECTION_LABELS[p.section] || 'Custom'} · Tap for details</span>
+            <span class="tap-hint">${PROTOCOL_SECTION_LABELS[p.section] || 'Custom'} · ${(p.kind === 'enhancement') ? 'Enhancement' : 'Full Treatment'} · Tap for details</span>
           </button>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-protocol-btn" data-id="${p.id}">Edit</button>
@@ -2445,6 +2518,8 @@ function renderAdminProtocolsTab(){
     const name = document.getElementById('admin-new-protocol-name').value.trim();
     const caption = document.getElementById('admin-new-protocol-caption').value.trim();
     const section = document.getElementById('admin-new-protocol-section').value;
+    const kind = document.getElementById('admin-new-protocol-kind').value;
+    const couples = document.getElementById('admin-new-protocol-couples').checked;
     const description = document.getElementById('admin-new-protocol-description').value.trim();
     const calloutsText = document.getElementById('admin-new-protocol-callouts').value;
     const stepsText = document.getElementById('admin-new-protocol-steps').value;
@@ -2488,6 +2563,8 @@ function renderAdminProtocolsTab(){
         existing.name = name;
         existing.caption = caption || '';
         existing.section = section;
+        existing.kind = kind;
+        existing.couples = couples;
         if(description) existing.menuDescription = description; else delete existing.menuDescription;
         if(callouts.length) existing.callouts = callouts; else delete existing.callouts;
         if(tableMakeup.length) existing.tableMakeup = tableMakeup; else delete existing.tableMakeup;
@@ -2503,6 +2580,8 @@ function renderAdminProtocolsTab(){
         name,
         caption: caption || '',
         section,
+        kind,
+        couples,
         createdAt: new Date().toISOString()
       };
       if(description) protocol.menuDescription = description;
@@ -2792,19 +2871,23 @@ async function loadBackupListIntoTab(){
   });
 }
 
+let editingProductId = null;
+
 function renderAdminProductsTab(){
   const content = document.getElementById('admin-tab-content');
   const products = loadProducts();
+  const editing = editingProductId ? products.find(p => p.id === editingProductId) : null;
 
   content.innerHTML = `
-    <div class="block-label">Add Product</div>
-    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis"></div>
-    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name"></div>
+    <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Product'}</div>
+    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis" value="${editing ? (editing.brand || '') : ''}"></div>
+    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name" value="${editing ? editing.name : ''}"></div>
     <div class="field">
       <label>Paste Ingredients</label>
-      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks"></textarea>
+      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks">${editing && editing.ingredients ? editing.ingredients.join(', ') : ''}</textarea>
     </div>
-    <button class="primary-btn" id="admin-add-product-btn">Add Product</button>
+    <button class="primary-btn" id="admin-add-product-btn">${editing ? 'Save Changes' : 'Add Product'}</button>
+    ${editing ? `<button class="ghost-btn" id="admin-cancel-product-btn">Cancel Edit</button>` : ''}
 
     <div class="block-label" style="margin-top:32px;">Products</div>
     <div id="admin-product-list">
@@ -2814,11 +2897,14 @@ function renderAdminProductsTab(){
             <span class="admin-user-name">${p.name}${p.brand ? ` <span class="admin-supply-empty">— ${p.brand}</span>` : ''}</span>
             <span class="tap-hint">${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : 'No ingredients listed'}</span>
           </button>
-          <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
+          <div class="admin-user-actions">
+            <button class="ghost-btn admin-edit-product-btn" data-id="${p.id}">Edit</button>
+            <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
+          </div>
         </div>
         <div class="admin-ingredient-tags hidden" id="ingredients-${p.id}">
           ${p.ingredients && p.ingredients.length
-            ? p.ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')
+            ? `<div class="ingredient-plain-list">${[...p.ingredients].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(i => `<div class="ingredient-plain-item">${i}</div>`).join('')}</div>`
             : ''}
         </div>
       `).join('') : `<p class="caption">No products yet.</p>`}
@@ -2832,15 +2918,41 @@ function renderAdminProductsTab(){
     if(!name){ alert('Enter a product name.'); return; }
     const ingredients = parseIngredientsText(ingredientsText);
     const list = loadProducts();
-    list.push({ id: makeId(), brand, name, ingredients, createdAt: new Date().toISOString() });
-    saveProducts(list);
-    logActivity(getAdminActingUsername(), `Added product "${name}"`);
+    if(editingProductId){
+      const existing = list.find(p => p.id === editingProductId);
+      if(existing){
+        existing.brand = brand;
+        existing.name = name;
+        existing.ingredients = ingredients;
+        saveProducts(list);
+        logActivity(getAdminActingUsername(), `Edited product "${name}"`);
+      }
+      editingProductId = null;
+    } else {
+      list.push({ id: makeId(), brand, name, ingredients, createdAt: new Date().toISOString() });
+      saveProducts(list);
+      logActivity(getAdminActingUsername(), `Added product "${name}"`);
+    }
     renderAdminProductsTab();
   });
+  const cancelProductBtn = document.getElementById('admin-cancel-product-btn');
+  if(cancelProductBtn){
+    cancelProductBtn.addEventListener('click', ()=>{
+      editingProductId = null;
+      renderAdminProductsTab();
+    });
+  }
   content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const panel = document.getElementById(`ingredients-${btn.dataset.id}`);
       if(panel) panel.classList.toggle('hidden');
+    });
+  });
+  content.querySelectorAll('.admin-edit-product-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingProductId = btn.dataset.id;
+      renderAdminProductsTab();
+      content.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
   content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
@@ -2851,6 +2963,7 @@ function renderAdminProductsTab(){
       const list = loadProducts().filter(p => p.id !== id);
       saveProducts(list);
       logActivity(getAdminActingUsername(), `Removed product "${product ? product.name : id}"`);
+      if(editingProductId === id) editingProductId = null;
       renderAdminProductsTab();
     });
   });
@@ -3119,6 +3232,37 @@ async function runImport2026_09(){
   logActivity('System', `Imported ${IMPORT_PRODUCTS_2026_09.length} products and ${IMPORT_MASSAGES_2026_09.length} massage protocols (2026-09 batch)`);
 }
 
+// The Full Treatment / Enhancement classification was added after the
+// 2026-09 import above, so those three enhancement protocols would
+// otherwise default to "Full Treatment" until someone noticed and fixed
+// each one by hand. This runs once, only sets `kind` where it isn't
+// already explicitly set (so it never overrides a manual edit), and
+// never touches anything else.
+const RECLASSIFY_ENHANCEMENTS_FLAG_KEY = 'stop-reclassify-enhancements-2026-09';
+const KNOWN_ENHANCEMENT_NAMES = new Set([
+  'thermabliss hot stone enhancement',
+  'divine hair and scalp enhancement',
+  'cbd massage enhancement',
+]);
+async function runReclassifyEnhancements2026_09(){
+  const alreadyDone = await syncGet(RECLASSIFY_ENHANCEMENTS_FLAG_KEY);
+  if(alreadyDone === true) return;
+
+  const protocols = loadCustomProtocols();
+  let changed = false;
+  protocols.forEach(p => {
+    if(p.kind === undefined && KNOWN_ENHANCEMENT_NAMES.has(p.name.toLowerCase())){
+      p.kind = 'enhancement';
+      changed = true;
+    }
+  });
+  if(changed){
+    saveCustomProtocols(protocols);
+    logActivity('System', 'Classified known enhancement protocols (Thermabliss, Divine Hair and Scalp, CBD Massage Enhancement)');
+  }
+  await syncPost(RECLASSIFY_ENHANCEMENTS_FLAG_KEY, true);
+}
+
 async function bootstrapAuth(){
   await Promise.all([
     refreshUsersFromServer(),
@@ -3130,6 +3274,7 @@ async function bootstrapAuth(){
     refreshAllergensFromServer()
   ]);
   await runImport2026_09();
+  await runReclassifyEnhancements2026_09();
   checkAuthAndRender();
   setInterval(async ()=>{
     await refreshUsersFromServer();
@@ -3169,35 +3314,33 @@ const TIME_OPTIONS = (() => {
   return opts;
 })();
 
-const SERVICE_OPTIONS = {
-  "Massages":[
-    "Nature's Healer Massage","Warm Bamboo Massage","Deep Tissue Massage",
-    "Monet's Favorite Fragrance Massage","Mirbeau Signature Massage",
-    "Men's Essential Massage","Mother-To-Be Massage","Just the Essentials Massage",
-    "Ashiatsu Massage","Thai Massage"
-  ],
-  "Body Treatments":[
-    "French Sea Detox","A Walk in the Forest","Impressionist Retreat",
-    "Exotic Nourish Wrap","Mirbeau Signature Ritual","Mother-To-Be Body Polish"
-  ],
-  "Kurs":[
-    "Pure Zen Journey","Mirbeau Luxury Collection"
-  ],
-  "Couples":[
-    "The Art of Living","Mirbeau Signature Couples Massage"
-  ]
-};
+// Service and Enhancement options are no longer a separate hardcoded
+// list — they're pulled live from Protocols, grouped by Section, and
+// filtered by the Full Treatment / Enhancement classification set in
+// Management → Protocols. Adding or renaming a protocol there is
+// immediately reflected here, with nothing to keep in sync by hand.
+function getServiceOptionsFromProtocols(){
+  const protocols = loadCustomProtocols().filter(p => (p.kind || 'full') === 'full');
+  const groups = {};
+  protocols.forEach(p => {
+    const groupLabel = PROTOCOL_SECTION_LABELS[p.section] || 'Custom';
+    if(!groups[groupLabel]) groups[groupLabel] = [];
+    groups[groupLabel].push(p.name);
+  });
+  Object.keys(groups).forEach(g => groups[g].sort((a,b)=>a.localeCompare(b)));
+  return groups;
+}
+
+function getEnhancementOptionsFromProtocols(){
+  const protocols = loadCustomProtocols().filter(p => p.kind === 'enhancement');
+  if(!protocols.length) return {};
+  return { 'Enhancements': protocols.map(p => p.name).sort((a,b)=>a.localeCompare(b)) };
+}
 
 const ROOM_OPTIONS = [
   "Room 0","Room 1","Room 2","Room 3","Room 4","Room 5","Room 6",
   "Lavender Room","Water Lilies Room","Monet Room"
 ];
-
-const ENHANCEMENT_OPTIONS = {
-  "Massage Enhancement":[
-    "CBD","Hot Stone Melter","Divine Hair and Scalp"
-  ]
-};
 
 function formatSlotTime(minutes){
   const h24 = Math.floor(minutes/60), min = minutes%60;
@@ -3283,7 +3426,7 @@ function matchServiceName(extractedText){
   const extractedWords = normalizeServiceWords(extractedText);
   if(!extractedWords.length) return '';
   let best = '', bestScore = 0;
-  Object.values(SERVICE_OPTIONS).flat().forEach(candidate => {
+  Object.values(getServiceOptionsFromProtocols()).flat().forEach(candidate => {
     const candWords = normalizeServiceWords(candidate);
     const overlap = extractedWords.filter(w => candWords.includes(w)).length;
     const score = overlap / extractedWords.length;
@@ -3793,6 +3936,14 @@ function allergenSortKey(entry){
   return (entry.commonName || entry.fullName || '').toLowerCase();
 }
 
+function getMatchingProducts(entry){
+  const products = loadProducts();
+  const searchTerms = new Set((entry.matchKeys || [entry.fullName]).map(s => s.trim().toLowerCase()));
+  return products
+    .filter(p => (p.ingredients || []).some(ing => searchTerms.has(ing.trim().toLowerCase())))
+    .sort((a,b) => a.name.localeCompare(b.name));
+}
+
 function getProtocolSafety(entry){
   const products = loadProducts();
   const searchTerms = new Set((entry.matchKeys || [entry.fullName]).map(s => s.trim().toLowerCase()));
@@ -3905,6 +4056,7 @@ function renderAllergyDetail(){
     return;
   }
   const { safe, unsafe } = getProtocolSafety(entry);
+  const matchingProducts = getMatchingProducts(entry);
 
   allergyInner.innerHTML = `
     <button class="back-btn" id="allergy-back"><span class="chev">←</span> Allergy Lookup</button>
@@ -3912,7 +4064,19 @@ function renderAllergyDetail(){
       <h2>${allergenDisplayName(entry)}</h2>
       <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
 
-      <div class="block-label">⚠️ Contains This Ingredient — Avoid</div>
+      <div class="block-label">Products That Contain It</div>
+      ${matchingProducts.length ? `
+        <div class="grid">
+          ${matchingProducts.map(p => `
+            <button class="card-btn allergy-product-btn" data-id="${p.id}">
+              <span><span class="name">${p.name}</span>${p.brand ? `<span class="meta">${p.brand}</span>` : ''}</span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : `<p class="caption">No products in your list contain this ingredient.</p>`}
+
+      <div class="block-label" style="margin-top:28px;">⚠️ Treatments That Use It — Avoid</div>
       ${unsafe.length ? `
         <div class="grid">
           ${unsafe.map(p => `
@@ -3922,7 +4086,7 @@ function renderAllergyDetail(){
             </button>
           `).join('')}
         </div>
-      ` : `<p class="caption">No protocols contain this ingredient.</p>`}
+      ` : `<p class="caption">No protocols use this ingredient.</p>`}
 
       <div class="block-label" style="margin-top:28px;">✅ Recommended Treatments</div>
       ${safe.length ? `
@@ -3949,6 +4113,12 @@ function renderAllergyDetail(){
       openDetail(btn.dataset.id);
     });
   });
+  allergyInner.querySelectorAll('.allergy-product-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      closeAllergyLookup();
+      openProductDetailDirect(btn.dataset.id);
+    });
+  });
 }
 
 document.getElementById('open-allergy-lookup').addEventListener('click', openAllergyLookup);
@@ -3963,6 +4133,15 @@ let productsBrowseSelectedId = null;
 function openProductsBrowse(){
   productsBrowseStep = 'list';
   productsBrowseSelectedId = null;
+  renderProductsBrowse();
+  productsBrowseOverlay.classList.add('open');
+  productsBrowseOverlay.scrollTop = 0;
+}
+// Opens the Products browse overlay straight to one product's detail,
+// e.g. from a tap in the Allergy Lookup.
+function openProductDetailDirect(productId){
+  productsBrowseStep = 'detail';
+  productsBrowseSelectedId = productId;
   renderProductsBrowse();
   productsBrowseOverlay.classList.add('open');
   productsBrowseOverlay.scrollTop = 0;
@@ -4026,8 +4205,8 @@ function renderProductsBrowseDetail(){
       ${product.brand ? `<p class="caption">${product.brand}</p>` : ''}
       <div class="block-label">Ingredients</div>
       ${ingredients.length ? `
-        <div class="admin-ingredient-tags">
-          ${ingredients.map(i => `<span class="ingredient-tag">${i}</span>`).join('')}
+        <div class="ingredient-plain-list">
+          ${ingredients.map(i => `<div class="ingredient-plain-item">${i}</div>`).join('')}
         </div>
       ` : `<p class="caption">No ingredients listed for this product.</p>`}
     </div>
@@ -4273,9 +4452,10 @@ function renderAgendaSetup(){
 
 function serviceOptionsHtml(selected){
   let html = `<option value="">Select service…</option>`;
-  Object.keys(SERVICE_OPTIONS).forEach(group=>{
+  const options = getServiceOptionsFromProtocols();
+  Object.keys(options).forEach(group=>{
     html += `<optgroup label="${group}">`;
-    html += SERVICE_OPTIONS[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
+    html += options[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
     html += `</optgroup>`;
   });
   return html;
@@ -4283,16 +4463,18 @@ function serviceOptionsHtml(selected){
 
 function enhancementOptionsHtml(selected){
   let html = `<option value="">Add enhancement (optional)…</option>`;
-  Object.keys(ENHANCEMENT_OPTIONS).forEach(group=>{
+  const options = getEnhancementOptionsFromProtocols();
+  Object.keys(options).forEach(group=>{
     html += `<optgroup label="${group}">`;
-    html += ENHANCEMENT_OPTIONS[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
+    html += options[group].map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('');
     html += `</optgroup>`;
   });
   return html;
 }
 
 function isCouplesService(serviceName){
-  return SERVICE_OPTIONS["Couples"].includes(serviceName);
+  const protocol = loadCustomProtocols().find(p => p.name === serviceName);
+  return isCouplesProtocol(protocol);
 }
 
 function roomOptionsHtml(selected){
