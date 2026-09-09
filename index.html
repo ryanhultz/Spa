@@ -810,45 +810,26 @@
     font-size:11px;
   }
   .add-time-btn:disabled{ opacity:0.5; cursor:not-allowed; }
-  .duration-toggle{
-    position:relative;
-    display:inline-flex;
-    width:116px;
+  .duration-select{
+    all:unset;
+    box-sizing:border-box;
     height:32px;
-    background:var(--stone);
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:3px;
-    cursor:pointer;
-    user-select:none;
-  }
-  .dur-thumb{
-    position:absolute;
-    top:3px; left:3px;
-    width:calc(50% - 3px);
-    height:calc(100% - 6px);
     background:var(--sage);
+    color:#fff;
+    border:1px solid var(--sage-deep);
     border-radius:999px;
-    transition:transform .2s cubic-bezier(.4,0,.2,1);
-    box-shadow:0 1px 4px rgba(43,42,36,0.25);
-  }
-  .duration-toggle.on-100 .dur-thumb{
-    transform:translateX(100%);
-  }
-  .dur-opt{
-    position:relative;
-    z-index:1;
-    flex:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    padding:0 30px 0 14px;
     font-family:'JetBrains Mono',monospace;
-    font-size:10.5px;
+    font-size:11px;
     letter-spacing:.03em;
-    color:var(--ink-soft);
-    transition:color .2s ease;
+    cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    background-size:14px;
+    appearance:none;
+    -webkit-appearance:none;
   }
-  .dur-opt.active{ color:#fff; }
   .slot-row input, .slot-row select{
     all:unset;
     box-sizing:border-box;
@@ -1261,24 +1242,10 @@
     <span class="arrow">→</span>
   </button>
 
-  <a class="agenda-entry link-entry" href="https://spa.agilysys.com/Spa/appointment/newappointment" target="_blank" rel="noopener">
-    <span class="agenda-entry-text">
-      <span class="ae-label">Agilysys</span>
-      <span class="ae-sub">Open new appointment booking</span>
-    </span>
-    <span class="arrow">→</span>
-  </a>
-
-  <button class="agenda-entry link-entry" id="open-breakroom">
-    <span class="agenda-entry-text">
-      <span class="ae-label">Breakroom</span>
-      <span class="ae-sub">Open the Breakroom app</span>
-    </span>
-    <span class="arrow">→</span>
-  </button>
+  <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.13.0</div>
+    <div class="app-version">v1.14.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1656,6 +1623,69 @@ function saveSupplies(list){
   syncPost('stop-supplies', list);
 }
 
+/* ---- Settings: Rooms, Durations, Categories, Home Links ---- */
+
+const ROOMS_KEY = 'stopRooms_v1';
+const DURATIONS_KEY = 'stopDurations_v1';
+const CATEGORIES_KEY = 'stopCategories_v1';
+const HOME_LINKS_KEY = 'stopHomeLinks_v1';
+
+let roomsCache = [];
+let durationsCache = [];
+let categoriesCache = [];
+let homeLinksCache = [];
+
+function loadRoomsLocalFallback(){ try{ return JSON.parse(localStorage.getItem(ROOMS_KEY)) || []; }catch(e){ return []; } }
+function loadDurationsLocalFallback(){ try{ return JSON.parse(localStorage.getItem(DURATIONS_KEY)) || []; }catch(e){ return []; } }
+function loadCategoriesLocalFallback(){ try{ return JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || []; }catch(e){ return []; } }
+function loadHomeLinksLocalFallback(){ try{ return JSON.parse(localStorage.getItem(HOME_LINKS_KEY)) || []; }catch(e){ return []; } }
+
+async function refreshRoomsFromServer(){
+  const remote = await syncGet('stop-rooms');
+  if(Array.isArray(remote)){ roomsCache = remote; try{ localStorage.setItem(ROOMS_KEY, JSON.stringify(roomsCache)); }catch(e){} }
+  else { roomsCache = loadRoomsLocalFallback(); }
+}
+async function refreshDurationsFromServer(){
+  const remote = await syncGet('stop-durations');
+  if(Array.isArray(remote)){ durationsCache = remote; try{ localStorage.setItem(DURATIONS_KEY, JSON.stringify(durationsCache)); }catch(e){} }
+  else { durationsCache = loadDurationsLocalFallback(); }
+}
+async function refreshCategoriesFromServer(){
+  const remote = await syncGet('stop-categories');
+  if(Array.isArray(remote)){ categoriesCache = remote; try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categoriesCache)); }catch(e){} }
+  else { categoriesCache = loadCategoriesLocalFallback(); }
+}
+async function refreshHomeLinksFromServer(){
+  const remote = await syncGet('stop-home-links');
+  if(Array.isArray(remote)){ homeLinksCache = remote; try{ localStorage.setItem(HOME_LINKS_KEY, JSON.stringify(homeLinksCache)); }catch(e){} }
+  else { homeLinksCache = loadHomeLinksLocalFallback(); }
+}
+
+function loadRooms(){ return roomsCache; }
+function saveRooms(list){
+  roomsCache = list;
+  try{ localStorage.setItem(ROOMS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-rooms', list);
+}
+function loadDurations(){ return durationsCache; }
+function saveDurations(list){
+  durationsCache = list;
+  try{ localStorage.setItem(DURATIONS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-durations', list);
+}
+function loadCategories(){ return categoriesCache; }
+function saveCategories(list){
+  categoriesCache = list;
+  try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-categories', list);
+}
+function loadHomeLinks(){ return homeLinksCache; }
+function saveHomeLinks(list){
+  homeLinksCache = list;
+  try{ localStorage.setItem(HOME_LINKS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-home-links', list);
+}
+
 function parseIngredientsText(text){
   return text
     .split(/[\n,;]+/)
@@ -1799,7 +1829,7 @@ function getActiveAuthToken(){
   return getSessionToken();
 }
 
-const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup','errors'];
+const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup','errors','settings'];
 function blankPermissions(){
   const p = {};
   PERMISSION_KEYS.forEach(k => p[k] = false);
@@ -1996,6 +2026,7 @@ const ADMIN_SECTIONS = [
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
   { key: 'backup', name: 'Backup', meta: 'Back up and restore all data' },
   { key: 'errors', name: 'Error Log', meta: 'Review recent app errors' },
+  { key: 'settings', name: 'Settings', meta: 'Rooms, durations, categories, and Home links' },
 ];
 
 function getEffectiveAdminPermissions(){
@@ -2151,6 +2182,7 @@ function renderAdmin(){
   else if(adminTab === 'allergens') renderAdminAllergensTab();
   else if(adminTab === 'backup') renderAdminBackupTab();
   else if(adminTab === 'errors') renderAdminErrorsTab();
+  else if(adminTab === 'settings') renderAdminSettingsTab();
   else renderAdminActivityTab();
 }
 
@@ -2399,7 +2431,8 @@ function renderAdminProtocolsTab(){
         <option value="body" ${editing && editing.section==='body' ? 'selected' : ''}>Body Treatments</option>
         <option value="kurr" ${editing && editing.section==='kurr' ? 'selected' : ''}>Kurr Collection</option>
         <option value="massages" ${editing && editing.section==='massages' ? 'selected' : ''}>Massages</option>
-        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages') ? 'selected' : ''}>Custom</option>
+        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages' && !loadCategories().includes(editing.section)) ? 'selected' : ''}>Custom</option>
+        ${loadCategories().map(c => `<option value="${c}" ${editing && editing.section===c ? 'selected' : ''}>${c}</option>`).join('')}
       </select>
     </div>
     <div class="field">
@@ -2455,7 +2488,7 @@ function renderAdminProtocolsTab(){
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
             <span class="admin-user-name">${p.name}</span>
-            <span class="tap-hint">${PROTOCOL_SECTION_LABELS[p.section] || 'Custom'} · ${(p.kind === 'enhancement') ? 'Enhancement' : 'Full Treatment'} · Tap for details</span>
+            <span class="tap-hint">${PROTOCOL_SECTION_LABELS[p.section] || p.section || 'Custom'} · ${(p.kind === 'enhancement') ? 'Enhancement' : 'Full Treatment'} · Tap for details</span>
           </button>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-protocol-btn" data-id="${p.id}">Edit</button>
@@ -2780,6 +2813,249 @@ function renderAdminErrorsTab(){
   }
 }
 
+/* ---------- Settings: Rooms / Durations / Categories / Home Links ---------- */
+
+let settingsSubTab = 'rooms'; // 'rooms' | 'durations' | 'categories' | 'homelinks'
+
+function renderAdminSettingsTab(){
+  const content = document.getElementById('admin-tab-content');
+  const subTabs = [
+    { key: 'rooms', label: 'Rooms' },
+    { key: 'durations', label: 'Durations' },
+    { key: 'categories', label: 'Categories' },
+    { key: 'homelinks', label: 'Home Links' },
+  ];
+
+  content.innerHTML = `
+    <div class="perm-chip-row">
+      ${subTabs.map(t => `<button class="perm-chip ${settingsSubTab===t.key?'active':''}" data-subtab="${t.key}">${t.label}</button>`).join('')}
+    </div>
+    <div id="settings-subtab-content"></div>
+  `;
+
+  content.querySelectorAll('[data-subtab]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      settingsSubTab = btn.dataset.subtab;
+      renderAdminSettingsTab();
+    });
+  });
+
+  if(settingsSubTab === 'rooms') renderSettingsRoomsSubTab();
+  else if(settingsSubTab === 'durations') renderSettingsDurationsSubTab();
+  else if(settingsSubTab === 'categories') renderSettingsCategoriesSubTab();
+  else renderSettingsHomeLinksSubTab();
+}
+
+function renderSettingsRoomsSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const rooms = [...loadRooms()].sort((a,b) => a.name.localeCompare(b.name));
+
+  el.innerHTML = `
+    <div class="field"><label>Room Name</label><input type="text" id="settings-new-room-name" placeholder="e.g. Room 7"></div>
+    <button class="primary-btn" id="settings-add-room-btn">Add Room</button>
+    <div class="block-label" style="margin-top:24px;">Rooms</div>
+    ${rooms.length ? rooms.map(r => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${r.name}</div>
+        <div class="admin-user-actions">
+          <button class="ghost-btn settings-remove-room-btn" data-id="${r.id}">Remove</button>
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No rooms yet.</p>`}
+  `;
+
+  document.getElementById('settings-add-room-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('settings-new-room-name').value.trim();
+    if(!name){ alert('Enter a room name.'); return; }
+    const list = loadRooms();
+    if(list.some(r => r.name.toLowerCase() === name.toLowerCase())){ alert('That room already exists.'); return; }
+    list.push({ id: makeId(), name });
+    saveRooms(list);
+    logActivity(getAdminActingUsername(), `Added room "${name}"`);
+    renderSettingsRoomsSubTab();
+  });
+  el.querySelectorAll('.settings-remove-room-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const room = loadRooms().find(r => r.id === btn.dataset.id);
+      if(!confirm(`Remove room "${room ? room.name : ''}"?`)) return;
+      saveRooms(loadRooms().filter(r => r.id !== btn.dataset.id));
+      logActivity(getAdminActingUsername(), `Removed room "${room ? room.name : ''}"`);
+      renderSettingsRoomsSubTab();
+    });
+  });
+}
+
+function renderSettingsDurationsSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const durations = [...loadDurations()].sort((a,b) => a - b);
+
+  el.innerHTML = `
+    <p class="caption">The shortest duration is the default for new appointment slots. Any longer duration takes up the next time slot too, the same way 100-minute services always have.</p>
+    <div class="field"><label>Duration (minutes)</label><input type="number" id="settings-new-duration" placeholder="e.g. 80" min="5" step="5"></div>
+    <button class="primary-btn" id="settings-add-duration-btn">Add Duration</button>
+    <div class="block-label" style="margin-top:24px;">Durations</div>
+    ${durations.length ? durations.map(d => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${d} min</div>
+        <div class="admin-user-actions">
+          ${durations.length > 1 ? `<button class="ghost-btn settings-remove-duration-btn" data-value="${d}">Remove</button>` : ''}
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No durations configured.</p>`}
+  `;
+
+  document.getElementById('settings-add-duration-btn').addEventListener('click', ()=>{
+    const val = parseInt(document.getElementById('settings-new-duration').value, 10);
+    if(!val || val <= 0){ alert('Enter a valid number of minutes.'); return; }
+    const list = loadDurations();
+    if(list.includes(val)){ alert('That duration already exists.'); return; }
+    list.push(val);
+    saveDurations(list);
+    logActivity(getAdminActingUsername(), `Added duration "${val} min"`);
+    renderSettingsDurationsSubTab();
+  });
+  el.querySelectorAll('.settings-remove-duration-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const val = parseInt(btn.dataset.value, 10);
+      if(!confirm(`Remove the ${val} min duration?`)) return;
+      const list = loadDurations().filter(d => d !== val);
+      if(!list.length){ alert('At least one duration must remain.'); return; }
+      saveDurations(list);
+      logActivity(getAdminActingUsername(), `Removed duration "${val} min"`);
+      renderSettingsDurationsSubTab();
+    });
+  });
+}
+
+const BUILT_IN_CATEGORIES = ['body', 'kurr', 'massages', 'custom'];
+
+function renderSettingsCategoriesSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const categories = [...loadCategories()].sort((a,b) => a.localeCompare(b));
+
+  el.innerHTML = `
+    <p class="caption">Body Treatments, Kurr Collection, Massages, and Custom are always available. Add more here — they'll show up in the Protocol form's Section list right away.</p>
+    <div class="field"><label>Category Name</label><input type="text" id="settings-new-category" placeholder="e.g. Facials"></div>
+    <button class="primary-btn" id="settings-add-category-btn">Add Category</button>
+    <div class="block-label" style="margin-top:24px;">Custom Categories</div>
+    ${categories.length ? categories.map(c => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${c}</div>
+        <div class="admin-user-actions">
+          <button class="ghost-btn settings-remove-category-btn" data-value="${c}">Remove</button>
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No custom categories yet.</p>`}
+  `;
+
+  document.getElementById('settings-add-category-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('settings-new-category').value.trim();
+    if(!name){ alert('Enter a category name.'); return; }
+    if(BUILT_IN_CATEGORIES.includes(name.toLowerCase())){ alert('That name is already a built-in category.'); return; }
+    const list = loadCategories();
+    if(list.some(c => c.toLowerCase() === name.toLowerCase())){ alert('That category already exists.'); return; }
+    list.push(name);
+    saveCategories(list);
+    logActivity(getAdminActingUsername(), `Added protocol category "${name}"`);
+    renderSettingsCategoriesSubTab();
+  });
+  el.querySelectorAll('.settings-remove-category-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const name = btn.dataset.value;
+      if(!confirm(`Remove category "${name}"? Protocols already using it will keep showing it as their category, but it won't be offered for new ones.`)) return;
+      saveCategories(loadCategories().filter(c => c !== name));
+      logActivity(getAdminActingUsername(), `Removed protocol category "${name}"`);
+      renderSettingsCategoriesSubTab();
+    });
+  });
+}
+
+let editingHomeLinkId = null;
+
+function renderSettingsHomeLinksSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const links = loadHomeLinks();
+  const editing = editingHomeLinkId ? links.find(l => l.id === editingHomeLinkId) : null;
+
+  el.innerHTML = `
+    <div class="block-label">${editing ? `Editing "${editing.label}"` : 'Add Home Link'}</div>
+    <div class="field"><label>Label</label><input type="text" id="settings-link-label" value="${editing ? editing.label : ''}"></div>
+    <div class="field"><label>Subtitle</label><input type="text" id="settings-link-subtitle" value="${editing ? (editing.subtitle || '') : ''}"></div>
+    <div class="field">
+      <label>Type</label>
+      <select id="settings-link-type">
+        <option value="url" ${(!editing || editing.type==='url') ? 'selected' : ''}>Website (opens in browser)</option>
+        <option value="scheme" ${editing && editing.type==='scheme' ? 'selected' : ''}>App (opens another app)</option>
+      </select>
+    </div>
+    <div class="field"><label>Web Address or App Scheme</label><input type="text" id="settings-link-target" placeholder="https://... or myapp://" value="${editing ? editing.target : ''}"></div>
+    <div class="field"><label>Fallback Website (optional, for App type)</label><input type="text" id="settings-link-fallback" placeholder="https://... shown if the app isn't installed" value="${editing ? (editing.fallbackUrl || '') : ''}"></div>
+    <button class="primary-btn" id="settings-save-link-btn">${editing ? 'Save Changes' : 'Add Home Link'}</button>
+    ${editing ? `<button class="ghost-btn" id="settings-cancel-link-btn">Cancel Edit</button>` : ''}
+
+    <div class="block-label" style="margin-top:32px;">Home Links</div>
+    ${links.length ? links.map(l => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${l.label}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${l.subtitle || ''}</span></div>
+        <div class="admin-user-actions">
+          <button class="ghost-btn settings-edit-link-btn" data-id="${l.id}">Edit</button>
+          <button class="ghost-btn settings-remove-link-btn" data-id="${l.id}">Remove</button>
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No Home links yet.</p>`}
+  `;
+
+  document.getElementById('settings-save-link-btn').addEventListener('click', ()=>{
+    const label = document.getElementById('settings-link-label').value.trim();
+    const subtitle = document.getElementById('settings-link-subtitle').value.trim();
+    const type = document.getElementById('settings-link-type').value;
+    const target = document.getElementById('settings-link-target').value.trim();
+    const fallbackUrl = document.getElementById('settings-link-fallback').value.trim();
+    if(!label || !target){ alert('Enter at least a label and a web address or app scheme.'); return; }
+    const list = loadHomeLinks();
+    if(editingHomeLinkId){
+      const existing = list.find(l => l.id === editingHomeLinkId);
+      if(existing){
+        existing.label = label; existing.subtitle = subtitle; existing.type = type; existing.target = target;
+        if(fallbackUrl) existing.fallbackUrl = fallbackUrl; else delete existing.fallbackUrl;
+        logActivity(getAdminActingUsername(), `Edited Home link "${label}"`);
+      }
+      editingHomeLinkId = null;
+    } else {
+      const link = { id: makeId(), label, subtitle, type, target };
+      if(fallbackUrl) link.fallbackUrl = fallbackUrl;
+      list.push(link);
+      logActivity(getAdminActingUsername(), `Added Home link "${label}"`);
+    }
+    saveHomeLinks(list);
+    renderHomeLinks();
+    renderSettingsHomeLinksSubTab();
+  });
+  const cancelLinkBtn = document.getElementById('settings-cancel-link-btn');
+  if(cancelLinkBtn){
+    cancelLinkBtn.addEventListener('click', ()=>{
+      editingHomeLinkId = null;
+      renderSettingsHomeLinksSubTab();
+    });
+  }
+  el.querySelectorAll('.settings-edit-link-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingHomeLinkId = btn.dataset.id;
+      renderSettingsHomeLinksSubTab();
+    });
+  });
+  el.querySelectorAll('.settings-remove-link-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const link = loadHomeLinks().find(l => l.id === btn.dataset.id);
+      if(!confirm(`Remove the "${link ? link.label : ''}" Home link?`)) return;
+      saveHomeLinks(loadHomeLinks().filter(l => l.id !== btn.dataset.id));
+      logActivity(getAdminActingUsername(), `Removed Home link "${link ? link.label : ''}"`);
+      renderHomeLinks();
+      renderSettingsHomeLinksSubTab();
+    });
+  });
+}
+
 function renderAdminBackupTab(){
   const content = document.getElementById('admin-tab-content');
 
@@ -2845,9 +3121,11 @@ async function loadBackupListIntoTab(){
         logActivity(getAdminActingUsername(), `Restored backup from ${btn.dataset.key}`);
         await Promise.all([
           refreshUsersFromServer(), refreshActivityFromServer(), refreshProductsFromServer(),
-          refreshSuppliesFromServer(), refreshCustomProtocolsFromServer(), refreshAllergensFromServer()
+          refreshSuppliesFromServer(), refreshCustomProtocolsFromServer(), refreshAllergensFromServer(),
+          refreshRoomsFromServer(), refreshDurationsFromServer(), refreshCategoriesFromServer(), refreshHomeLinksFromServer()
         ]);
         renderHomeScheduleList();
+        renderHomeLinks();
         checkAuthAndRender();
         alert('Backup restored — data has been refreshed.');
         renderAdminBackupTab();
@@ -3263,6 +3541,28 @@ async function runReclassifyEnhancements2026_09(){
   await syncPost(RECLASSIFY_ENHANCEMENTS_FLAG_KEY, true);
 }
 
+// One-time defaults for the new Settings lists — only fills in if the
+// list is still empty, so it can never overwrite anything an admin has
+// already configured. This preserves the app's previous built-in
+// Rooms/Durations/Home links behavior without anyone needing to
+// manually recreate them after this update.
+async function runSettingsDefaultsSeed2026_09(){
+  if(!loadRooms().length){
+    const defaultRooms = ["Room 0","Room 1","Room 2","Room 3","Room 4","Room 5","Room 6","Lavender Room","Water Lilies Room","Monet Room"]
+      .map(name => ({ id: makeId(), name }));
+    saveRooms(defaultRooms);
+  }
+  if(!loadDurations().length){
+    saveDurations([50, 100]);
+  }
+  if(!loadHomeLinks().length){
+    saveHomeLinks([
+      { id: makeId(), label: 'Agilysys', subtitle: 'Open new appointment booking', type: 'url', target: 'https://spa.agilysys.com/Spa/appointment/newappointment' },
+      { id: makeId(), label: 'Breakroom', subtitle: 'Open the Breakroom app', type: 'scheme', target: 'breakroom://', fallbackUrl: 'https://www.breakroomapp.com/' }
+    ]);
+  }
+}
+
 async function bootstrapAuth(){
   await Promise.all([
     refreshUsersFromServer(),
@@ -3271,11 +3571,17 @@ async function bootstrapAuth(){
     refreshProductsFromServer(),
     refreshSuppliesFromServer(),
     refreshCustomProtocolsFromServer(),
-    refreshAllergensFromServer()
+    refreshAllergensFromServer(),
+    refreshRoomsFromServer(),
+    refreshDurationsFromServer(),
+    refreshCategoriesFromServer(),
+    refreshHomeLinksFromServer()
   ]);
   await runImport2026_09();
   await runReclassifyEnhancements2026_09();
+  await runSettingsDefaultsSeed2026_09();
   checkAuthAndRender();
+  renderHomeLinks();
   setInterval(async ()=>{
     await refreshUsersFromServer();
     await refreshActivityFromServer();
@@ -3284,6 +3590,11 @@ async function bootstrapAuth(){
     await refreshSuppliesFromServer();
     await refreshCustomProtocolsFromServer();
     await refreshAllergensFromServer();
+    await refreshRoomsFromServer();
+    await refreshDurationsFromServer();
+    await refreshCategoriesFromServer();
+    await refreshHomeLinksFromServer();
+    renderHomeLinks();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
     const gate = document.getElementById('auth-gate');
@@ -3323,7 +3634,7 @@ function getServiceOptionsFromProtocols(){
   const protocols = loadCustomProtocols().filter(p => (p.kind || 'full') === 'full');
   const groups = {};
   protocols.forEach(p => {
-    const groupLabel = PROTOCOL_SECTION_LABELS[p.section] || 'Custom';
+    const groupLabel = PROTOCOL_SECTION_LABELS[p.section] || p.section || 'Custom';
     if(!groups[groupLabel]) groups[groupLabel] = [];
     groups[groupLabel].push(p.name);
   });
@@ -3337,11 +3648,6 @@ function getEnhancementOptionsFromProtocols(){
   return { 'Enhancements': protocols.map(p => p.name).sort((a,b)=>a.localeCompare(b)) };
 }
 
-const ROOM_OPTIONS = [
-  "Room 0","Room 1","Room 2","Room 3","Room 4","Room 5","Room 6",
-  "Lavender Room","Water Lilies Room","Monet Room"
-];
-
 function formatSlotTime(minutes){
   const h24 = Math.floor(minutes/60), min = minutes%60;
   const ampm = h24 < 12 ? 'AM' : 'PM';
@@ -3353,7 +3659,7 @@ function buildSlots(startMin, endMin){
   const slots = [];
   let t = startMin;
   while(t + 50 <= endMin){
-    slots.push({time:t, client:'', client2:'', service:'', enhancement:'', room:'', duration:50, hidden:false});
+    slots.push({time:t, client:'', client2:'', service:'', enhancement:'', room:'', duration:shortestConfiguredDuration(), hidden:false});
     t += 60;
   }
   return slots;
@@ -3396,7 +3702,7 @@ function parsePastedSchedule(text){
           if(dur <= 0) dur += 24*60;
           appointments.push({
             startMin,
-            duration: dur >= 75 ? 100 : 50,
+            duration: closestConfiguredDuration(dur),
             client: nameLine,
             serviceText: svcMatch[1].trim()
           });
@@ -3467,7 +3773,7 @@ function buildAgendaFromPastedText(text){
     slots[idx].client = appt.client;
     slots[idx].service = matched;
     slots[idx].duration = appt.duration;
-    if(appt.duration === 100 && slots[idx+1]){
+    if(appt.duration > shortestConfiguredDuration() && slots[idx+1]){
       slots[idx+1].hidden = true;
     }
   });
@@ -3554,6 +3860,7 @@ function renderHomeScheduleList(){
 
 restoreAgendaState();
 renderHomeScheduleList();
+renderHomeLinks();
 setInterval(renderHomeScheduleList, 30000);
 
 const DATA = {
@@ -4353,22 +4660,42 @@ document.getElementById('open-agenda').addEventListener('click', openAgenda);
 document.getElementById('logout-btn').addEventListener('click', logout);
 document.getElementById('home-admin-link').addEventListener('click', openAdmin);
 
-/* ---------- Breakroom app launch ---------- */
+/* ---------- Home Links (admin-managed, replaces the old hardcoded buttons) ---------- */
 
-document.getElementById('open-breakroom').addEventListener('click', ()=>{
-  const fallbackUrl = 'https://www.breakroomapp.com/';
-  const clickTime = Date.now();
+function renderHomeLinks(){
+  const container = document.getElementById('home-links');
+  if(!container) return;
+  const links = loadHomeLinks();
+  container.innerHTML = links.map(link => `
+    <button class="agenda-entry link-entry home-link-btn" data-id="${link.id}">
+      <span class="agenda-entry-text">
+        <span class="ae-label">${link.label}</span>
+        <span class="ae-sub">${link.subtitle || ''}</span>
+      </span>
+      <span class="arrow">→</span>
+    </button>
+  `).join('');
 
-  window.location.href = 'breakroom://';
-
-  setTimeout(()=>{
-    // If we're still here (and not backgrounded) after the attempt,
-    // the app likely isn't installed or the scheme didn't launch it.
-    if(!document.hidden && (Date.now() - clickTime) < 2000){
-      window.open(fallbackUrl, '_blank', 'noopener');
-    }
-  }, 1200);
-});
+  container.querySelectorAll('.home-link-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const link = loadHomeLinks().find(l => l.id === btn.dataset.id);
+      if(!link) return;
+      if(link.type === 'scheme'){
+        const clickTime = Date.now();
+        window.location.href = link.target;
+        if(link.fallbackUrl){
+          setTimeout(()=>{
+            if(!document.hidden && (Date.now() - clickTime) < 2000){
+              window.open(link.fallbackUrl, '_blank', 'noopener');
+            }
+          }, 1200);
+        }
+      } else {
+        window.open(link.target, '_blank', 'noopener');
+      }
+    });
+  });
+}
 
 /* ---------- Treatment Protocols overlay ---------- */
 
@@ -4479,7 +4806,7 @@ function isCouplesService(serviceName){
 
 function roomOptionsHtml(selected){
   let html = `<option value="">Assign room…</option>`;
-  html += ROOM_OPTIONS.map(r => `<option value="${r}" ${r===selected?'selected':''}>${r}</option>`).join('');
+  html += loadRooms().map(r => `<option value="${r.name}" ${r.name===selected?'selected':''}>${r.name}</option>`).join('');
   return html;
 }
 
@@ -4491,11 +4818,9 @@ function renderAgendaFill(){
       <div class="slot-time-row">
         <div class="slot-time">${formatSlotTime(slot.time)}</div>
         <div class="slot-time-controls">
-          <div class="duration-toggle ${slot.duration===100?'on-100':''}" data-idx="${idx}">
-            <div class="dur-thumb"></div>
-            <span class="dur-opt ${slot.duration===50?'active':''}">50 min</span>
-            <span class="dur-opt ${slot.duration===100?'active':''}">100 min</span>
-          </div>
+          <select class="duration-select" data-idx="${idx}">
+            ${loadDurations().map(d => `<option value="${d}" ${d===slot.duration?'selected':''}>${d} min</option>`).join('')}
+          </select>
           <button class="remove-slot-btn" data-idx="${idx}" title="Remove this appointment time" aria-label="Remove this appointment time">✕</button>
         </div>
       </div>
@@ -4567,11 +4892,10 @@ function renderAgendaFill(){
       saveAgendaState();
     });
   });
-  agendaInner.querySelectorAll('.duration-toggle').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      const idx = parseInt(el.dataset.idx,10);
-      const newDur = agenda.slots[idx].duration === 100 ? 50 : 100;
-      setSlotDuration(idx, newDur);
+  agendaInner.querySelectorAll('.duration-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const idx = parseInt(sel.dataset.idx,10);
+      setSlotDuration(idx, parseInt(sel.value,10));
       saveAgendaState();
       renderAgendaFill();
     });
@@ -4599,6 +4923,15 @@ function renderAgendaFill(){
   });
 }
 
+function shortestConfiguredDuration(){
+  const durations = loadDurations();
+  return durations.length ? Math.min(...durations) : 50;
+}
+function closestConfiguredDuration(minutes){
+  const durations = loadDurations().length ? loadDurations() : [50, 100];
+  return durations.reduce((closest, d) => Math.abs(d - minutes) < Math.abs(closest - minutes) ? d : closest, durations[0]);
+}
+
 function removeSlot(idx){
   const removed = agenda.slots[idx];
   const hasData = removed.client || removed.client2 || removed.service;
@@ -4606,20 +4939,21 @@ function removeSlot(idx){
     return;
   }
   agenda.slots.splice(idx, 1);
-  // If the removed slot was a 100-min appointment, un-hide the slot it had absorbed
-  if(removed.duration === 100 && agenda.slots[idx] && agenda.slots[idx].hidden){
+  // If the removed slot was a longer appointment, un-hide the slot it had absorbed
+  const shortest = shortestConfiguredDuration();
+  if(removed.duration > shortest && agenda.slots[idx] && agenda.slots[idx].hidden){
     agenda.slots[idx].hidden = false;
     agenda.slots[idx].client = '';
     agenda.slots[idx].client2 = '';
     agenda.slots[idx].service = '';
     agenda.slots[idx].enhancement = '';
     agenda.slots[idx].room = '';
-    agenda.slots[idx].duration = 50;
+    agenda.slots[idx].duration = shortest;
   }
 }
 
 function addSlotAtTime(timeMin){
-  const newSlot = {time:timeMin, client:'', client2:'', service:'', enhancement:'', room:'', duration:50, hidden:false};
+  const newSlot = {time:timeMin, client:'', client2:'', service:'', enhancement:'', room:'', duration:shortestConfiguredDuration(), hidden:false};
   let insertAt = agenda.slots.findIndex(s => s.time > timeMin);
   if(insertAt === -1) insertAt = agenda.slots.length;
   agenda.slots.splice(insertAt, 0, newSlot);
@@ -4628,8 +4962,13 @@ function addSlotAtTime(timeMin){
 function setSlotDuration(idx, dur){
   const slot = agenda.slots[idx];
   const next = agenda.slots[idx+1];
+  const durations = loadDurations().length ? loadDurations() : [50, 100];
+  const shortest = Math.min(...durations);
   slot.duration = dur;
-  if(dur === 100){
+  if(dur > shortest){
+    // Any duration longer than the shortest configured option consumes
+    // the next time slot (same merge behavior the app has always had —
+    // just no longer hardcoded to exactly 100 minutes).
     if(next){ next.hidden = true; }
   } else {
     if(next){
@@ -4639,7 +4978,7 @@ function setSlotDuration(idx, dur){
       next.service = '';
       next.enhancement = '';
       next.room = '';
-      next.duration = 50;
+      next.duration = shortest;
     }
   }
 }
