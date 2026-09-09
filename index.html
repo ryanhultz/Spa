@@ -1245,7 +1245,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.14.0</div>
+    <div class="app-version">v1.15.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1684,6 +1684,52 @@ function saveHomeLinks(list){
   homeLinksCache = list;
   try{ localStorage.setItem(HOME_LINKS_KEY, JSON.stringify(list)); }catch(e){}
   syncPost('stop-home-links', list);
+}
+
+/* ---- Sub-Protocols (reusable, linked step-sequences) ---- */
+
+const SUB_PROTOCOLS_KEY = 'stopSubProtocols_v1';
+let subProtocolsCache = [];
+function loadSubProtocolsLocalFallback(){ try{ return JSON.parse(localStorage.getItem(SUB_PROTOCOLS_KEY)) || []; }catch(e){ return []; } }
+async function refreshSubProtocolsFromServer(){
+  const remote = await syncGet('stop-sub-protocols');
+  if(Array.isArray(remote)){ subProtocolsCache = remote; try{ localStorage.setItem(SUB_PROTOCOLS_KEY, JSON.stringify(subProtocolsCache)); }catch(e){} }
+  else { subProtocolsCache = loadSubProtocolsLocalFallback(); }
+}
+function loadSubProtocols(){ return subProtocolsCache; }
+function saveSubProtocols(list){
+  subProtocolsCache = list;
+  try{ localStorage.setItem(SUB_PROTOCOLS_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-sub-protocols', list);
+}
+// The marker embedded in a main protocol's Steps text when a sub-protocol
+// is inserted. The ID is what's authoritative — the name shown inside is
+// only there so the raw text is readable while editing; the display name
+// and steps are always resolved live from the current sub-protocol, so
+// renaming or editing it updates every protocol that references it.
+function subProtocolMarker(subProtocol){
+  return `[[Sub-Protocol: ${subProtocol.name} | ${subProtocol.id}]]`;
+}
+function parseSubProtocolMarker(line){
+  const m = String(line).match(/^\[\[Sub-Protocol:.*\|\s*(id-[a-z0-9-]+)\s*\]\]$/i);
+  return m ? m[1] : null;
+}
+
+/* ---- Shift Templates ---- */
+
+const SHIFT_TEMPLATES_KEY = 'stopShiftTemplates_v1';
+let shiftTemplatesCache = [];
+function loadShiftTemplatesLocalFallback(){ try{ return JSON.parse(localStorage.getItem(SHIFT_TEMPLATES_KEY)) || []; }catch(e){ return []; } }
+async function refreshShiftTemplatesFromServer(){
+  const remote = await syncGet('stop-shift-templates');
+  if(Array.isArray(remote)){ shiftTemplatesCache = remote; try{ localStorage.setItem(SHIFT_TEMPLATES_KEY, JSON.stringify(shiftTemplatesCache)); }catch(e){} }
+  else { shiftTemplatesCache = loadShiftTemplatesLocalFallback(); }
+}
+function loadShiftTemplates(){ return shiftTemplatesCache; }
+function saveShiftTemplates(list){
+  shiftTemplatesCache = list;
+  try{ localStorage.setItem(SHIFT_TEMPLATES_KEY, JSON.stringify(list)); }catch(e){}
+  syncPost('stop-shift-templates', list);
 }
 
 function parseIngredientsText(text){
@@ -2326,6 +2372,7 @@ function renderAdminUserDetail(){
 }
 
 let editingProtocolId = null;
+let protocolsSubView = 'protocols'; // 'protocols' | 'subprotocols'
 let protocolFormTarget = null; // tracks which protocol the row builders currently reflect
 let protocolPrepRows = [];
 let protocolTableMakeupRows = [];
@@ -2406,8 +2453,98 @@ function isCouplesProtocol(p){
   return /couples/i.test(p.name) || p.name === 'The Art of Living';
 }
 
+let editingSubProtocolId = null;
+
+function renderSubProtocolsSubTab(){
+  const el = document.getElementById('subprotocols-content');
+  if(!el) return;
+  const subProtocols = [...loadSubProtocols()].sort((a,b) => a.name.localeCompare(b.name));
+  const editing = editingSubProtocolId ? subProtocols.find(sp => sp.id === editingSubProtocolId) : null;
+
+  el.innerHTML = `
+    <p class="caption">A Sub-Protocol is a reusable step-sequence — like the Facial Massage routine — that you can insert into any main Protocol's Steps. Editing or renaming it here updates it everywhere it's used.</p>
+    <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Sub-Protocol'}</div>
+    <div class="field"><label>Name</label><input type="text" id="subprotocol-name" value="${editing ? editing.name : ''}"></div>
+    <div class="field"><label>Steps (one per line)</label><textarea id="subprotocol-steps" rows="6">${editing && editing.steps ? editing.steps.join('\n') : ''}</textarea></div>
+    <button class="primary-btn" id="save-subprotocol-btn">${editing ? 'Save Changes' : 'Add Sub-Protocol'}</button>
+    ${editing ? `<button class="ghost-btn" id="cancel-subprotocol-btn">Cancel Edit</button>` : ''}
+
+    <div class="block-label" style="margin-top:32px;">Sub-Protocols</div>
+    ${subProtocols.length ? subProtocols.map(sp => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${sp.name}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${(sp.steps||[]).length} step${(sp.steps||[]).length===1?'':'s'}</span></div>
+        <div class="admin-user-actions">
+          <button class="ghost-btn edit-subprotocol-btn" data-id="${sp.id}">Edit</button>
+          <button class="ghost-btn remove-subprotocol-btn" data-id="${sp.id}">Remove</button>
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No Sub-Protocols yet.</p>`}
+  `;
+
+  document.getElementById('save-subprotocol-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('subprotocol-name').value.trim();
+    const stepsText = document.getElementById('subprotocol-steps').value;
+    const steps = stepsText.split('\n').map(s => s.trim()).filter(Boolean);
+    if(!name){ alert('Enter a name.'); return; }
+    if(!steps.length){ alert('Enter at least one step.'); return; }
+    const list = loadSubProtocols();
+    if(editingSubProtocolId){
+      const existing = list.find(sp => sp.id === editingSubProtocolId);
+      if(existing){
+        existing.name = name;
+        existing.steps = steps;
+        logActivity(getAdminActingUsername(), `Edited Sub-Protocol "${name}"`);
+      }
+      editingSubProtocolId = null;
+    } else {
+      list.push({ id: makeId(), name, steps, createdAt: new Date().toISOString() });
+      logActivity(getAdminActingUsername(), `Added Sub-Protocol "${name}"`);
+    }
+    saveSubProtocols(list);
+    renderSubProtocolsSubTab();
+  });
+  const cancelBtn = document.getElementById('cancel-subprotocol-btn');
+  if(cancelBtn){
+    cancelBtn.addEventListener('click', ()=>{
+      editingSubProtocolId = null;
+      renderSubProtocolsSubTab();
+    });
+  }
+  el.querySelectorAll('.edit-subprotocol-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingSubProtocolId = btn.dataset.id;
+      renderSubProtocolsSubTab();
+    });
+  });
+  el.querySelectorAll('.remove-subprotocol-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const sp = loadSubProtocols().find(s => s.id === btn.dataset.id);
+      if(!confirm(`Remove Sub-Protocol "${sp ? sp.name : ''}"? Any protocol steps that reference it will show as not found.`)) return;
+      saveSubProtocols(loadSubProtocols().filter(s => s.id !== btn.dataset.id));
+      logActivity(getAdminActingUsername(), `Removed Sub-Protocol "${sp ? sp.name : ''}"`);
+      renderSubProtocolsSubTab();
+    });
+  });
+}
+
 function renderAdminProtocolsTab(){
   const content = document.getElementById('admin-tab-content');
+  const protocolsSubNavHtml = `
+    <div class="perm-chip-row">
+      <button class="perm-chip ${protocolsSubView==='protocols'?'active':''}" data-protocols-subtab="protocols">Protocols</button>
+      <button class="perm-chip ${protocolsSubView==='subprotocols'?'active':''}" data-protocols-subtab="subprotocols">Sub-Protocols</button>
+    </div>
+  `;
+
+  if(protocolsSubView === 'subprotocols'){
+    content.innerHTML = protocolsSubNavHtml + `<div id="subprotocols-content"></div>`;
+    content.querySelectorAll('[data-protocols-subtab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ protocolsSubView = btn.dataset.protocolsSubtab; renderAdminProtocolsTab(); });
+    });
+    renderSubProtocolsSubTab();
+    return;
+  }
+
   const protocols = loadCustomProtocols();
   const products = loadProducts();
   const supplies = loadSupplies();
@@ -2421,7 +2558,7 @@ function renderAdminProtocolsTab(){
 
   const linesToText = (lines) => (lines || []).join('\n');
 
-  content.innerHTML = `
+  content.innerHTML = protocolsSubNavHtml + `
     <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Protocol'}</div>
     <div class="field"><label>Protocol Name</label><input type="text" id="admin-new-protocol-name" value="${editing ? editing.name : ''}"></div>
     <div class="field"><label>Short Caption</label><input type="text" id="admin-new-protocol-caption" placeholder="One line shown on the button" value="${editing ? (editing.caption || '') : ''}"></div>
@@ -2479,6 +2616,16 @@ function renderAdminProtocolsTab(){
       <label>Steps</label>
       <textarea id="admin-new-protocol-steps" rows="5" placeholder="One step per line, in order">${editing ? linesToText(editing.steps) : ''}</textarea>
     </div>
+    ${loadSubProtocols().length ? `
+    <div class="field">
+      <label>Insert Sub-Protocol</label>
+      <select id="admin-insert-subprotocol-select">
+        <option value="">Choose a Sub-Protocol to insert as a step…</option>
+        ${loadSubProtocols().map(sp => `<option value="${sp.id}">${sp.name}</option>`).join('')}
+      </select>
+      <button class="ghost-btn" id="admin-insert-subprotocol-btn" style="margin-top:8px;">Insert at End of Steps</button>
+    </div>
+    ` : ''}
     <button class="primary-btn" id="admin-add-protocol-btn">${editing ? 'Save Changes' : 'Add Protocol'}</button>
     ${editing ? `<button class="ghost-btn" id="admin-cancel-edit-btn">Cancel Edit</button>` : ''}
 
@@ -2546,6 +2693,21 @@ function renderAdminProtocolsTab(){
     protocolTableMakeupRows.push(blankTableMakeupRow());
     renderAdminProtocolsTab();
   });
+  content.querySelectorAll('[data-protocols-subtab]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ protocolsSubView = btn.dataset.protocolsSubtab; renderAdminProtocolsTab(); });
+  });
+  const insertSubBtn = document.getElementById('admin-insert-subprotocol-btn');
+  if(insertSubBtn){
+    insertSubBtn.addEventListener('click', ()=>{
+      const select = document.getElementById('admin-insert-subprotocol-select');
+      const sp = loadSubProtocols().find(s => s.id === select.value);
+      if(!sp){ alert('Choose a Sub-Protocol first.'); return; }
+      const textarea = document.getElementById('admin-new-protocol-steps');
+      const current = textarea.value;
+      textarea.value = current && !current.endsWith('\n') ? `${current}\n${subProtocolMarker(sp)}` : `${current}${subProtocolMarker(sp)}`;
+      select.value = '';
+    });
+  }
 
   document.getElementById('admin-add-protocol-btn').addEventListener('click', ()=>{
     const name = document.getElementById('admin-new-protocol-name').value.trim();
@@ -2815,7 +2977,7 @@ function renderAdminErrorsTab(){
 
 /* ---------- Settings: Rooms / Durations / Categories / Home Links ---------- */
 
-let settingsSubTab = 'rooms'; // 'rooms' | 'durations' | 'categories' | 'homelinks'
+let settingsSubTab = 'rooms'; // 'rooms' | 'durations' | 'categories' | 'homelinks' | 'shifttemplates'
 
 function renderAdminSettingsTab(){
   const content = document.getElementById('admin-tab-content');
@@ -2824,6 +2986,7 @@ function renderAdminSettingsTab(){
     { key: 'durations', label: 'Durations' },
     { key: 'categories', label: 'Categories' },
     { key: 'homelinks', label: 'Home Links' },
+    { key: 'shifttemplates', label: 'Shift Templates' },
   ];
 
   content.innerHTML = `
@@ -2843,7 +3006,8 @@ function renderAdminSettingsTab(){
   if(settingsSubTab === 'rooms') renderSettingsRoomsSubTab();
   else if(settingsSubTab === 'durations') renderSettingsDurationsSubTab();
   else if(settingsSubTab === 'categories') renderSettingsCategoriesSubTab();
-  else renderSettingsHomeLinksSubTab();
+  else if(settingsSubTab === 'homelinks') renderSettingsHomeLinksSubTab();
+  else renderSettingsShiftTemplatesSubTab();
 }
 
 function renderSettingsRoomsSubTab(){
@@ -3056,6 +3220,54 @@ function renderSettingsHomeLinksSubTab(){
   });
 }
 
+function renderSettingsShiftTemplatesSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const templates = [...loadShiftTemplates()].sort((a,b) => a.name.localeCompare(b.name));
+  const timeOpts = TIME_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+  el.innerHTML = `
+    <p class="caption">Save common start/end times (like "Morning" or "Closer") so building today's Agenda is a quick pick instead of choosing times from scratch each time.</p>
+    <div class="field"><label>Shift Name</label><input type="text" id="settings-shift-name" placeholder="e.g. Morning"></div>
+    <div class="field"><label>Start Time</label><select id="settings-shift-start">${timeOpts}</select></div>
+    <div class="field"><label>End Time</label><select id="settings-shift-end">${timeOpts}</select></div>
+    <button class="primary-btn" id="settings-add-shift-btn">Add Shift Template</button>
+    <div class="block-label" style="margin-top:24px;">Shift Templates</div>
+    ${templates.length ? templates.map(t => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${t.name}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${formatSlotTime(t.startMin)} – ${formatSlotTime(t.endMin)}</span></div>
+        <div class="admin-user-actions">
+          <button class="ghost-btn settings-remove-shift-btn" data-id="${t.id}">Remove</button>
+        </div>
+      </div>
+    `).join('') : `<p class="caption">No shift templates yet.</p>`}
+  `;
+
+  document.getElementById('settings-shift-start').value = 510;
+  document.getElementById('settings-shift-end').value = 990;
+
+  document.getElementById('settings-add-shift-btn').addEventListener('click', ()=>{
+    const name = document.getElementById('settings-shift-name').value.trim();
+    const startMin = parseInt(document.getElementById('settings-shift-start').value, 10);
+    const endMin = parseInt(document.getElementById('settings-shift-end').value, 10);
+    if(!name){ alert('Enter a shift name.'); return; }
+    if(endMin <= startMin){ alert('End time must be after start time.'); return; }
+    const list = loadShiftTemplates();
+    list.push({ id: makeId(), name, startMin, endMin });
+    saveShiftTemplates(list);
+    logActivity(getAdminActingUsername(), `Added shift template "${name}"`);
+    renderSettingsShiftTemplatesSubTab();
+  });
+  el.querySelectorAll('.settings-remove-shift-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const t = loadShiftTemplates().find(x => x.id === btn.dataset.id);
+      if(!confirm(`Remove shift template "${t ? t.name : ''}"?`)) return;
+      saveShiftTemplates(loadShiftTemplates().filter(x => x.id !== btn.dataset.id));
+      logActivity(getAdminActingUsername(), `Removed shift template "${t ? t.name : ''}"`);
+      renderSettingsShiftTemplatesSubTab();
+    });
+  });
+}
+
 function renderAdminBackupTab(){
   const content = document.getElementById('admin-tab-content');
 
@@ -3122,7 +3334,8 @@ async function loadBackupListIntoTab(){
         await Promise.all([
           refreshUsersFromServer(), refreshActivityFromServer(), refreshProductsFromServer(),
           refreshSuppliesFromServer(), refreshCustomProtocolsFromServer(), refreshAllergensFromServer(),
-          refreshRoomsFromServer(), refreshDurationsFromServer(), refreshCategoriesFromServer(), refreshHomeLinksFromServer()
+          refreshRoomsFromServer(), refreshDurationsFromServer(), refreshCategoriesFromServer(), refreshHomeLinksFromServer(),
+          refreshSubProtocolsFromServer(), refreshShiftTemplatesFromServer()
         ]);
         renderHomeScheduleList();
         renderHomeLinks();
@@ -3575,7 +3788,9 @@ async function bootstrapAuth(){
     refreshRoomsFromServer(),
     refreshDurationsFromServer(),
     refreshCategoriesFromServer(),
-    refreshHomeLinksFromServer()
+    refreshHomeLinksFromServer(),
+    refreshSubProtocolsFromServer(),
+    refreshShiftTemplatesFromServer()
   ]);
   await runImport2026_09();
   await runReclassifyEnhancements2026_09();
@@ -3594,6 +3809,8 @@ async function bootstrapAuth(){
     await refreshDurationsFromServer();
     await refreshCategoriesFromServer();
     await refreshHomeLinksFromServer();
+    await refreshSubProtocolsFromServer();
+    await refreshShiftTemplatesFromServer();
     renderHomeLinks();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
@@ -4603,6 +4820,24 @@ function openDetail(id){
           <div class="routine-panel hidden" id="${panelId}">${routineRows}</div>
         </li>`;
       }
+      const subProtocolId = parseSubProtocolMarker(s);
+      if(subProtocolId){
+        const sub = loadSubProtocols().find(sp => sp.id === subProtocolId);
+        const panelId = `routine-${item.id}-${idx}`;
+        if(!sub){
+          return `<li><span class="num">${idx+1}</span><em>Sub-Protocol not found — it may have been removed.</em></li>`;
+        }
+        const routineRows = sub.steps.map((step,ri) => `
+          <div class="routine-row">
+            <span class="rn">${ri+1}</span>
+            <span class="rt">${step}</span>
+          </div>
+        `).join('');
+        return `<li><span class="num">${idx+1}</span>
+          <button class="routine-toggle" data-target="${panelId}">${sub.name} <span class="tap-hint">Tap for routine</span></button>
+          <div class="routine-panel hidden" id="${panelId}">${routineRows}</div>
+        </li>`;
+      }
       return `<li><span class="num">${idx+1}</span>${s}</li>`;
     }).join('');
     html += `</ol>`;
@@ -4740,6 +4975,15 @@ function renderAgendaSetup(){
       </div>
       <button class="primary-btn" id="agenda-extract">Extract &amp; Build</button>
       <div class="setup-divider">or set manually</div>
+      ${loadShiftTemplates().length ? `
+      <div class="field">
+        <label>Quick Pick a Shift</label>
+        <select id="agenda-shift-template">
+          <option value="">Choose a saved shift…</option>
+          ${loadShiftTemplates().map(t => `<option value="${t.id}">${t.name} (${formatSlotTime(t.startMin)}–${formatSlotTime(t.endMin)})</option>`).join('')}
+        </select>
+      </div>
+      ` : ''}
       <div class="field">
         <label>Start Time</label>
         <select id="agenda-start">${timeOpts}</select>
@@ -4754,6 +4998,15 @@ function renderAgendaSetup(){
   document.getElementById('agenda-back').addEventListener('click', closeAgenda);
   document.getElementById('agenda-start').value = 510; // 8:30 AM default
   document.getElementById('agenda-end').value = 990;   // 4:30 PM default
+  const shiftTemplateSelect = document.getElementById('agenda-shift-template');
+  if(shiftTemplateSelect){
+    shiftTemplateSelect.addEventListener('change', ()=>{
+      const template = loadShiftTemplates().find(t => t.id === shiftTemplateSelect.value);
+      if(!template) return;
+      document.getElementById('agenda-start').value = template.startMin;
+      document.getElementById('agenda-end').value = template.endMin;
+    });
+  }
   document.getElementById('agenda-extract').addEventListener('click', ()=>{
     const text = document.getElementById('agenda-paste').value;
     if(!text.trim()){
