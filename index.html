@@ -1266,7 +1266,7 @@
   </button>
 
   <div class="home-footer">
-    <div class="app-version">v1.11.0</div>
+    <div class="app-version">v1.11.1</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -2122,10 +2122,11 @@ function renderAdminUsersTab(){
     </div>
   `;
 
-  document.getElementById('admin-add-user-btn').addEventListener('click', ()=>{
+  document.getElementById('admin-add-user-btn').addEventListener('click', async ()=>{
     const u = document.getElementById('admin-new-username').value.trim();
     const p = document.getElementById('admin-new-password').value;
     if(!u || !p){ alert('Enter a username and password.'); return; }
+    await refreshUsersFromServer(); // get the current server state right before writing
     if(findUser(u)){ alert('That username already exists.'); return; }
     const list = loadUsers();
     list.push({ username: u, password: p, permissions: blankPermissions(), lastLogin: null, createdAt: new Date().toISOString() });
@@ -2134,10 +2135,11 @@ function renderAdminUsersTab(){
     renderAdminUsersTab();
   });
   content.querySelectorAll('.admin-reset-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       const newPw = prompt(`New password for ${username}:`);
       if(!newPw) return;
+      await refreshUsersFromServer(); // get the current server state right before writing
       const list = loadUsers();
       const user = list.find(u => u.username === username);
       if(user){
@@ -2146,12 +2148,14 @@ function renderAdminUsersTab(){
         logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
         alert('Password reset.');
       }
+      renderAdminUsersTab();
     });
   });
   content.querySelectorAll('.admin-remove-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       if(!confirm(`Remove user "${username}"?`)) return;
+      await refreshUsersFromServer(); // get the current server state right before writing
       const list = loadUsers().filter(u => u.username !== username);
       saveUsers(list);
       logActivity(getAdminActingUsername(), `Removed user "${username}"`);
@@ -2160,9 +2164,10 @@ function renderAdminUsersTab(){
     });
   });
   content.querySelectorAll('.perm-chip').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       const key = btn.dataset.perm;
+      await refreshUsersFromServer(); // get the current server state right before writing
       const list = loadUsers();
       const user = list.find(u => u.username === username);
       if(!user) return;
