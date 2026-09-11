@@ -1308,7 +1308,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.17.1</div>
+    <div class="app-version">v1.17.2</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1912,6 +1912,7 @@ function loadUsers(){
   return usersCache;
 }
 function findUser(username){
+  if(!username) return undefined;
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
 }
 // A demo account behaves completely normally on screen — saves show
@@ -1920,7 +1921,9 @@ function findUser(username){
 // write path, so logging out (or anyone else using the app at the same
 // time) is never affected by anything a demo session touched.
 function isDemoUser(){
-  const user = findUser(getCurrentUser());
+  const current = getCurrentUser();
+  if(!current) return false;
+  const user = findUser(current);
   return !!(user && user.isDemo);
 }
 const LOGIN_DATE_KEY = 'stopCurrentUserLoginDate_v1';
