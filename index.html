@@ -1308,7 +1308,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.18.2</div>
+    <div class="app-version">v1.19.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1713,12 +1713,20 @@ const HOME_LINKS_KEY = 'stopHomeLinks_v1';
 
 let roomsCache = [];
 let durationsCache = [];
-let categoriesCache = [];
+let categoriesCache = { custom: [], overrides: {} };
 let homeLinksCache = [];
+
+function normalizeCategoriesShape(value){
+  // Older versions stored this as a flat array of custom category names.
+  // Wrap that up into the new shape so nothing already saved gets lost.
+  if(Array.isArray(value)) return { custom: value, overrides: {} };
+  if(value && typeof value === 'object') return { custom: value.custom || [], overrides: value.overrides || {} };
+  return { custom: [], overrides: {} };
+}
 
 function loadRoomsLocalFallback(){ try{ return JSON.parse(localStorage.getItem(ROOMS_KEY)) || []; }catch(e){ return []; } }
 function loadDurationsLocalFallback(){ try{ return JSON.parse(localStorage.getItem(DURATIONS_KEY)) || []; }catch(e){ return []; } }
-function loadCategoriesLocalFallback(){ try{ return JSON.parse(localStorage.getItem(CATEGORIES_KEY)) || []; }catch(e){ return []; } }
+function loadCategoriesLocalFallback(){ try{ return normalizeCategoriesShape(JSON.parse(localStorage.getItem(CATEGORIES_KEY))); }catch(e){ return { custom: [], overrides: {} }; } }
 function loadHomeLinksLocalFallback(){ try{ return JSON.parse(localStorage.getItem(HOME_LINKS_KEY)) || []; }catch(e){ return []; } }
 
 async function refreshRoomsFromServer(){
@@ -1733,7 +1741,7 @@ async function refreshDurationsFromServer(){
 }
 async function refreshCategoriesFromServer(){
   const remote = await syncGet('stop-categories');
-  if(Array.isArray(remote)){ categoriesCache = remote; try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categoriesCache)); }catch(e){} }
+  if(remote !== null && remote !== undefined){ categoriesCache = normalizeCategoriesShape(remote); try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categoriesCache)); }catch(e){} }
   else { categoriesCache = loadCategoriesLocalFallback(); }
 }
 async function refreshHomeLinksFromServer(){
@@ -1754,11 +1762,24 @@ function saveDurations(list){
   try{ localStorage.setItem(DURATIONS_KEY, JSON.stringify(list)); }catch(e){}
   syncPost('stop-durations', list);
 }
+// loadCategories() returns the full { custom, overrides } object — used by
+// the Settings admin screen. loadCustomCategoryNames() returns just the
+// flat list of admin-added category names, for the Protocol form's
+// dropdown and other places that only care about the custom ones.
 function loadCategories(){ return categoriesCache; }
-function saveCategories(list){
-  categoriesCache = list;
-  try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(list)); }catch(e){}
-  syncPost('stop-categories', list);
+function loadCustomCategoryNames(){ return categoriesCache.custom || []; }
+function saveCategories(data){
+  categoriesCache = data;
+  try{ localStorage.setItem(CATEGORIES_KEY, JSON.stringify(data)); }catch(e){}
+  syncPost('stop-categories', data);
+}
+// The display label for any protocol section — built-in or custom. A
+// renamed built-in still keeps its original stored key (so existing
+// protocols stay correctly grouped); only what's shown changes.
+function getCategoryLabel(key){
+  const overrides = categoriesCache.overrides || {};
+  if(overrides[key]) return overrides[key];
+  return PROTOCOL_SECTION_LABELS[key] || key;
 }
 function loadHomeLinks(){ return homeLinksCache; }
 function saveHomeLinks(list){
@@ -2809,11 +2830,11 @@ function renderAdminProtocolsTab(){
     <div class="field">
       <label>Section</label>
       <select id="admin-new-protocol-section">
-        <option value="body" ${editing && editing.section==='body' ? 'selected' : ''}>Body Treatments</option>
-        <option value="kurr" ${editing && editing.section==='kurr' ? 'selected' : ''}>Kurr Collection</option>
-        <option value="massages" ${editing && editing.section==='massages' ? 'selected' : ''}>Massages</option>
-        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages' && !loadCategories().includes(editing.section)) ? 'selected' : ''}>Custom</option>
-        ${loadCategories().map(c => `<option value="${c}" ${editing && editing.section===c ? 'selected' : ''}>${c}</option>`).join('')}
+        <option value="body" ${editing && editing.section==='body' ? 'selected' : ''}>${getCategoryLabel('body')}</option>
+        <option value="kurr" ${editing && editing.section==='kurr' ? 'selected' : ''}>${getCategoryLabel('kurr')}</option>
+        <option value="massages" ${editing && editing.section==='massages' ? 'selected' : ''}>${getCategoryLabel('massages')}</option>
+        <option value="custom" ${!editing || (editing.section!=='body' && editing.section!=='kurr' && editing.section!=='massages' && !loadCustomCategoryNames().includes(editing.section)) ? 'selected' : ''}>${getCategoryLabel('custom')}</option>
+        ${loadCustomCategoryNames().map(c => `<option value="${c}" ${editing && editing.section===c ? 'selected' : ''}>${c}</option>`).join('')}
       </select>
     </div>
     <div class="field">
@@ -2879,7 +2900,7 @@ function renderAdminProtocolsTab(){
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
             <span class="admin-user-name">${p.name}</span>
-            <span class="tap-hint">${PROTOCOL_SECTION_LABELS[p.section] || p.section || 'Custom'} · ${(p.kind === 'enhancement') ? 'Enhancement' : 'Full Treatment'} · Tap for details</span>
+            <span class="tap-hint">${getCategoryLabel(p.section)} · ${(p.kind === 'enhancement') ? 'Enhancement' : 'Full Treatment'} · Tap for details</span>
           </button>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-protocol-btn" data-id="${p.id}">Edit</button>
@@ -3386,17 +3407,48 @@ function renderSettingsDurationsSubTab(){
 }
 
 const BUILT_IN_CATEGORIES = ['body', 'kurr', 'massages', 'custom'];
+let editingBuiltInCategoryKey = null;
 
 function renderSettingsCategoriesSubTab(){
   const el = document.getElementById('settings-subtab-content');
-  const categories = [...loadCategories()].sort((a,b) => a.localeCompare(b));
+  const data = loadCategories();
+  const customNames = [...(data.custom || [])].sort((a,b) => a.localeCompare(b));
 
   el.innerHTML = `
-    <p class="caption">Body Treatments, Kurr Collection, Massages, and Custom are always available. Add more here — they'll show up in the Protocol form's Section list right away.</p>
+    <div class="block-label">Built-In Categories</div>
+    <p class="caption">These four always exist and can't be removed, but you can rename how they're displayed. Protocols already filed under one stay correctly grouped — renaming only changes the label.</p>
+    ${BUILT_IN_CATEGORIES.map(key => {
+      const isEditing = editingBuiltInCategoryKey === key;
+      const currentLabel = getCategoryLabel(key);
+      if(isEditing){
+        return `
+          <div class="admin-user-row">
+            <div class="admin-user-name" style="flex:1;">
+              <input type="text" id="settings-builtin-rename-${key}" value="${currentLabel}" style="margin-top:4px;">
+            </div>
+            <div class="admin-user-actions">
+              <button class="ghost-btn settings-save-builtin-btn" data-key="${key}">Save</button>
+              <button class="ghost-btn settings-cancel-builtin-btn" data-key="${key}">Cancel</button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${currentLabel}</div>
+          <div class="admin-user-actions">
+            <button class="ghost-btn settings-edit-builtin-btn" data-key="${key}">Rename</button>
+          </div>
+        </div>
+      `;
+    }).join('')}
+
+    <div class="block-label" style="margin-top:32px;">Add Custom Category</div>
+    <p class="caption">New categories beyond the built-in four — they'll show up in the Protocol form's Section list right away.</p>
     <div class="field"><label>Category Name</label><input type="text" id="settings-new-category" placeholder="e.g. Facials"></div>
     <button class="primary-btn" id="settings-add-category-btn">Add Category</button>
     <div class="block-label" style="margin-top:24px;">Custom Categories</div>
-    ${categories.length ? categories.map(c => `
+    ${customNames.length ? customNames.map(c => `
       <div class="admin-user-row">
         <div class="admin-user-name">${c}</div>
         <div class="admin-user-actions">
@@ -3406,14 +3458,41 @@ function renderSettingsCategoriesSubTab(){
     `).join('') : `<p class="caption">No custom categories yet.</p>`}
   `;
 
+  el.querySelectorAll('.settings-edit-builtin-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingBuiltInCategoryKey = btn.dataset.key;
+      renderSettingsCategoriesSubTab();
+    });
+  });
+  el.querySelectorAll('.settings-cancel-builtin-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingBuiltInCategoryKey = null;
+      renderSettingsCategoriesSubTab();
+    });
+  });
+  el.querySelectorAll('.settings-save-builtin-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const key = btn.dataset.key;
+      const newLabel = document.getElementById(`settings-builtin-rename-${key}`).value.trim();
+      if(!newLabel){ alert('Enter a name.'); return; }
+      const current = loadCategories();
+      const overrides = { ...(current.overrides || {}) };
+      overrides[key] = newLabel;
+      saveCategories({ custom: current.custom || [], overrides });
+      logActivity(getAdminActingUsername(), `Renamed the "${key}" category to "${newLabel}"`);
+      editingBuiltInCategoryKey = null;
+      renderSettingsCategoriesSubTab();
+    });
+  });
+
   document.getElementById('settings-add-category-btn').addEventListener('click', ()=>{
     const name = document.getElementById('settings-new-category').value.trim();
     if(!name){ alert('Enter a category name.'); return; }
     if(BUILT_IN_CATEGORIES.includes(name.toLowerCase())){ alert('That name is already a built-in category.'); return; }
-    const list = loadCategories();
-    if(list.some(c => c.toLowerCase() === name.toLowerCase())){ alert('That category already exists.'); return; }
-    list.push(name);
-    saveCategories(list);
+    const current = loadCategories();
+    const custom = current.custom || [];
+    if(custom.some(c => c.toLowerCase() === name.toLowerCase())){ alert('That category already exists.'); return; }
+    saveCategories({ custom: [...custom, name], overrides: current.overrides || {} });
     logActivity(getAdminActingUsername(), `Added protocol category "${name}"`);
     renderSettingsCategoriesSubTab();
   });
@@ -3421,7 +3500,8 @@ function renderSettingsCategoriesSubTab(){
     btn.addEventListener('click', ()=>{
       const name = btn.dataset.value;
       if(!confirm(`Remove category "${name}"? Protocols already using it will keep showing it as their category, but it won't be offered for new ones.`)) return;
-      saveCategories(loadCategories().filter(c => c !== name));
+      const current = loadCategories();
+      saveCategories({ custom: (current.custom || []).filter(c => c !== name), overrides: current.overrides || {} });
       logActivity(getAdminActingUsername(), `Removed protocol category "${name}"`);
       renderSettingsCategoriesSubTab();
     });
@@ -4223,7 +4303,7 @@ function getServiceOptionsFromProtocols(){
   const protocols = loadCustomProtocols().filter(p => (p.kind || 'full') === 'full');
   const groups = {};
   protocols.forEach(p => {
-    const groupLabel = PROTOCOL_SECTION_LABELS[p.section] || p.section || 'Custom';
+    const groupLabel = getCategoryLabel(p.section);
     if(!groups[groupLabel]) groups[groupLabel] = [];
     groups[groupLabel].push(p.name);
   });
@@ -4713,7 +4793,7 @@ function renderProtocolGrids(){
       massagesSection.innerHTML = '';
     } else {
       massagesSection.innerHTML = `
-        <div class="section-label">Massages</div>
+        <div class="section-label">${getCategoryLabel('massages')}</div>
         <div class="grid" id="massages-grid"></div>
       `;
       renderGrid('massages-grid', massageItems);
