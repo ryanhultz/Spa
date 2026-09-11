@@ -1308,7 +1308,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.16.0</div>
+    <div class="app-version">v1.17.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1448,6 +1448,7 @@ async function syncGet(key){
 
 async function syncPost(key, value){
   if(!isSyncConfigured()) return false;
+  if(isDemoUser()) return true; // demo accounts never actually write anything
   try{
     const token = (typeof getActiveAuthToken === 'function') ? getActiveAuthToken() : null;
     const headers = { 'Content-Type': 'application/json' };
@@ -1470,6 +1471,7 @@ async function syncPost(key, value){
 // tell the person WHY a save failed, not just that it did.
 async function syncPostChecked(key, value){
   if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  if(isDemoUser()) return { ok:true, status:200, error:null }; // demo accounts never actually write anything
   try{
     const token = (typeof getActiveAuthToken === 'function') ? getActiveAuthToken() : null;
     const headers = { 'Content-Type': 'application/json' };
@@ -1514,6 +1516,7 @@ function authHeaders(extra){
 // reading the whole user list and writing it all back.
 async function upsertUserOnServer(username, fields){
   if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  if(isDemoUser()) return { ok:true, status:200, error:null };
   try{
     const res = await fetch(`${SYNC_API_BASE}/users/upsert`, {
       method: 'POST',
@@ -1530,6 +1533,7 @@ async function upsertUserOnServer(username, fields){
 
 async function deleteUserOnServer(username){
   if(!isSyncConfigured()) return { ok:false, status:0, error:"Sync isn't set up on this device yet." };
+  if(isDemoUser()) return { ok:true, status:200, error:null };
   try{
     const res = await fetch(`${SYNC_API_BASE}/users/delete`, {
       method: 'POST',
@@ -1557,6 +1561,7 @@ async function fetchBackupList(){
 
 async function createManualBackup(){
   if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  if(isDemoUser()) return { ok: true, backup: { key: `backup:demo-${Date.now()}`, type: 'manual', timestamp: new Date().toISOString() } };
   try{
     const res = await fetch(`${SYNC_API_BASE}/backups`, { method: 'POST', headers: authHeaders() });
     return await res.json();
@@ -1567,6 +1572,7 @@ async function createManualBackup(){
 
 async function restoreBackupByKey(key){
   if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  if(isDemoUser()) return { ok: true }; // never actually restore anything for a demo account
   try{
     const res = await fetch(`${SYNC_API_BASE}/backups/restore`, {
       method: 'POST',
@@ -1581,6 +1587,7 @@ async function restoreBackupByKey(key){
 
 async function deleteBackupByKey(key){
   if(!isSyncConfigured()) return { ok: false, error: 'Sync is not configured.' };
+  if(isDemoUser()) return { ok: true };
   try{
     const res = await fetch(`${SYNC_API_BASE}/backups/delete`, {
       method: 'POST',
@@ -1906,6 +1913,15 @@ function loadUsers(){
 }
 function findUser(username){
   return loadUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
+}
+// A demo account behaves completely normally on screen — saves show
+// success, lists update, everything looks real — but nothing it does
+// ever actually reaches the server. One single check, applied at every
+// write path, so logging out (or anyone else using the app at the same
+// time) is never affected by anything a demo session touched.
+function isDemoUser(){
+  const user = findUser(getCurrentUser());
+  return !!(user && user.isDemo);
 }
 const LOGIN_DATE_KEY = 'stopCurrentUserLoginDate_v1';
 const MASTER_TOKEN_KEY = 'stopMasterToken_v1';
@@ -2495,12 +2511,30 @@ function renderAdminUserDetail(){
       }).join('')}
     </div>
 
+    <div class="block-label" style="margin-top:24px;">Demo Account</div>
+    <p class="caption">A demo account can see and use everything normally, but nothing it saves, changes, or deletes ever actually reaches the shared data — safe to hand to anyone for a look around.</p>
+    <div class="perm-chip-row">
+      <button class="perm-chip ${user.isDemo ? 'active' : ''}" id="admin-toggle-demo-btn" data-username="${user.username}">${user.isDemo ? 'Demo Mode: ON' : 'Demo Mode: OFF'}</button>
+    </div>
+
     <button class="ghost-btn admin-reset-btn" data-username="${user.username}" style="margin-top:24px;">Reset Password</button>
     <button class="ghost-btn admin-remove-btn" data-username="${user.username}">Remove User</button>
   `;
 
   document.getElementById('admin-user-detail-back').addEventListener('click', ()=>{
     viewingUserUsername = null;
+    renderAdminUsersTab();
+  });
+  document.getElementById('admin-toggle-demo-btn').addEventListener('click', async ()=>{
+    const username = user.username;
+    const newVal = !user.isDemo;
+    const result = await upsertUserOnServer(username, { isDemo: newVal });
+    if(!result.ok){
+      alert(`Couldn't update this — the server rejected it (${result.error || 'error ' + result.status}).`);
+    } else {
+      logActivity(getAdminActingUsername(), `${newVal ? 'Enabled' : 'Disabled'} demo mode for "${username}"`);
+    }
+    await refreshUsersFromServer();
     renderAdminUsersTab();
   });
   content.querySelectorAll('.perm-chip').forEach(btn=>{
@@ -4093,6 +4127,22 @@ async function runSettingsDefaultsSeed2026_09(){
   }
 }
 
+// Creates the shared internal demo account once, if it doesn't already
+// exist. Retry-safe: it just checks whether "demo" is present rather
+// than using a one-time flag, so if this runs before anyone with
+// "users" permission has a valid session (and so can't actually create
+// it yet), it simply tries again on the next load.
+async function runDemoAccountSeed(){
+  if(findUser('demo')) return;
+  const allPermissions = {};
+  PERMISSION_KEYS.forEach(k => { allPermissions[k] = true; });
+  const result = await upsertUserOnServer('demo', { password: 'demo2026', permissions: allPermissions, isDemo: true });
+  if(result.ok){
+    await refreshUsersFromServer();
+    logActivity('System', 'Created the demo account');
+  }
+}
+
 async function bootstrapAuth(){
   await Promise.all([
     refreshUsersFromServer(),
@@ -4113,6 +4163,7 @@ async function bootstrapAuth(){
   await runReclassifyEnhancements2026_09();
   await runImport2026_09_B2();
   await runSettingsDefaultsSeed2026_09();
+  await runDemoAccountSeed();
   checkAuthAndRender();
   renderHomeLinks();
   setInterval(async ()=>{
@@ -5414,6 +5465,7 @@ function renderMyAccount(){
 
 async function updateMyAccount(fields){
   if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
+  if(isDemoUser()) return { ok:true, error:null };
   try{
     const res = await fetch(`${SYNC_API_BASE}/auth/update-account`, {
       method: 'POST',
