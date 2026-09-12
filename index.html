@@ -1308,7 +1308,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.20.0</div>
+    <div class="app-version">v1.21.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -1367,20 +1367,21 @@ function loadErrorsLocalFallback(){
 
 function logError(message, location){
   const current = (function(){ try{ return localStorage.getItem('stopCurrentUser_v1') || 'Unknown'; }catch(e){ return 'Unknown'; } })();
-  errorsCache.unshift({
+  const entry = {
     message: String(message == null ? 'Unknown error' : message).slice(0, 500),
     location: String(location || '').slice(0, 200),
     username: current,
     timestamp: new Date().toISOString()
-  });
+  };
+  errorsCache.unshift(entry);
   while(errorsCache.length > 100) errorsCache.pop();
   try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
   try{
     if(typeof SYNC_API_BASE !== 'undefined'){
-      fetch(`${SYNC_API_BASE}/data/stop-errors`, {
+      fetch(`${SYNC_API_BASE}/log/error`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorsCache)
+        body: JSON.stringify(entry)
       }).catch(()=>{});
     }
   }catch(e){}
@@ -1412,6 +1413,26 @@ window.addEventListener('unhandledrejection', function(event){
   logError(String(event.reason && event.reason.message ? event.reason.message : event.reason), 'unhandled promise rejection');
   showErrorFallback('A background task failed unexpectedly.');
 });
+
+/* ---------- Login announcement (shown once right after a successful login) ---------- */
+
+function maybeShowAnnouncement(){
+  const data = loadAnnouncement();
+  if(!data || !data.enabled || !data.message) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'stop-announcement-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(43,42,36,0.45);display:flex;align-items:center;justify-content:center;padding:24px;';
+  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  overlay.innerHTML = `
+    <div style="background:#F8F5EC;border-radius:18px;padding:28px 24px;max-width:340px;width:100%;text-align:center;font-family:-apple-system,sans-serif;">
+      <div style="font-family:Georgia,serif;font-size:19px;color:#2B2A24;margin-bottom:10px;">${esc(data.title) || 'Announcement'}</div>
+      <div style="font-size:14px;color:#5B584C;line-height:1.5;margin-bottom:22px;white-space:pre-wrap;">${esc(data.message)}</div>
+      <button id="stop-announcement-ok-btn" style="background:#727F63;color:#fff;border:none;border-radius:14px;padding:12px 32px;font-size:13px;cursor:pointer;">OK</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('stop-announcement-ok-btn').addEventListener('click', function(){ overlay.remove(); });
+}
 
 /* ============ Service worker (faster loads + Android install prompt) ============ */
 
@@ -1834,6 +1855,24 @@ function saveShiftTemplates(list){
   syncPost('stop-shift-templates', list);
 }
 
+/* ---- Login Announcement (single object, not a list) ---- */
+
+const ANNOUNCEMENT_KEY = 'stopAnnouncement_v1';
+const BLANK_ANNOUNCEMENT = { enabled: false, title: '', message: '' };
+let announcementCache = { ...BLANK_ANNOUNCEMENT };
+function loadAnnouncementLocalFallback(){ try{ return { ...BLANK_ANNOUNCEMENT, ...(JSON.parse(localStorage.getItem(ANNOUNCEMENT_KEY)) || {}) }; }catch(e){ return { ...BLANK_ANNOUNCEMENT }; } }
+async function refreshAnnouncementFromServer(){
+  const remote = await syncGet('stop-announcement');
+  if(remote && typeof remote === 'object'){ announcementCache = { ...BLANK_ANNOUNCEMENT, ...remote }; try{ localStorage.setItem(ANNOUNCEMENT_KEY, JSON.stringify(announcementCache)); }catch(e){} }
+  else { announcementCache = loadAnnouncementLocalFallback(); }
+}
+function loadAnnouncement(){ return announcementCache; }
+function saveAnnouncement(data){
+  announcementCache = data;
+  try{ localStorage.setItem(ANNOUNCEMENT_KEY, JSON.stringify(data)); }catch(e){}
+  syncPost('stop-announcement', data);
+}
+
 function parseIngredientsText(text){
   return text
     .split(/[\n,;]+/)
@@ -1843,6 +1882,21 @@ function parseIngredientsText(text){
 
 function makeId(){
   return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+
+// Escapes text before it's inserted into the page, so anything someone
+// types — a client name, a product name, a note — always displays as
+// plain text and can never be interpreted as HTML/code by the browser.
+// Used anywhere user-entered content is shown to OTHER people, not just
+// reflected back to whoever typed it into their own form.
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /* ---- Custom Protocols ---- */
@@ -2009,7 +2063,13 @@ function logActivity(username, action){
   activityCache.unshift({ username, action, timestamp: new Date().toISOString() });
   while(activityCache.length > 200) activityCache.pop();
   try{ localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityCache)); }catch(e){}
-  syncPost('stop-activity', activityCache);
+  if(isDemoUser()) return; // demo accounts never actually write anything, same as everywhere else
+  if(typeof SYNC_API_BASE === 'undefined' || !isSyncConfigured()) return;
+  fetch(`${SYNC_API_BASE}/log/activity`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, action })
+  }).catch(()=>{});
 }
 
 function checkAuthAndRender(trustSession){
@@ -2234,6 +2294,7 @@ async function attemptLogin(username, password){
   logActivity(result.username, 'Logged in');
   authError = '';
   checkAuthAndRender(true);
+  maybeShowAnnouncement();
   refreshUsersFromServer();
 }
 
@@ -2272,6 +2333,7 @@ async function attemptCreateAccount(username, password, confirmPw, code, securit
   logActivity(result.username, 'Logged in');
   authError = '';
   checkAuthAndRender(true);
+  maybeShowAnnouncement();
   refreshUsersFromServer();
 }
 
@@ -2482,7 +2544,7 @@ function renderAdminUsersList(){
     <div id="admin-user-list">
       ${users.length ? users.map(u => `
         <button class="user-list-row" data-username="${u.username}">
-          <span class="ulr-name">${u.username}</span>
+          <span class="ulr-name">${escapeHtml(u.username)}</span>
           <span class="ulr-meta">${u.lastLogin ? `Last login: ${new Date(u.lastLogin).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</span>
         </button>
       `).join('') : `<p class="caption">No users yet.</p>`}
@@ -2728,16 +2790,16 @@ function renderSubProtocolsSubTab(){
 
   el.innerHTML = `
     <p class="caption">A Sub-Protocol is a reusable step-sequence — like the Facial Massage routine — that you can insert into any main Protocol's Steps. Editing or renaming it here updates it everywhere it's used.</p>
-    <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Sub-Protocol'}</div>
-    <div class="field"><label>Name</label><input type="text" id="subprotocol-name" value="${editing ? editing.name : ''}"></div>
-    <div class="field"><label>Steps (one per line)</label><textarea id="subprotocol-steps" rows="6">${editing && editing.steps ? editing.steps.join('\n') : ''}</textarea></div>
+    <div class="block-label">${editing ? `Editing "${escapeHtml(editing.name)}"` : 'Add Sub-Protocol'}</div>
+    <div class="field"><label>Name</label><input type="text" id="subprotocol-name" value="${editing ? escapeHtml(editing.name) : ''}"></div>
+    <div class="field"><label>Steps (one per line)</label><textarea id="subprotocol-steps" rows="6">${editing && editing.steps ? escapeHtml(editing.steps.join('\n')) : ''}</textarea></div>
     <button class="primary-btn" id="save-subprotocol-btn">${editing ? 'Save Changes' : 'Add Sub-Protocol'}</button>
     ${editing ? `<button class="ghost-btn" id="cancel-subprotocol-btn">Cancel Edit</button>` : ''}
 
     <div class="block-label" style="margin-top:32px;">Sub-Protocols</div>
     ${subProtocols.length ? subProtocols.map(sp => `
       <div class="admin-user-row">
-        <div class="admin-user-name">${sp.name}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${(sp.steps||[]).length} step${(sp.steps||[]).length===1?'':'s'}</span></div>
+        <div class="admin-user-name">${escapeHtml(sp.name)}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${(sp.steps||[]).length} step${(sp.steps||[]).length===1?'':'s'}</span></div>
         <div class="admin-user-actions">
           <button class="ghost-btn edit-subprotocol-btn" data-id="${sp.id}">Edit</button>
           <button class="ghost-btn remove-subprotocol-btn" data-id="${sp.id}">Remove</button>
@@ -2824,9 +2886,9 @@ function renderAdminProtocolsTab(){
   const linesToText = (lines) => (lines || []).join('\n');
 
   content.innerHTML = protocolsSubNavHtml + `
-    <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Protocol'}</div>
-    <div class="field"><label>Protocol Name</label><input type="text" id="admin-new-protocol-name" value="${editing ? editing.name : ''}"></div>
-    <div class="field"><label>Short Caption</label><input type="text" id="admin-new-protocol-caption" placeholder="One line shown on the button" value="${editing ? (editing.caption || '') : ''}"></div>
+    <div class="block-label">${editing ? `Editing "${escapeHtml(editing.name)}"` : 'Add Protocol'}</div>
+    <div class="field"><label>Protocol Name</label><input type="text" id="admin-new-protocol-name" value="${editing ? escapeHtml(editing.name) : ''}"></div>
+    <div class="field"><label>Short Caption</label><input type="text" id="admin-new-protocol-caption" placeholder="One line shown on the button" value="${editing ? escapeHtml(editing.caption || '') : ''}"></div>
     <div class="field">
       <label>Section</label>
       <select id="admin-new-protocol-section">
@@ -2852,11 +2914,11 @@ function renderAdminProtocolsTab(){
     </div>
     <div class="field">
       <label>Description (optional)</label>
-      <textarea id="admin-new-protocol-description" rows="3" placeholder="Longer guest-facing description, shown under &quot;See description&quot;">${editing ? (editing.menuDescription || '') : ''}</textarea>
+      <textarea id="admin-new-protocol-description" rows="3" placeholder="Longer guest-facing description, shown under &quot;See description&quot;">${editing ? escapeHtml(editing.menuDescription || '') : ''}</textarea>
     </div>
     <div class="field">
       <label>Warnings / Callouts (optional)</label>
-      <textarea id="admin-new-protocol-callouts" rows="2" placeholder="One warning per line, e.g. Confirm no known allergies before starting">${editing ? linesToText(editing.callouts) : ''}</textarea>
+      <textarea id="admin-new-protocol-callouts" rows="2" placeholder="One warning per line, e.g. Confirm no known allergies before starting">${editing ? escapeHtml(linesToText(editing.callouts)) : ''}</textarea>
     </div>
 
     <div class="field">
@@ -2879,7 +2941,7 @@ function renderAdminProtocolsTab(){
 
     <div class="field">
       <label>Steps</label>
-      <textarea id="admin-new-protocol-steps" rows="5" placeholder="One step per line, in order">${editing ? linesToText(editing.steps) : ''}</textarea>
+      <textarea id="admin-new-protocol-steps" rows="5" placeholder="One step per line, in order">${editing ? escapeHtml(linesToText(editing.steps)) : ''}</textarea>
     </div>
     ${loadSubProtocols().length ? `
     <div class="field">
@@ -3165,10 +3227,10 @@ function renderAdminAllergensTab(){
     <div id="admin-allergen-list">
       ${merged.length ? merged.map(a => `
         <div class="admin-user-row">
-          <div class="admin-user-name">${allergenDisplayName(a)}</div>
+          <div class="admin-user-name">${escapeHtml(allergenDisplayName(a))}</div>
           <div class="admin-user-actions">
-            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : a.fullName}">Edit</button>
-            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : a.fullName}">Remove</button>
+            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : escapeHtml(a.fullName)}">Edit</button>
+            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : escapeHtml(a.fullName)}">Remove</button>
           </div>
         </div>
       `).join('') : `<p class="caption">No ingredients yet — add products with ingredients first, or add an allergen manually above.</p>`}
@@ -3249,8 +3311,8 @@ function renderAdminActivityTab(){
       ${log.length ? log.slice(0,50).map(entry => `
         <div class="agenda-row">
           <span class="ar-time">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
-          <span class="ar-client">${entry.username}</span>
-          <span class="ar-service">${entry.action}</span>
+          <span class="ar-client">${escapeHtml(entry.username)}</span>
+          <span class="ar-service">${escapeHtml(entry.action)}</span>
         </div>
       `).join('') : `<p class="caption">No activity yet.</p>`}
     </div>
@@ -3268,8 +3330,8 @@ function renderAdminErrorsTab(){
       ${log.length ? log.slice(0,50).map(entry => `
         <div class="admin-user-row">
           <div class="admin-user-name">
-            ${entry.message}
-            <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} · ${entry.username}${entry.location ? ' · ' + entry.location : ''}</span>
+            ${escapeHtml(entry.message)}
+            <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${new Date(entry.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} · ${escapeHtml(entry.username)}${entry.location ? ' · ' + escapeHtml(entry.location) : ''}</span>
           </div>
         </div>
       `).join('') : `<p class="caption">No errors logged — that's a good sign.</p>`}
@@ -3279,11 +3341,15 @@ function renderAdminErrorsTab(){
 
   const clearBtn = document.getElementById('admin-clear-errors-btn');
   if(clearBtn){
-    clearBtn.addEventListener('click', ()=>{
+    clearBtn.addEventListener('click', async ()=>{
       if(!confirm('Clear the error log? This cannot be undone.')) return;
       errorsCache = [];
       try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
-      syncPost('stop-errors', errorsCache);
+      if(isSyncConfigured()){
+        try{
+          await fetch(`${SYNC_API_BASE}/log/error/clear`, { method: 'POST', headers: authHeaders() });
+        }catch(e){}
+      }
       logActivity(getAdminActingUsername(), 'Cleared the error log');
       renderAdminErrorsTab();
     });
@@ -3292,7 +3358,7 @@ function renderAdminErrorsTab(){
 
 /* ---------- Settings: Rooms / Durations / Categories / Home Links ---------- */
 
-let settingsSubTab = 'rooms'; // 'rooms' | 'durations' | 'categories' | 'homelinks' | 'shifttemplates'
+let settingsSubTab = 'rooms'; // 'rooms' | 'durations' | 'categories' | 'homelinks' | 'shifttemplates' | 'announcement'
 
 function renderAdminSettingsTab(){
   const content = document.getElementById('admin-tab-content');
@@ -3302,6 +3368,7 @@ function renderAdminSettingsTab(){
     { key: 'categories', label: 'Categories' },
     { key: 'homelinks', label: 'Home Links' },
     { key: 'shifttemplates', label: 'Shift Templates' },
+    { key: 'announcement', label: 'Announcement' },
   ];
 
   content.innerHTML = `
@@ -3322,7 +3389,8 @@ function renderAdminSettingsTab(){
   else if(settingsSubTab === 'durations') renderSettingsDurationsSubTab();
   else if(settingsSubTab === 'categories') renderSettingsCategoriesSubTab();
   else if(settingsSubTab === 'homelinks') renderSettingsHomeLinksSubTab();
-  else renderSettingsShiftTemplatesSubTab();
+  else if(settingsSubTab === 'shifttemplates') renderSettingsShiftTemplatesSubTab();
+  else renderSettingsAnnouncementSubTab();
 }
 
 function renderSettingsRoomsSubTab(){
@@ -3642,6 +3710,34 @@ function renderSettingsShiftTemplatesSubTab(){
   });
 }
 
+function renderSettingsAnnouncementSubTab(){
+  const el = document.getElementById('settings-subtab-content');
+  const data = loadAnnouncement();
+
+  el.innerHTML = `
+    <p class="caption">Shown once to everyone the next time they log in — good for a quick reminder ("Inventory count Friday") without needing to tell each person individually. Turn it off when it's no longer needed; it won't show again once it's off.</p>
+    <div class="field"><label>Title</label><input type="text" id="settings-announcement-title" value="${escapeHtml(data.title || '')}" placeholder="e.g. Reminder"></div>
+    <div class="field"><label>Message</label><textarea id="settings-announcement-message" rows="4" placeholder="e.g. Inventory count this Friday after close.">${escapeHtml(data.message || '')}</textarea></div>
+    <div class="perm-chip-row">
+      <button class="perm-chip ${data.enabled ? 'active' : ''}" id="settings-announcement-toggle">${data.enabled ? 'Showing at Login: ON' : 'Showing at Login: OFF'}</button>
+    </div>
+    <button class="primary-btn" id="settings-save-announcement-btn" style="margin-top:16px;">Save</button>
+  `;
+
+  document.getElementById('settings-announcement-toggle').addEventListener('click', ()=>{
+    saveAnnouncement({ ...loadAnnouncement(), enabled: !loadAnnouncement().enabled });
+    renderSettingsAnnouncementSubTab();
+  });
+  document.getElementById('settings-save-announcement-btn').addEventListener('click', ()=>{
+    const title = document.getElementById('settings-announcement-title').value.trim();
+    const message = document.getElementById('settings-announcement-message').value.trim();
+    if(loadAnnouncement().enabled && !message){ alert('Enter a message, or turn Showing at Login off.'); return; }
+    saveAnnouncement({ ...loadAnnouncement(), title, message });
+    logActivity(getAdminActingUsername(), 'Updated the login announcement');
+    renderSettingsAnnouncementSubTab();
+  });
+}
+
 function renderAdminBackupTab(){
   const content = document.getElementById('admin-tab-content');
 
@@ -3744,12 +3840,12 @@ function renderAdminProductsTab(){
   const editing = editingProductId ? products.find(p => p.id === editingProductId) : null;
 
   content.innerHTML = `
-    <div class="block-label">${editing ? `Editing "${editing.name}"` : 'Add Product'}</div>
-    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis" value="${editing ? (editing.brand || '') : ''}"></div>
-    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name" value="${editing ? editing.name : ''}"></div>
+    <div class="block-label">${editing ? `Editing "${escapeHtml(editing.name)}"` : 'Add Product'}</div>
+    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis" value="${editing ? escapeHtml(editing.brand || '') : ''}"></div>
+    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name" value="${editing ? escapeHtml(editing.name) : ''}"></div>
     <div class="field">
       <label>Paste Ingredients</label>
-      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks">${editing && editing.ingredients ? editing.ingredients.join(', ') : ''}</textarea>
+      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks">${editing && editing.ingredients ? escapeHtml(editing.ingredients.join(', ')) : ''}</textarea>
     </div>
     <button class="primary-btn" id="admin-add-product-btn">${editing ? 'Save Changes' : 'Add Product'}</button>
     ${editing ? `<button class="ghost-btn" id="admin-cancel-product-btn">Cancel Edit</button>` : ''}
@@ -3759,7 +3855,7 @@ function renderAdminProductsTab(){
       ${products.length ? products.map(p => `
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
-            <span class="admin-user-name">${p.name}${p.brand ? ` <span class="admin-supply-empty">— ${p.brand}</span>` : ''}</span>
+            <span class="admin-user-name">${escapeHtml(p.name)}${p.brand ? ` <span class="admin-supply-empty">— ${escapeHtml(p.brand)}</span>` : ''}</span>
             <span class="tap-hint">${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : 'No ingredients listed'}</span>
           </button>
           <div class="admin-user-actions">
@@ -3769,7 +3865,7 @@ function renderAdminProductsTab(){
         </div>
         <div class="admin-ingredient-tags hidden" id="ingredients-${p.id}">
           ${p.ingredients && p.ingredients.length
-            ? `<div class="ingredient-plain-list">${[...p.ingredients].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(i => `<div class="ingredient-plain-item">${i}</div>`).join('')}</div>`
+            ? `<div class="ingredient-plain-list">${[...p.ingredients].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(i => `<div class="ingredient-plain-item">${escapeHtml(i)}</div>`).join('')}</div>`
             : ''}
         </div>
       `).join('') : `<p class="caption">No products yet.</p>`}
@@ -3848,7 +3944,7 @@ function renderAdminSuppliesTab(){
       ${supplies.length ? supplies.map(s => `
         <div class="admin-supply-row">
           <div class="admin-supply-main">
-            <div class="admin-user-name">${s.name}</div>
+            <div class="admin-user-name">${escapeHtml(s.name)}</div>
           </div>
           <button class="ghost-btn admin-remove-supply-btn" data-id="${s.id}">Remove</button>
         </div>
@@ -4128,6 +4224,46 @@ async function runReclassifyEnhancements2026_09(){
   await syncPost(RECLASSIFY_ENHANCEMENTS_FLAG_KEY, true);
 }
 
+// One-time update: the original "2026 Autumn Restore Seasonal Massage"
+// import was a short summary. This replaces it with the fuller prep/steps
+// from the actual training sheet, and drops "2026" from the name.
+const UPDATE_AUTUMN_RESTORE_FLAG_KEY = 'stop-update-autumn-restore-2026';
+async function runUpdateAutumnRestore2026(){
+  const alreadyDone = await syncGet(UPDATE_AUTUMN_RESTORE_FLAG_KEY);
+  if(alreadyDone === true) return;
+
+  const protocols = loadCustomProtocols();
+  const target = protocols.find(p => p.name === '2026 Autumn Restore Seasonal Massage' || p.name === 'Autumn Restore Seasonal Massage');
+  if(target){
+    target.name = 'Autumn Restore Seasonal Massage';
+    target.caption = 'Restore & Pure oil, hot stones, scent introduction, and a warm Quench foot treatment';
+    target.menuDescription = "A seasonal massage featuring Restore and Pure oil, a scent-introduction opening, hot stones throughout, and a warmed Quench foot treatment.";
+    target.prep = [
+      {t:'1 dry hot towel (apply 1 pump Restore oil before putting in cabi)'},
+      {t:'2 hot washcloths (to wrap feet prior to massage)'},
+      {t:'1 hot towel (wipe feet at end)'},
+      {t:'Small amount of Quench, warmed in flexi bowl (foot application)'},
+      {t:'Restore Oil'},
+      {t:'Pure Oil'},
+      {t:'2 hot stones w/ activator packets'}
+    ];
+    target.steps = [
+      "Guest starts face up. Light to medium pressure massage — Restore Oil on the upper body, Pure Oil on the lower body",
+      "Scent introduction: apply Restore oil to your hands, hold above the guest's nose, and have them take 3 deep breaths, then provide a neck and shoulder massage",
+      "Drape a warm towel around the neck (1 pump Restore oil applied to it before it went in the towel cabi)",
+      "Provide light to medium pressure massage on the anterior side of the body, incorporating hot stones",
+      "Foot massage: wrap each foot in a hot washcloth, perform compressions, then remove the washcloths",
+      "Apply warmed Quench to each foot, then massage using the Quench and Restore oil",
+      "Wash hands, then prepare the stones for use",
+      "Guest flips over: massage the back, incorporating hot stones throughout the entire posterior side",
+      "Ending: apply a hot towel to the feet, lay the bathmat on the floor, place sandals on top, drape the robe across the guest's lap, remove the foot towel, wash your hands, and spritz the beauty elixir"
+    ];
+    saveCustomProtocols(protocols);
+    logActivity('System', 'Updated "Autumn Restore Seasonal Massage" with fuller prep and steps');
+  }
+  await syncPost(UPDATE_AUTUMN_RESTORE_FLAG_KEY, true);
+}
+
 // One-time defaults for the new Settings lists — only fills in if the
 // list is still empty, so it can never overwrite anything an admin has
 // already configured. This preserves the app's previous built-in
@@ -4240,10 +4376,12 @@ async function bootstrapAuth(){
     refreshCategoriesFromServer(),
     refreshHomeLinksFromServer(),
     refreshSubProtocolsFromServer(),
-    refreshShiftTemplatesFromServer()
+    refreshShiftTemplatesFromServer(),
+    refreshAnnouncementFromServer()
   ]);
   await runImport2026_09();
   await runReclassifyEnhancements2026_09();
+  await runUpdateAutumnRestore2026();
   await runImport2026_09_B2();
   await runSettingsDefaultsSeed2026_09();
   await runDemoAccountSeed();
@@ -4263,6 +4401,7 @@ async function bootstrapAuth(){
     await refreshHomeLinksFromServer();
     await refreshSubProtocolsFromServer();
     await refreshShiftTemplatesFromServer();
+    await refreshAnnouncementFromServer();
     renderHomeLinks();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
@@ -4519,7 +4658,7 @@ function renderHomeScheduleList(){
         const isCurrent = current && s.time === current.time;
         return `<div class="agenda-row ${isCurrent ? 'current' : ''}">
           <span class="ar-time">${formatSlotTime(s.time)}</span>
-          <span class="ar-client">${clientLine}${s.room ? `<span class="ar-room">${s.room}</span>` : ''}</span>
+          <span class="ar-client">${escapeHtml(clientLine)}${s.room ? `<span class="ar-room">${escapeHtml(s.room)}</span>` : ''}</span>
           <span class="ar-service">${svcLine || '—'}</span>
         </div>`;
       }).join('')}
@@ -4750,8 +4889,8 @@ function renderGrid(containerId, items, isRef=false){
   el.innerHTML = items.map(item => `
     <button class="card-btn ${isRef?'ref-btn':''}" data-id="${item.id}">
       <span>
-        <span class="name">${item.name}</span>
-        <span class="meta">${item.caption}</span>
+        <span class="name">${escapeHtml(item.name)}</span>
+        <span class="meta">${escapeHtml(item.caption)}</span>
       </span>
       ${iconArrow()}
     </button>
@@ -4985,7 +5124,7 @@ function renderAllergyList(){
     <div class="agenda-step">
       <h2>Allergy Lookup</h2>
       <p class="caption">Find an ingredient to see which treatments are safe to recommend.</p>
-      <div class="field"><input type="text" id="allergy-search" placeholder="Search ingredients…" value="${allergySearchTerm}"></div>
+      <div class="field"><input type="text" id="allergy-search" placeholder="Search ingredients…" value="${escapeHtml(allergySearchTerm)}"></div>
       ${letters.length ? `
         <div class="letter-jump">
           ${letters.map(l => `<a href="#allergy-letter-${l}" class="letter-chip">${l}</a>`).join('')}
@@ -4996,7 +5135,7 @@ function renderAllergyList(){
         <div class="grid">
           ${groups[letter].map(entry => `
             <button class="card-btn allergen-btn" data-key="${allergenSortKey(entry)}">
-              <span><span class="name">${allergenDisplayName(entry)}</span></span>
+              <span><span class="name">${escapeHtml(allergenDisplayName(entry))}</span></span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -5037,7 +5176,7 @@ function renderAllergyDetail(){
   allergyInner.innerHTML = `
     <button class="back-btn" id="allergy-back"><span class="chev">←</span> Allergy Lookup</button>
     <div class="agenda-step">
-      <h2>${allergenDisplayName(entry)}</h2>
+      <h2>${escapeHtml(allergenDisplayName(entry))}</h2>
       <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
 
       <div class="block-label">Products That Contain It</div>
@@ -5045,7 +5184,7 @@ function renderAllergyDetail(){
         <div class="grid">
           ${matchingProducts.map(p => `
             <button class="card-btn allergy-product-btn" data-id="${p.id}">
-              <span><span class="name">${p.name}</span>${p.brand ? `<span class="meta">${p.brand}</span>` : ''}</span>
+              <span><span class="name">${escapeHtml(p.name)}</span>${p.brand ? `<span class="meta">${escapeHtml(p.brand)}</span>` : ''}</span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -5057,7 +5196,7 @@ function renderAllergyDetail(){
         <div class="grid">
           ${unsafe.map(p => `
             <button class="card-btn allergy-result-btn avoid" data-id="${p.id}">
-              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
+              <span><span class="name">${escapeHtml(p.name)}</span><span class="meta">${escapeHtml(p.caption || '')}</span></span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -5069,7 +5208,7 @@ function renderAllergyDetail(){
         <div class="grid">
           ${safe.map(p => `
             <button class="card-btn allergy-result-btn" data-id="${p.id}">
-              <span><span class="name">${p.name}</span><span class="meta">${p.caption || ''}</span></span>
+              <span><span class="name">${escapeHtml(p.name)}</span><span class="meta">${escapeHtml(p.caption || '')}</span></span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -5146,7 +5285,7 @@ function renderProductsBrowseList(){
         <div class="grid">
           ${products.map(p => `
             <button class="card-btn products-browse-btn" data-id="${p.id}">
-              <span><span class="name">${p.name}</span>${p.brand ? `<span class="meta">${p.brand}</span>` : ''}</span>
+              <span><span class="name">${escapeHtml(p.name)}</span>${p.brand ? `<span class="meta">${escapeHtml(p.brand)}</span>` : ''}</span>
               ${iconArrow()}
             </button>
           `).join('')}
@@ -5177,12 +5316,12 @@ function renderProductsBrowseDetail(){
   productsBrowseInner.innerHTML = `
     <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Products</button>
     <div class="agenda-step">
-      <h2>${product.name}</h2>
-      ${product.brand ? `<p class="caption">${product.brand}</p>` : ''}
+      <h2>${escapeHtml(product.name)}</h2>
+      ${product.brand ? `<p class="caption">${escapeHtml(product.brand)}</p>` : ''}
       <div class="block-label">Ingredients</div>
       ${ingredients.length ? `
         <div class="ingredient-plain-list">
-          ${ingredients.map(i => `<div class="ingredient-plain-item">${i}</div>`).join('')}
+          ${ingredients.map(i => `<div class="ingredient-plain-item">${escapeHtml(i)}</div>`).join('')}
         </div>
       ` : `<p class="caption">No ingredients listed for this product.</p>`}
     </div>
@@ -5318,25 +5457,25 @@ function openDetail(id){
 
   let html = `
     <button class="back-btn" id="back-btn"><span class="chev">←</span> All treatments</button>
-    <h2>${item.name}</h2>
-    <p class="caption">${item.caption}</p>
+    <h2>${escapeHtml(item.name)}</h2>
+    <p class="caption">${escapeHtml(item.caption)}</p>
   `;
 
   if(item.menuDescription){
     html += `<button class="desc-toggle" id="desc-toggle"><span class="car">▸</span> See description</button>`;
-    html += `<p class="menu-desc hidden" id="desc-panel">${item.menuDescription}</p>`;
+    html += `<p class="menu-desc hidden" id="desc-panel">${escapeHtml(item.menuDescription)}</p>`;
   }
 
   if(item.callouts){
-    html += item.callouts.map(c => `<div class="callout">${c}</div>`).join('');
+    html += item.callouts.map(c => `<div class="callout">${escapeHtml(c)}</div>`).join('');
   }
   if(item.scanNote){
-    html += `<div class="scan-note">${item.scanNote}</div>`;
+    html += `<div class="scan-note">${escapeHtml(item.scanNote)}</div>`;
   }
 
   if(item.prep){
     html += `<div class="block-label">Prep</div><ul class="tray">`;
-    html += item.prep.map(p => `<li>${p.t}${p.note ? `<span class="note">${p.note}</span>` : ''}</li>`).join('');
+    html += item.prep.map(p => `<li>${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</li>`).join('');
     html += `</ul>`;
   }
 
@@ -5345,7 +5484,7 @@ function openDetail(id){
     html += item.tableMakeup.map((t,idx) => `
       <div class="layer-row">
         <span class="n">${idx+1}</span>
-        <span class="t">${t}</span>
+        <span class="t">${escapeHtml(t)}</span>
       </div>
     `).join('');
     html += `</div>`;
@@ -5353,7 +5492,7 @@ function openDetail(id){
 
   if(item.tableLinens){
     html += `<div class="block-label">Table Linens</div><ul class="tray">`;
-    html += item.tableLinens.map(t => `<li>${t}</li>`).join('');
+    html += item.tableLinens.map(t => `<li>${escapeHtml(t)}</li>`).join('');
     html += `</ul>`;
   }
 
@@ -5362,7 +5501,7 @@ function openDetail(id){
     html += item.layers.map(l => `
       <div class="layer-row ${l.sub ? 'sub' : ''}">
         <span class="n">${l.n}</span>
-        <span class="t">${l.t}${l.note ? `<small>${l.note}</small>` : ''}</span>
+        <span class="t">${escapeHtml(l.t)}${l.note ? `<small>${escapeHtml(l.note)}</small>` : ''}</span>
       </div>
     `).join('');
     html += `</div>`;
@@ -5376,7 +5515,7 @@ function openDetail(id){
         const routineRows = FACIAL_MASSAGE_ROUTINE.map((r,ri) => `
           <div class="routine-row">
             <span class="rn">${ri+1}</span>
-            <span class="rt"><b>${r.area}</b> — ${r.detail}</span>
+            <span class="rt"><b>${escapeHtml(r.area)}</b> — ${escapeHtml(r.detail)}</span>
           </div>
         `).join('');
         return `<li><span class="num">${idx+1}</span>
@@ -5394,15 +5533,15 @@ function openDetail(id){
         const routineRows = sub.steps.map((step,ri) => `
           <div class="routine-row">
             <span class="rn">${ri+1}</span>
-            <span class="rt">${step}</span>
+            <span class="rt">${escapeHtml(step)}</span>
           </div>
         `).join('');
         return `<li><span class="num">${idx+1}</span>
-          <button class="routine-toggle" data-target="${panelId}">${sub.name} <span class="tap-hint">Tap for routine</span></button>
+          <button class="routine-toggle" data-target="${panelId}">${escapeHtml(sub.name)} <span class="tap-hint">Tap for routine</span></button>
           <div class="routine-panel hidden" id="${panelId}">${routineRows}</div>
         </li>`;
       }
-      return `<li><span class="num">${idx+1}</span>${s}</li>`;
+      return `<li><span class="num">${idx+1}</span>${escapeHtml(s)}</li>`;
     }).join('');
     html += `</ol>`;
   }
@@ -5574,8 +5713,8 @@ function renderHomeLinks(){
   container.innerHTML = links.map(link => `
     <button class="agenda-entry link-entry home-link-btn" data-id="${link.id}">
       <span class="agenda-entry-text">
-        <span class="ae-label">${link.label}</span>
-        <span class="ae-sub">${link.subtitle || ''}</span>
+        <span class="ae-label">${escapeHtml(link.label)}</span>
+        <span class="ae-sub">${escapeHtml(link.subtitle || '')}</span>
       </span>
       <span class="arrow">→</span>
     </button>
@@ -5747,8 +5886,8 @@ function renderAgendaFill(){
           <button class="remove-slot-btn" data-idx="${idx}" title="Remove this appointment time" aria-label="Remove this appointment time">✕</button>
         </div>
       </div>
-      <input type="text" placeholder="Client name" data-idx="${idx}" class="agenda-client-input" value="${slot.client}">
-      ${isCouplesService(slot.service) ? `<input type="text" placeholder="Client 2 name" data-idx="${idx}" class="agenda-client2-input" value="${slot.client2}">` : ''}
+      <input type="text" placeholder="Client name" data-idx="${idx}" class="agenda-client-input" value="${escapeHtml(slot.client)}">
+      ${isCouplesService(slot.service) ? `<input type="text" placeholder="Client 2 name" data-idx="${idx}" class="agenda-client2-input" value="${escapeHtml(slot.client2)}">` : ''}
       <select data-idx="${idx}" class="agenda-room-select">${roomOptionsHtml(slot.room)}</select>
       <select data-idx="${idx}" class="agenda-service-select">${serviceOptionsHtml(slot.service)}</select>
       <select data-idx="${idx}" class="agenda-enhancement-select">${enhancementOptionsHtml(slot.enhancement)}</select>
@@ -5961,7 +6100,7 @@ function updateAgendaLive(){
     const clientLine = [slot.client, slot.client2].filter(Boolean).join(' & ') || 'Open';
     return `<div class="nn-card ${cls}">
       <div class="nn-label">${label}</div>
-      <div class="nn-client">${clientLine}</div>
+      <div class="nn-client">${escapeHtml(clientLine)}</div>
       <div class="nn-service">${svcLine || '—'}</div>
       <div class="nn-time">${formatSlotTime(slot.time)}${slot.room ? ' · ' + slot.room : ''}</div>
     </div>`;
@@ -5975,7 +6114,7 @@ function updateAgendaLive(){
     return `
     <div class="agenda-row ${current && s.time===current.time ? 'current' : ''}">
       <span class="ar-time">${formatSlotTime(s.time)}</span>
-      <span class="ar-client">${clientLine}${s.room ? `<span class="ar-room">${s.room}</span>` : ''}</span>
+      <span class="ar-client">${escapeHtml(clientLine)}${s.room ? `<span class="ar-room">${escapeHtml(s.room)}</span>` : ''}</span>
       <span class="ar-service">${svcLine || '—'}</span>
     </div>
   `;
