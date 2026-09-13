@@ -65,7 +65,7 @@
     max-width:560px;
     width:100%;
     margin:0 auto;
-    padding:calc(28px + env(safe-area-inset-top)) 20px calc(60px + env(safe-area-inset-bottom));
+    padding:calc(28px + env(safe-area-inset-top)) 20px calc(60px + 64px + env(safe-area-inset-bottom));
     position:relative;
     overflow-x:hidden;
   }
@@ -328,7 +328,7 @@
     max-width:560px;
     width:100%;
     margin:0 auto;
-    padding:calc(20px + env(safe-area-inset-top)) 20px calc(70px + env(safe-area-inset-bottom));
+    padding:calc(20px + env(safe-area-inset-top)) 20px calc(70px + 64px + env(safe-area-inset-bottom));
     overflow-x:hidden;
   }
   .back-btn{
@@ -988,26 +988,60 @@
     opacity:0.45;
     margin-top:8px;
   }
-  .home-admin-link{
+  #bottom-nav{
+    display:none;
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:200;
+    display:flex;
+    justify-content:space-around;
+    align-items:stretch;
+    background:var(--card);
+    border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bottom-nav-btn{
     all:unset;
     box-sizing:border-box;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    padding:10px 4px 8px;
     cursor:pointer;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10.5px;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:#fff;
-    background:var(--sage);
-    border:1px solid var(--sage-deep);
-    border-radius:999px;
-    padding:5px 11px;
-  }
-  .home-admin-link:active{ background:var(--sage-deep); }
-  .home-footer-divider{
+    position:relative;
     color:var(--ink-soft);
-    opacity:0.4;
+    font-family:-apple-system,sans-serif;
     font-size:10.5px;
   }
+  .bottom-nav-btn .nav-icon{
+    font-style:normal;
+    font-size:20px;
+    line-height:1;
+  }
+  .bottom-nav-btn.active{
+    color:var(--sage-deep);
+  }
+  .nav-badge{
+    position:absolute;
+    top:4px;
+    right:calc(50% - 22px);
+    background:#8C4A2A;
+    color:#fff;
+    font-size:10px;
+    line-height:1;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+  }
+  .nav-badge.hidden{ display:none; }
+
   .admin-user-row{
     display:flex;
     align-items:center;
@@ -1332,9 +1366,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.22.0</div>
-    <span class="home-footer-divider">·</span>
-    <button class="home-admin-link" id="home-admin-link">Management</button>
+    <div class="app-version">v1.23.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1353,6 +1385,14 @@
 
 <div class="detail" id="my-account-overlay">
   <div class="detail-inner" id="my-account-inner"></div>
+</div>
+
+<div class="detail" id="menu-overlay">
+  <div class="detail-inner" id="menu-inner"></div>
+</div>
+
+<div class="detail" id="messages-overlay">
+  <div class="detail-inner" id="messages-inner"></div>
 </div>
 
 <div class="detail" id="soap-notes-overlay">
@@ -1376,6 +1416,26 @@
 
 <div class="detail" id="detail">
   <div class="detail-inner" id="detail-inner"></div>
+</div>
+
+<div id="bottom-nav">
+  <button class="bottom-nav-btn" id="nav-home-btn" data-nav="home">
+    <i class="nav-icon">⌂</i>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-agenda-btn" data-nav="agenda">
+    <i class="nav-icon">▤</i>
+    <span>Agenda</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-messages-btn" data-nav="messages">
+    <i class="nav-icon">✉</i>
+    <span>Messages</span>
+    <span class="nav-badge hidden" id="nav-messages-badge">0</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-menu-btn" data-nav="menu">
+    <i class="nav-icon">☰</i>
+    <span>Menu</span>
+  </button>
 </div>
 
 <script>
@@ -2098,6 +2158,7 @@ function logActivity(username, action){
 
 function checkAuthAndRender(trustSession){
   const gate = document.getElementById('auth-gate');
+  const nav = document.getElementById('bottom-nav');
   const current = getCurrentUser();
   const hasToken = !!getSessionToken();
   // Right after a fresh login/signup, the server has already confirmed the
@@ -2113,13 +2174,16 @@ function checkAuthAndRender(trustSession){
       logActivity(current, 'Session expired (midnight reset)');
       clearCurrentUser();
       gate.classList.remove('hidden');
+      if(nav) nav.style.display = 'none';
       renderAuthView();
       return;
     }
     gate.classList.add('hidden');
+    if(nav) nav.style.display = 'flex';
   } else {
     if(current && !trustSession && !findUser(current)) clearCurrentUser();
     gate.classList.remove('hidden');
+    if(nav) nav.style.display = 'none';
     renderAuthView();
   }
 }
@@ -2372,6 +2436,127 @@ function logout(){
   checkAuthAndRender();
 }
 
+/* ---------- Persistent bottom navigation ---------- */
+
+let activeNavTab = 'home';
+
+function setActiveNavTab(tab){
+  activeNavTab = tab;
+  document.querySelectorAll('.bottom-nav-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.nav === tab);
+  });
+}
+// Nav destinations are mutually exclusive top-level screens — tapping one
+// always jumps straight there, closing whatever else was open. This is
+// separate from in-flow navigation elsewhere in the app (like a product
+// link inside a protocol), which can still stack normally.
+function closeAllOverlaysForNav(){
+  document.querySelectorAll('.detail.open').forEach(el => el.classList.remove('open'));
+}
+
+function openMenuScreen(){
+  renderMenuScreen();
+  document.getElementById('menu-overlay').classList.add('open');
+  document.getElementById('menu-overlay').scrollTop = 0;
+}
+function closeMenuScreen(){
+  document.getElementById('menu-overlay').classList.remove('open');
+}
+function renderMenuScreen(){
+  const inner = document.getElementById('menu-inner');
+  const current = getCurrentUser();
+  const user = current ? findUser(current) : null;
+  const perms = getUserPermissions(user);
+  const visibleSections = ADMIN_SECTIONS.filter(s => perms[s.key]);
+
+  inner.innerHTML = `
+    <button class="back-btn" id="menu-back-btn"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Menu</h2>
+      ${visibleSections.length ? `
+        <div class="block-label">Management</div>
+        <div class="grid">
+          ${visibleSections.map(s => `
+            <button class="card-btn menu-admin-section-btn" data-tab="${s.key}">
+              <span><span class="name">${escapeHtml(s.name)}</span><span class="meta">${escapeHtml(s.meta)}</span></span>
+              ${iconArrow()}
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+      <div class="block-label" style="margin-top:${visibleSections.length ? '28px' : '0'};">Account</div>
+      <div class="grid">
+        <button class="card-btn" id="menu-my-account-btn">
+          <span><span class="name">My Account</span><span class="meta">Change password, security question</span></span>
+          ${iconArrow()}
+        </button>
+        <button class="card-btn" id="menu-logout-btn">
+          <span><span class="name">Log Out</span></span>
+          ${iconArrow()}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('menu-back-btn').addEventListener('click', ()=>{
+    closeMenuScreen();
+    setActiveNavTab('home');
+  });
+  inner.querySelectorAll('.menu-admin-section-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      closeMenuScreen();
+      openAdmin(btn.dataset.tab);
+    });
+  });
+  document.getElementById('menu-my-account-btn').addEventListener('click', ()=>{
+    closeMenuScreen();
+    openMyAccount();
+  });
+  document.getElementById('menu-logout-btn').addEventListener('click', ()=>{
+    if(!confirm('Log out?')) return;
+    closeMenuScreen();
+    logout();
+  });
+}
+
+// Placeholder until the full messaging feature is built — gives the nav
+// item a real destination now rather than a dead button.
+function openMessagesPlaceholder(){
+  const inner = document.getElementById('messages-inner');
+  inner.innerHTML = `
+    <button class="back-btn" id="messages-back-btn"><span class="chev">←</span> Home</button>
+    <div class="agenda-step">
+      <h2>Messages</h2>
+      <p class="caption">Messaging is coming soon.</p>
+    </div>
+  `;
+  document.getElementById('messages-back-btn').addEventListener('click', ()=>{
+    document.getElementById('messages-overlay').classList.remove('open');
+    setActiveNavTab('home');
+  });
+  document.getElementById('messages-overlay').classList.add('open');
+}
+
+document.getElementById('nav-home-btn').addEventListener('click', ()=>{
+  closeAllOverlaysForNav();
+  setActiveNavTab('home');
+});
+document.getElementById('nav-agenda-btn').addEventListener('click', ()=>{
+  closeAllOverlaysForNav();
+  openAgenda();
+  setActiveNavTab('agenda');
+});
+document.getElementById('nav-messages-btn').addEventListener('click', ()=>{
+  closeAllOverlaysForNav();
+  openMessagesPlaceholder();
+  setActiveNavTab('messages');
+});
+document.getElementById('nav-menu-btn').addEventListener('click', ()=>{
+  closeAllOverlaysForNav();
+  openMenuScreen();
+  setActiveNavTab('menu');
+});
+
 let adminTab = null; // null (menu) | 'users' | 'protocols' | 'products' | 'supplies' | 'activity'
 let adminSessionMode = null; // 'user' | 'master'
 
@@ -2402,8 +2587,8 @@ function getAdminActingUsername(){
   return current || 'Unknown';
 }
 
-function openAdmin(){
-  adminTab = null;
+function openAdmin(startTab){
+  adminTab = startTab || null;
   const current = getCurrentUser();
   const user = current ? findUser(current) : null;
   const perms = getUserPermissions(user);
@@ -5690,11 +5875,13 @@ function openAgenda(){
   renderAgenda();
   agendaOverlay.classList.add('open');
   agendaOverlay.scrollTop = 0;
+  setActiveNavTab('agenda');
 }
 
 function closeAgenda(){
   agendaOverlay.classList.remove('open');
   if(agenda.timer){ clearInterval(agenda.timer); agenda.timer = null; }
+  setActiveNavTab('home');
 }
 
 document.getElementById('open-agenda').addEventListener('click', openAgenda);
@@ -5804,8 +5991,6 @@ async function updateMyAccount(fields){
     return { ok:false, error: "Couldn't reach the server." };
   }
 }
-
-document.getElementById('home-admin-link').addEventListener('click', openAdmin);
 
 /* ---------- Home Links (admin-managed, replaces the old hardcoded buttons) ---------- */
 
