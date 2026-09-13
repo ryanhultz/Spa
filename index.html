@@ -27,6 +27,8 @@
     --card:#F8F5EC;
     --sage:#727F63;
     --sage-deep:#565F49;
+    --brand:#3F5D42;
+    --brand-ink:#4A6B4F;
     --gold:#A9824F;
     --gold-soft:#D8C6A2;
     --line: rgba(43,42,36,0.14);
@@ -186,19 +188,24 @@
     all:unset;
     box-sizing:border-box;
     cursor:pointer;
-    background:var(--sage);
-    border:1px solid var(--sage-deep);
-    border-radius:var(--radius);
-    padding:16px 18px;
+    background:var(--brand);
+    border:1px solid var(--brand);
+    border-radius:16px;
+    padding:18px 20px;
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:14px;
     transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
-  .card-btn:active{ transform:scale(0.985); background:var(--sage-deep); }
+  .card-btn:active{ transform:scale(0.985); background:#354E38; }
   .card-btn:hover{ border-color:var(--gold-soft); box-shadow:var(--shadow); }
+  .card-btn > span:first-child{
+    flex:1;
+    min-width:0;
+  }
   .card-btn .name{
+    display:block;
     font-family:'Fraunces',serif;
     font-size:19px;
     font-weight:500;
@@ -206,9 +213,10 @@
     color:#fff;
   }
   .card-btn .meta{
-    font-size:12px;
-    color:rgba(255,255,255,0.78);
-    margin-top:3px;
+    display:block;
+    font-size:12.5px;
+    color:rgba(255,255,255,0.8);
+    margin-top:4px;
   }
   .card-btn .arrow{
     width:30px;height:30px;
@@ -327,6 +335,21 @@
     padding:calc(20px + env(safe-area-inset-top)) 20px calc(70px + 64px + env(safe-area-inset-bottom));
     overflow-x:hidden;
   }
+  /* Shared screen header treatment — echoes the Home hero across every overlay */
+  .detail-inner > .agenda-step > h2,
+  .detail-inner > .agenda-step > .block-label:first-child{
+    position:relative;
+  }
+  .detail-inner .agenda-step h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    letter-spacing:-0.01em;
+  }
+  .screen-rule{
+    height:1px;
+    background:var(--line);
+    margin:14px 0 20px;
+  }
   .back-btn{
     all:unset;
     box-sizing:border-box;
@@ -368,7 +391,7 @@
     font-size:11px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:var(--gold);
+    color:var(--brand-ink);
     margin:0 0 10px;
   }
   .tray{
@@ -843,7 +866,7 @@
     display:block;
     width:100%;
     text-align:center;
-    background:var(--sage);
+    background:var(--brand);
     color:#fff;
     font-family:'JetBrains Mono',monospace;
     font-size:12.5px;
@@ -1533,7 +1556,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.27.0</div>
+    <div class="app-version">v1.28.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
