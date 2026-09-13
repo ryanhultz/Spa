@@ -1545,7 +1545,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.29.0</div>
+    <div class="app-version">v1.30.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1952,7 +1952,7 @@ function otherParticipants(thread){
 function threadDisplayName(thread){
   if(thread.type === 'group') return thread.name || 'Group';
   const others = otherParticipants(thread);
-  return others.length ? others.join(', ') : thread.name || 'Conversation';
+  return others.length ? others.map(getDisplayFullName).join(', ') : thread.name || 'Conversation';
 }
 
 async function fetchBackupList(){
@@ -2465,6 +2465,23 @@ function logActivity(username, action){
 // Morning ends at noon, afternoon runs until 5pm, evening after that —
 // reasonable defaults, easy to adjust later if they don't fit how the
 // day actually splits for this team.
+// A person's first name if they've set one, otherwise their username —
+// used anywhere a friendlier name reads better than a raw login name.
+function getDisplayFirstName(username){
+  const user = findUser(username);
+  return (user && user.firstName) ? user.firstName : username;
+}
+// Full name if both parts are set, first name alone if only that's set,
+// otherwise the username — used in Messages, where knowing who's who
+// matters more than in a quick greeting.
+function getDisplayFullName(username){
+  const user = findUser(username);
+  if(!user) return username;
+  if(user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+  if(user.firstName) return user.firstName;
+  return username;
+}
+
 function renderHomeGreeting(){
   const el = document.getElementById('home-greeting');
   if(!el) return;
@@ -2472,7 +2489,7 @@ function renderHomeGreeting(){
   if(!username) { el.textContent = ''; return; }
   const hour = new Date().getHours();
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-  el.textContent = `Good ${timeOfDay}, ${username}`;
+  el.textContent = `Good ${timeOfDay}, ${getDisplayFirstName(username)}`;
   renderHomeDatePill();
 }
 function renderHomeDatePill(){
@@ -2525,6 +2542,8 @@ function renderAuthView(){
       <p class="caption">New accounts need an invitation code from your admin.</p>
       ${errorHtml}
       <div class="field"><label>Username</label><input type="text" id="auth-new-username" autocomplete="username"></div>
+      <div class="field"><label>First Name (optional)</label><input type="text" id="auth-new-firstname" autocomplete="given-name"></div>
+      <div class="field"><label>Last Name (optional)</label><input type="text" id="auth-new-lastname" autocomplete="family-name"></div>
       <div class="field"><label>Password</label><input type="password" id="auth-new-password" autocomplete="new-password"></div>
       <div class="field"><label>Confirm Password</label><input type="password" id="auth-confirm-password" autocomplete="new-password"></div>
       <div class="field"><label>Invitation Code</label><input type="text" id="auth-invite-code" autocomplete="off"></div>
@@ -2536,12 +2555,14 @@ function renderAuthView(){
     `;
     document.getElementById('auth-create-btn').addEventListener('click', ()=>{
       const u = document.getElementById('auth-new-username').value.trim();
+      const firstName = document.getElementById('auth-new-firstname').value.trim();
+      const lastName = document.getElementById('auth-new-lastname').value.trim();
       const p = document.getElementById('auth-new-password').value;
       const c = document.getElementById('auth-confirm-password').value;
       const code = document.getElementById('auth-invite-code').value.trim();
       const secQ = document.getElementById('auth-security-question').value.trim();
       const secA = document.getElementById('auth-security-answer').value.trim();
-      attemptCreateAccount(u, p, c, code, secQ, secA);
+      attemptCreateAccount(u, p, c, code, secQ, secA, firstName, lastName);
     });
     document.getElementById('auth-show-login').addEventListener('click', ()=>{
       authError = ''; authView = 'login'; renderAuthView();
@@ -2712,7 +2733,7 @@ async function attemptLogin(username, password){
   refreshUsersFromServer();
 }
 
-async function attemptCreateAccount(username, password, confirmPw, code, securityQuestion, securityAnswer){
+async function attemptCreateAccount(username, password, confirmPw, code, securityQuestion, securityAnswer, firstName, lastName){
   if(!username || !password || !confirmPw){ authError = 'Fill in all fields.'; renderAuthView(); return; }
   if(password !== confirmPw){ authError = 'Passwords do not match.'; renderAuthView(); return; }
 
@@ -2727,7 +2748,7 @@ async function attemptCreateAccount(username, password, confirmPw, code, securit
     const res = await fetch(`${SYNC_API_BASE}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, inviteCode: code, securityQuestion, securityAnswer })
+      body: JSON.stringify({ username, password, inviteCode: code, securityQuestion, securityAnswer, firstName, lastName })
     });
     result = await res.json();
   }catch(e){
@@ -3093,7 +3114,7 @@ function renderThreadMessagesList(){
     const isMine = m.sender.toLowerCase() === (me || '').toLowerCase();
     return `
       <div style="display:flex; flex-direction:column; align-items:${isMine ? 'flex-end' : 'flex-start'}; margin-bottom:10px;">
-        ${currentThreadInfo.type === 'group' && !isMine ? `<span style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(m.sender)}</span>` : ''}
+        ${currentThreadInfo.type === 'group' && !isMine ? `<span style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(getDisplayFullName(m.sender))}</span>` : ''}
         <div style="max-width:78%; background:${isMine ? 'var(--sage)' : 'var(--card)'}; color:${isMine ? '#fff' : 'var(--ink)'}; border-radius:14px; padding:9px 13px; font-size:14px; position:relative;">
           ${escapeHtml(m.text)}
           ${isMine ? `<button class="delete-message-btn" data-id="${m.id}" style="all:unset; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.75;">✕</button>` : ''}
@@ -3303,7 +3324,7 @@ function renderAdmin(){
     inner.innerHTML = `
       <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
       <div class="agenda-step">
-        <h2>Management</h2>
+        <h2>Menu</h2>
         <p class="caption">Choose a section to manage.</p>
         ${syncStatusWarningHtml()}
         ${visibleSections.length ? `
@@ -3332,7 +3353,11 @@ function renderAdmin(){
     return;
   }
 
-  if(!perms[adminTab]){
+  // products/supplies are reached internally via the Inventory landing
+  // screen, not as their own top-level sections anymore — check the
+  // permission they now actually live under.
+  const effectiveTabPerm = (adminTab === 'products' || adminTab === 'supplies') ? 'inventory' : adminTab;
+  if(!perms[effectiveTabPerm]){
     adminTab = null;
     renderAdmin();
     return;
@@ -3342,7 +3367,7 @@ function renderAdmin(){
   inner.innerHTML = `
     <button class="back-btn" id="admin-back"><span class="chev">←</span> Admin</button>
     <div class="agenda-step">
-      <h2>${sectionMeta ? sectionMeta.name : 'Management'}</h2>
+      <h2>${sectionMeta ? sectionMeta.name : 'Menu'}</h2>
       ${syncStatusWarningHtml()}
       <div id="admin-tab-content"></div>
     </div>
@@ -3572,12 +3597,12 @@ function prepRowHtml(row, idx, products){
           <button class="ghost-btn prep-undo-choice-btn" data-idx="${idx}">Undo Choice</button>
         </div>
         <div class="choice-checkbox-list">
-          ${products.map(p => `
+          ${products.length ? products.map(p => `
             <label class="choice-checkbox-item">
               <input type="checkbox" class="prep-choice-checkbox" data-idx="${idx}" data-product-id="${p.id}" ${row.choiceProductIds.includes(p.id) ? 'checked' : ''}>
               ${p.brand ? `${p.brand} — ${p.name}` : p.name}
             </label>
-          `).join('')}
+          `).join('') : `<p class="caption" style="margin:0;">No products yet — add some in Menu → Inventory → Products first.</p>`}
         </div>
         <select class="prep-amount-select" data-idx="${idx}">
           <option value="">No amount</option>
@@ -6926,7 +6951,14 @@ function renderMyAccount(){
       ${errorHtml}
       ${successHtml}
 
-      <div class="block-label">Change Password</div>
+      <div class="block-label">Name</div>
+      <p class="caption">Shown in Messages and your Home greeting, instead of your username. Re-enter your current password to update it.</p>
+      <div class="field"><label>First Name</label><input type="text" id="my-account-firstname" value="${escapeHtml(user.firstName || '')}"></div>
+      <div class="field"><label>Last Name</label><input type="text" id="my-account-lastname" value="${escapeHtml(user.lastName || '')}"></div>
+      <div class="field"><label>Current Password (to confirm)</label><input type="password" id="my-account-name-current-pw" autocomplete="current-password"></div>
+      <button class="primary-btn" id="my-account-save-name-btn">Save Name</button>
+
+      <div class="block-label" style="margin-top:32px;">Change Password</div>
       <div class="field"><label>Current Password</label><input type="password" id="my-account-current-pw" autocomplete="current-password"></div>
       <div class="field"><label>New Password</label><input type="password" id="my-account-new-pw" autocomplete="new-password"></div>
       <button class="primary-btn" id="my-account-change-pw-btn">Change Password</button>
@@ -6941,6 +6973,24 @@ function renderMyAccount(){
   `;
 
   document.getElementById('my-account-back').addEventListener('click', closeMyAccount);
+
+  document.getElementById('my-account-save-name-btn').addEventListener('click', async ()=>{
+    const currentPassword = document.getElementById('my-account-name-current-pw').value;
+    const firstName = document.getElementById('my-account-firstname').value.trim();
+    const lastName = document.getElementById('my-account-lastname').value.trim();
+    if(!currentPassword){ myAccountError = 'Enter your current password to confirm.'; myAccountSuccess=''; renderMyAccount(); return; }
+    const result = await updateMyAccount({ currentPassword, firstName, lastName });
+    if(result.ok){
+      logActivity(username, 'Updated their name');
+      myAccountError = '';
+      myAccountSuccess = 'Name saved.';
+      await refreshUsersFromServer();
+    } else {
+      myAccountSuccess = '';
+      myAccountError = result.error || 'Could not save your name.';
+    }
+    renderMyAccount();
+  });
 
   document.getElementById('my-account-change-pw-btn').addEventListener('click', async ()=>{
     const currentPassword = document.getElementById('my-account-current-pw').value;
