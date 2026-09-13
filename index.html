@@ -103,6 +103,19 @@
     font-weight:500;
     color:var(--sage-deep);
   }
+  .home-tagline{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--sage-deep);
+    margin:2px 0 0;
+  }
+  .home-greeting{
+    font-family:-apple-system,sans-serif;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:10px 0 0;
+  }
   .sub{
     font-size:14.5px;
     color:var(--ink-soft);
@@ -1299,6 +1312,8 @@
   <div class="home-header-row">
     <h1 class="title">The Ledger</h1>
   </div>
+  <p class="home-tagline">Every detail, in its place</p>
+  <p class="home-greeting" id="home-greeting"></p>
 
   <div id="home-schedule"></div>
 
@@ -1345,7 +1360,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.24.1</div>
+    <div class="app-version">v1.25.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2258,6 +2273,19 @@ function logActivity(username, action){
   }).catch(()=>{});
 }
 
+// Morning ends at noon, afternoon runs until 5pm, evening after that —
+// reasonable defaults, easy to adjust later if they don't fit how the
+// day actually splits for this team.
+function renderHomeGreeting(){
+  const el = document.getElementById('home-greeting');
+  if(!el) return;
+  const username = getCurrentUser();
+  if(!username) { el.textContent = ''; return; }
+  const hour = new Date().getHours();
+  const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  el.textContent = `Good ${timeOfDay}, ${username}`;
+}
+
 function checkAuthAndRender(trustSession){
   const gate = document.getElementById('auth-gate');
   const nav = document.getElementById('bottom-nav');
@@ -2282,6 +2310,7 @@ function checkAuthAndRender(trustSession){
     }
     gate.classList.add('hidden');
     if(nav) nav.style.display = 'flex';
+    renderHomeGreeting();
   } else {
     if(current && !trustSession && !findUser(current)) clearCurrentUser();
     gate.classList.remove('hidden');
