@@ -528,6 +528,30 @@
     margin:-16px 0 24px;
   }
   .menu-desc.hidden{ display:none; }
+  .reorder-badge{
+    display:inline-block;
+    font-size:10px;
+    font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:#8C4A2A;
+    background:rgba(140,74,42,0.12);
+    border-radius:6px;
+    padding:2px 6px;
+    margin-left:6px;
+    vertical-align:middle;
+  }
+  .prep-product-link{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    display:inline;
+    color:var(--sage-deep);
+    text-decoration:underline;
+    text-decoration-style:dashed;
+    text-decoration-color:var(--gold);
+    text-underline-offset:3px;
+  }
   ol.steps li .routine-toggle{
     all:unset;
     box-sizing:border-box;
@@ -1308,7 +1332,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.21.0</div>
+    <div class="app-version">v1.22.0</div>
     <span class="home-footer-divider">·</span>
     <button class="home-admin-link" id="home-admin-link">Management</button>
   </div>
@@ -2691,11 +2715,18 @@ function blankTableMakeupRow(){ return { supplyId:'', qty:'', originalText:'' };
 
 function resetProtocolFormRows(editing){
   if(editing && editing.prep && editing.prep.length){
-    protocolPrepRows = editing.prep.map(item => ({
-      productId: '',
-      amount: '',
-      originalText: item.note ? `${item.t} (${item.note})` : item.t
-    }));
+    protocolPrepRows = editing.prep.map(item => {
+      if(item.productIds && item.productIds.length){
+        return { productId: '', amount: item.amount || '', originalText: '', isChoice: true, choiceProductIds: [...item.productIds] };
+      }
+      if(item.productId){
+        return { productId: item.productId, amount: item.amount || '', originalText: '', isChoice: false, choiceProductIds: [] };
+      }
+      return {
+        productId: '', amount: '', isChoice: false, choiceProductIds: [],
+        originalText: item.note ? `${item.t} (${item.note})` : item.t
+      };
+    });
   } else {
     protocolPrepRows = [blankPrepRow()];
   }
@@ -3102,12 +3133,12 @@ function renderAdminProtocolsTab(){
             ? `${names[0]} or ${names[1]}`
             : `${names.slice(0, -1).join(', ')}, or ${names[names.length - 1]}`;
         const t = row.amount ? `${row.amount} — ${label} (guest's choice)` : `${label} (guest's choice)`;
-        return { t };
+        return { t, productIds: row.choiceProductIds, amount: row.amount || '' };
       } else if(row.productId){
         const product = currentProducts.find(p => p.id === row.productId);
         const productName = product ? product.name : '';
         const t = row.amount ? `${row.amount} ${productName}` : productName;
-        return t ? { t } : null;
+        return t ? { t, productId: row.productId, amount: row.amount || '' } : null;
       } else if(row.originalText){
         return { t: row.originalText };
       }
@@ -3834,6 +3865,15 @@ async function loadBackupListIntoTab(){
 
 let editingProductId = null;
 
+// A Product or Supply is "low stock" only when BOTH a current quantity and
+// a reorder threshold have actually been set — leaving either blank means
+// this item simply isn't being tracked, not that it's silently at zero.
+function isLowStock(item){
+  return item.quantity !== undefined && item.quantity !== null
+      && item.reorderThreshold !== undefined && item.reorderThreshold !== null
+      && item.quantity <= item.reorderThreshold;
+}
+
 function renderAdminProductsTab(){
   const content = document.getElementById('admin-tab-content');
   const products = loadProducts();
@@ -3844,19 +3884,26 @@ function renderAdminProductsTab(){
     <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis" value="${editing ? escapeHtml(editing.brand || '') : ''}"></div>
     <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name" value="${editing ? escapeHtml(editing.name) : ''}"></div>
     <div class="field">
+      <label>Description (optional)</label>
+      <textarea id="admin-new-product-description" rows="3" placeholder="What it is, what it's for, how it's used">${editing ? escapeHtml(editing.description || '') : ''}</textarea>
+    </div>
+    <div class="field">
       <label>Paste Ingredients</label>
       <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks">${editing && editing.ingredients ? escapeHtml(editing.ingredients.join(', ')) : ''}</textarea>
     </div>
+    <div class="field"><label>Current Stock (optional)</label><input type="number" id="admin-new-product-quantity" min="0" step="1" value="${editing && editing.quantity !== undefined && editing.quantity !== null ? editing.quantity : ''}"></div>
+    <div class="field"><label>Reorder At (optional)</label><input type="number" id="admin-new-product-reorder" min="0" step="1" placeholder="Flag as low stock at or below this number" value="${editing && editing.reorderThreshold !== undefined && editing.reorderThreshold !== null ? editing.reorderThreshold : ''}"></div>
     <button class="primary-btn" id="admin-add-product-btn">${editing ? 'Save Changes' : 'Add Product'}</button>
     ${editing ? `<button class="ghost-btn" id="admin-cancel-product-btn">Cancel Edit</button>` : ''}
 
     <div class="block-label" style="margin-top:32px;">Products</div>
+    ${products.filter(isLowStock).length ? `<p class="caption" style="color:#8C4A2A;">${products.filter(isLowStock).length} product${products.filter(isLowStock).length===1?'':'s'} need reordering</p>` : ''}
     <div id="admin-product-list">
       ${products.length ? products.map(p => `
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${p.id}">
-            <span class="admin-user-name">${escapeHtml(p.name)}${p.brand ? ` <span class="admin-supply-empty">— ${escapeHtml(p.brand)}</span>` : ''}</span>
-            <span class="tap-hint">${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : 'No ingredients listed'}</span>
+            <span class="admin-user-name">${escapeHtml(p.name)}${p.brand ? ` <span class="admin-supply-empty">— ${escapeHtml(p.brand)}</span>` : ''}${isLowStock(p) ? ` <span class="reorder-badge">Reorder</span>` : ''}</span>
+            <span class="tap-hint">${p.quantity !== undefined && p.quantity !== null ? `In stock: ${p.quantity}` : ''}${p.quantity !== undefined && p.quantity !== null && p.ingredients && p.ingredients.length ? ' · ' : ''}${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : (p.quantity !== undefined && p.quantity !== null ? '' : 'No ingredients listed')}</span>
           </button>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-product-btn" data-id="${p.id}">Edit</button>
@@ -3864,6 +3911,7 @@ function renderAdminProductsTab(){
           </div>
         </div>
         <div class="admin-ingredient-tags hidden" id="ingredients-${p.id}">
+          ${p.description ? `<p style="font-size:13px; line-height:1.5; color:var(--ink); margin:0 0 12px;">${escapeHtml(p.description)}</p>` : ''}
           ${p.ingredients && p.ingredients.length
             ? `<div class="ingredient-plain-list">${[...p.ingredients].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(i => `<div class="ingredient-plain-item">${escapeHtml(i)}</div>`).join('')}</div>`
             : ''}
@@ -3875,7 +3923,12 @@ function renderAdminProductsTab(){
   document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
     const brand = document.getElementById('admin-new-product-brand').value.trim();
     const name = document.getElementById('admin-new-product-name').value.trim();
+    const description = document.getElementById('admin-new-product-description').value.trim();
     const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
+    const quantityRaw = document.getElementById('admin-new-product-quantity').value;
+    const reorderRaw = document.getElementById('admin-new-product-reorder').value;
+    const quantity = quantityRaw === '' ? null : parseInt(quantityRaw, 10);
+    const reorderThreshold = reorderRaw === '' ? null : parseInt(reorderRaw, 10);
     if(!name){ alert('Enter a product name.'); return; }
     const ingredients = parseIngredientsText(ingredientsText);
     const list = loadProducts();
@@ -3884,13 +3937,16 @@ function renderAdminProductsTab(){
       if(existing){
         existing.brand = brand;
         existing.name = name;
+        existing.description = description;
         existing.ingredients = ingredients;
+        existing.quantity = quantity;
+        existing.reorderThreshold = reorderThreshold;
         saveProducts(list);
         logActivity(getAdminActingUsername(), `Edited product "${name}"`);
       }
       editingProductId = null;
     } else {
-      list.push({ id: makeId(), brand, name, ingredients, createdAt: new Date().toISOString() });
+      list.push({ id: makeId(), brand, name, description, ingredients, quantity, reorderThreshold, createdAt: new Date().toISOString() });
       saveProducts(list);
       logActivity(getAdminActingUsername(), `Added product "${name}"`);
     }
@@ -3940,11 +3996,17 @@ function renderAdminSuppliesTab(){
     <button class="primary-btn" id="admin-add-supply-btn">Add Supply</button>
 
     <div class="block-label" style="margin-top:32px;">Supplies</div>
+    ${supplies.filter(isLowStock).length ? `<p class="caption" style="color:#8C4A2A;">${supplies.filter(isLowStock).length} suppl${supplies.filter(isLowStock).length===1?'y needs':'ies need'} reordering</p>` : ''}
     <div id="admin-supply-list">
       ${supplies.length ? supplies.map(s => `
         <div class="admin-supply-row">
           <div class="admin-supply-main">
-            <div class="admin-user-name">${escapeHtml(s.name)}</div>
+            <div class="admin-user-name">${escapeHtml(s.name)}${isLowStock(s) ? ` <span class="reorder-badge">Reorder</span>` : ''}</div>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+              <input type="number" min="0" step="1" class="supply-quantity-input" data-id="${s.id}" placeholder="In stock" value="${s.quantity !== undefined && s.quantity !== null ? s.quantity : ''}" style="width:90px; font-size:12px; padding:6px 8px;">
+              <input type="number" min="0" step="1" class="supply-reorder-input" data-id="${s.id}" placeholder="Reorder at" value="${s.reorderThreshold !== undefined && s.reorderThreshold !== null ? s.reorderThreshold : ''}" style="width:90px; font-size:12px; padding:6px 8px;">
+              <button class="ghost-btn supply-save-stock-btn" data-id="${s.id}" style="width:auto; padding:6px 12px; margin-top:0; font-size:11px;">Save</button>
+            </div>
           </div>
           <button class="ghost-btn admin-remove-supply-btn" data-id="${s.id}">Remove</button>
         </div>
@@ -3960,6 +4022,21 @@ function renderAdminSuppliesTab(){
     saveSupplies(list);
     logActivity(getAdminActingUsername(), `Added supply "${name}"`);
     renderAdminSuppliesTab();
+  });
+  content.querySelectorAll('.supply-save-stock-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const list = loadSupplies();
+      const supply = list.find(s => s.id === id);
+      if(!supply) return;
+      const qtyRaw = content.querySelector(`.supply-quantity-input[data-id="${id}"]`).value;
+      const reorderRaw = content.querySelector(`.supply-reorder-input[data-id="${id}"]`).value;
+      supply.quantity = qtyRaw === '' ? null : parseInt(qtyRaw, 10);
+      supply.reorderThreshold = reorderRaw === '' ? null : parseInt(reorderRaw, 10);
+      saveSupplies(list);
+      logActivity(getAdminActingUsername(), `Updated stock for "${supply.name}"`);
+      renderAdminSuppliesTab();
+    });
   });
   content.querySelectorAll('.admin-remove-supply-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -5318,6 +5395,7 @@ function renderProductsBrowseDetail(){
     <div class="agenda-step">
       <h2>${escapeHtml(product.name)}</h2>
       ${product.brand ? `<p class="caption">${escapeHtml(product.brand)}</p>` : ''}
+      ${product.description ? `<p style="font-size:14px; line-height:1.5; color:var(--ink); margin:12px 0 24px;">${escapeHtml(product.description)}</p>` : ''}
       <div class="block-label">Ingredients</div>
       ${ingredients.length ? `
         <div class="ingredient-plain-list">
@@ -5475,7 +5553,27 @@ function openDetail(id){
 
   if(item.prep){
     html += `<div class="block-label">Prep</div><ul class="tray">`;
-    html += item.prep.map(p => `<li>${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</li>`).join('');
+    html += item.prep.map(p => {
+      if(p.productId){
+        const product = loadProducts().find(pr => pr.id === p.productId);
+        if(product){
+          return `<li>${p.amount ? escapeHtml(p.amount) + ' ' : ''}<button class="prep-product-link" data-id="${product.id}">${escapeHtml(product.name)}</button></li>`;
+        }
+      }
+      if(p.productIds && p.productIds.length){
+        const links = p.productIds
+          .map(id => { const product = loadProducts().find(pr => pr.id === id); return product ? { id: product.id, name: product.name } : null; })
+          .filter(Boolean);
+        if(links.length){
+          const linkHtml = links.map(l => `<button class="prep-product-link" data-id="${l.id}">${escapeHtml(l.name)}</button>`);
+          const joined = linkHtml.length === 1 ? linkHtml[0]
+            : linkHtml.length === 2 ? `${linkHtml[0]} or ${linkHtml[1]}`
+            : `${linkHtml.slice(0, -1).join(', ')}, or ${linkHtml[linkHtml.length - 1]}`;
+          return `<li>${p.amount ? escapeHtml(p.amount) + ' — ' : ''}${joined} <span class="note">(guest's choice)</span></li>`;
+        }
+      }
+      return `<li>${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</li>`;
+    }).join('');
     html += `</ul>`;
   }
 
@@ -5561,6 +5659,11 @@ function openDetail(id){
     btn.addEventListener('click', ()=>{
       const panel = document.getElementById(btn.dataset.target);
       if(panel) panel.classList.toggle('hidden');
+    });
+  });
+  detailInner.querySelectorAll('.prep-product-link').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      openProductDetailDirect(btn.dataset.id);
     });
   });
   detail.scrollTop = 0;
