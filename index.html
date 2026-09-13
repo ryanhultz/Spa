@@ -1498,17 +1498,6 @@
 
   <div id="home-schedule"></div>
 
-  <button class="agenda-entry" id="open-agenda">
-    <span class="agenda-entry-text">
-      <span class="ae-icon">▤</span>
-      <span>
-        <span class="ae-label">Agenda</span>
-        <span class="ae-sub">Build today's appointment schedule</span>
-      </span>
-    </span>
-    <span class="arrow">→</span>
-  </button>
-
   <button class="agenda-entry" id="open-protocols">
     <span class="agenda-entry-text">
       <span class="ae-icon">▦</span>
@@ -1556,7 +1545,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.28.0</div>
+    <div class="app-version">v1.29.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2440,7 +2429,7 @@ function getActiveAuthToken(){
   return getSessionToken();
 }
 
-const PERMISSION_KEYS = ['users','protocols','products','supplies','allergens','activity','backup','errors','settings'];
+const PERMISSION_KEYS = ['users','protocols','inventory','allergens','activity','backup','errors','settings','messages'];
 function blankPermissions(){
   const p = {};
   PERMISSION_KEYS.forEach(k => p[k] = false);
@@ -2450,6 +2439,10 @@ function getUserPermissions(user){
   const base = blankPermissions();
   if(user && user.permissions){
     PERMISSION_KEYS.forEach(k => { base[k] = !!user.permissions[k]; });
+    // Backward compatibility: anyone already granted the old separate
+    // products/supplies permissions keeps working inventory access,
+    // without needing their stored record touched at all.
+    if(user.permissions.products || user.permissions.supplies) base.inventory = true;
   }
   return base;
 }
@@ -3196,8 +3189,7 @@ let adminSessionMode = null; // 'user' | 'master'
 const ADMIN_SECTIONS = [
   { key: 'users', name: 'Users', meta: 'Add, remove, and reset passwords' },
   { key: 'protocols', name: 'Protocols', meta: 'Edit treatment prep and steps' },
-  { key: 'products', name: 'Products', meta: 'Manage ingredients' },
-  { key: 'supplies', name: 'Supplies', meta: 'Linens, towels, and more' },
+  { key: 'inventory', name: 'Inventory', meta: 'Products, supplies, counts, and reports' },
   { key: 'allergens', name: 'Allergies', meta: 'Add, edit, and rename known allergens' },
   { key: 'activity', name: 'Activity Log', meta: 'Recent account activity' },
   { key: 'backup', name: 'Backup', meta: 'Back up and restore all data' },
@@ -3207,7 +3199,15 @@ const ADMIN_SECTIONS = [
 ];
 
 function getEffectiveAdminPermissions(){
-  if(adminSessionMode === 'master') return { users:true, protocols:true, products:true, supplies:true, allergens:true, activity:true };
+  if(adminSessionMode === 'master'){
+    // Master grants every permission — previously this object was
+    // hand-maintained and had quietly fallen out of sync, missing
+    // backup/errors/settings/messages entirely. Deriving it from the
+    // real permission list means it can't drift like that again.
+    const all = {};
+    PERMISSION_KEYS.forEach(k => { all[k] = true; });
+    return all;
+  }
   const current = getCurrentUser();
   const user = current ? findUser(current) : null;
   return getUserPermissions(user);
@@ -3354,6 +3354,7 @@ function renderAdmin(){
 
   if(adminTab === 'users') renderAdminUsersTab();
   else if(adminTab === 'protocols') renderAdminProtocolsTab();
+  else if(adminTab === 'inventory') renderAdminInventoryTab();
   else if(adminTab === 'products') renderAdminProductsTab();
   else if(adminTab === 'supplies') renderAdminSuppliesTab();
   else if(adminTab === 'allergens') renderAdminAllergensTab();
@@ -4770,6 +4771,295 @@ function isLowStock(item){
   return item.quantity !== undefined && item.quantity !== null
       && item.reorderThreshold !== undefined && item.reorderThreshold !== null
       && item.quantity <= item.reorderThreshold;
+}
+
+/* ---------- Take Inventory ---------- */
+
+let takeInventoryDraft = {}; // itemId -> { quantity, type }
+let takeInventoryStep = 'counting'; // 'counting' | 'add' | 'review'
+
+function openTakeInventory(){
+  takeInventoryStep = 'counting';
+  takeInventoryDraft = {};
+  renderTakeInventory();
+}
+
+function getTrackedInventoryItems(){
+  const products = loadProducts().map(p => ({...p, _type:'product'}));
+  const supplies = loadSupplies().map(s => ({...s, _type:'supply'}));
+  return [...products, ...supplies].filter(i => i.quantity !== undefined && i.quantity !== null && i.reorderThreshold !== undefined && i.reorderThreshold !== null);
+}
+function getUntrackedInventoryItems(){
+  const products = loadProducts().map(p => ({...p, _type:'product'}));
+  const supplies = loadSupplies().map(s => ({...s, _type:'supply'}));
+  return [...products, ...supplies].filter(i => !(i.quantity !== undefined && i.quantity !== null && i.reorderThreshold !== undefined && i.reorderThreshold !== null));
+}
+
+function renderTakeInventory(){
+  if(takeInventoryStep === 'add'){ renderTakeInventoryAddItem(); return; }
+  if(takeInventoryStep === 'review'){ renderTakeInventoryReview(); return; }
+
+  const content = document.getElementById('admin-tab-content');
+  const items = getTrackedInventoryItems();
+
+  content.innerHTML = `
+    <button class="ghost-btn" id="inventory-count-back-btn" style="margin-bottom:16px;">← Inventory</button>
+    <div class="block-label">Take Inventory</div>
+    <p class="caption">Enter the current count for each item. Anything not changed keeps its last known count, but is still marked as counted today.</p>
+    ${items.length ? items.map(item => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">
+          ${escapeHtml(item.name)}
+          <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${item.lastCountedAt ? `Last counted ${new Date(item.lastCountedAt).toLocaleDateString([], {month:'short', day:'numeric'})}` : 'Never counted'}</span>
+        </div>
+        <input type="number" min="0" step="1" class="inventory-count-input" data-id="${item.id}" data-type="${item._type}" value="${takeInventoryDraft[item.id] !== undefined ? takeInventoryDraft[item.id].quantity : item.quantity}" style="width:80px; font-size:14px; padding:8px 10px;">
+      </div>
+    `).join('') : `<p class="caption">No items are being tracked yet. Add one below to get started.</p>`}
+    <button class="ghost-btn" id="inventory-add-item-btn" style="margin-top:16px;">+ Add Item to Count</button>
+    ${items.length ? `<button class="primary-btn" id="inventory-review-btn" style="margin-top:16px;">Review Count</button>` : ''}
+  `;
+
+  document.getElementById('inventory-count-back-btn').addEventListener('click', ()=>{
+    adminTab = 'inventory';
+    renderAdmin();
+  });
+  document.getElementById('inventory-add-item-btn').addEventListener('click', ()=>{
+    content.querySelectorAll('.inventory-count-input').forEach(input=>{
+      takeInventoryDraft[input.dataset.id] = { quantity: parseInt(input.value, 10) || 0, type: input.dataset.type };
+    });
+    takeInventoryStep = 'add';
+    renderTakeInventory();
+  });
+  const reviewBtn = document.getElementById('inventory-review-btn');
+  if(reviewBtn){
+    reviewBtn.addEventListener('click', ()=>{
+      content.querySelectorAll('.inventory-count-input').forEach(input=>{
+        takeInventoryDraft[input.dataset.id] = { quantity: parseInt(input.value, 10) || 0, type: input.dataset.type };
+      });
+      takeInventoryStep = 'review';
+      renderTakeInventory();
+    });
+  }
+}
+
+function renderTakeInventoryAddItem(){
+  const content = document.getElementById('admin-tab-content');
+  const untracked = getUntrackedInventoryItems();
+
+  content.innerHTML = `
+    <button class="ghost-btn" id="inventory-add-back-btn" style="margin-bottom:16px;">← Take Inventory</button>
+    <div class="block-label">Add Item to Count</div>
+    <p class="caption">Choose an existing item that isn't tracked yet. Give it a starting count and a reorder threshold.</p>
+    ${untracked.length ? untracked.map(item => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${escapeHtml(item.name)}</div>
+        <button class="ghost-btn inventory-start-tracking-btn" data-id="${item.id}" data-type="${item._type}" data-name="${escapeHtml(item.name)}">Add</button>
+      </div>
+    `).join('') : `<p class="caption">Every existing Product and Supply is already tracked.</p>`}
+  `;
+
+  document.getElementById('inventory-add-back-btn').addEventListener('click', ()=>{
+    takeInventoryStep = 'counting';
+    renderTakeInventory();
+  });
+  content.querySelectorAll('.inventory-start-tracking-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qty = prompt(`Starting count for "${btn.dataset.name}"?`, '0');
+      if(qty === null) return;
+      const threshold = prompt(`Reorder threshold for "${btn.dataset.name}"? (Flag as low stock at or below this number)`, '1');
+      if(threshold === null) return;
+      const list = btn.dataset.type === 'product' ? loadProducts() : loadSupplies();
+      const item = list.find(i => i.id === btn.dataset.id);
+      if(item){
+        item.quantity = parseInt(qty, 10) || 0;
+        item.reorderThreshold = parseInt(threshold, 10) || 0;
+        if(btn.dataset.type === 'product') saveProducts(list); else saveSupplies(list);
+        takeInventoryDraft[item.id] = { quantity: item.quantity, type: btn.dataset.type };
+      }
+      takeInventoryStep = 'counting';
+      renderTakeInventory();
+    });
+  });
+}
+
+function renderTakeInventoryReview(){
+  const content = document.getElementById('admin-tab-content');
+  const items = getTrackedInventoryItems();
+  const changes = items.map(item => {
+    const draft = takeInventoryDraft[item.id];
+    const newQty = draft ? draft.quantity : item.quantity;
+    return { item, oldQty: item.quantity, newQty, changed: newQty !== item.quantity };
+  });
+  const changedCount = changes.filter(c => c.changed).length;
+  const nowLow = changes.filter(c => c.newQty <= c.item.reorderThreshold && !(c.item.quantity <= c.item.reorderThreshold));
+
+  content.innerHTML = `
+    <button class="ghost-btn" id="inventory-review-back-btn" style="margin-bottom:16px;">← Keep Counting</button>
+    <div class="block-label">Review Count</div>
+    <p class="caption">${changedCount} of ${items.length} item${items.length===1?'':'s'} changed. Everything below will be marked as counted today.</p>
+    ${nowLow.length ? `<p class="caption" style="color:#8C4A2A;">${nowLow.length} item${nowLow.length===1?'':'s'} will newly need reordering</p>` : ''}
+    ${changes.map(c => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${escapeHtml(c.item.name)}</div>
+        <div style="font-size:13px; color:${c.changed ? 'var(--ink)' : 'var(--ink-soft)'};">
+          ${c.changed ? `${c.oldQty} → <strong>${c.newQty}</strong>` : `${c.newQty} (unchanged)`}
+        </div>
+      </div>
+    `).join('')}
+    <button class="primary-btn" id="inventory-confirm-btn" style="margin-top:20px;">Confirm & Save</button>
+  `;
+
+  document.getElementById('inventory-review-back-btn').addEventListener('click', ()=>{
+    takeInventoryStep = 'counting';
+    renderTakeInventory();
+  });
+  document.getElementById('inventory-confirm-btn').addEventListener('click', ()=>{
+    const now = new Date().toISOString();
+    const products = loadProducts();
+    const supplies = loadSupplies();
+    let productsChanged = false, suppliesChanged = false;
+    changes.forEach(c => {
+      const list = c.item._type === 'product' ? products : supplies;
+      const target = list.find(i => i.id === c.item.id);
+      if(target){
+        target.quantity = c.newQty;
+        target.lastCountedAt = now;
+        if(c.item._type === 'product') productsChanged = true; else suppliesChanged = true;
+      }
+    });
+    if(productsChanged) saveProducts(products);
+    if(suppliesChanged) saveSupplies(supplies);
+    logActivity(getAdminActingUsername(), `Completed an inventory count (${changedCount} item${changedCount===1?'':'s'} changed)`);
+    takeInventoryDraft = {};
+    takeInventoryStep = 'counting';
+    adminTab = 'inventory';
+    renderAdmin();
+    alert('Inventory count saved.');
+  });
+}
+
+/* ---------- Inventory Reports ---------- */
+
+function openInventoryReports(){
+  const content = document.getElementById('admin-tab-content');
+  const items = getTrackedInventoryItems();
+  content.innerHTML = `
+    <button class="ghost-btn" id="inventory-reports-back-btn" style="margin-bottom:16px;">← Inventory</button>
+    <div class="block-label">Reports</div>
+    <p class="caption">${items.length} tracked item${items.length===1?'':'s'}.</p>
+    <button class="primary-btn" id="inventory-print-btn" style="margin-bottom:12px;">Print Report</button>
+    <button class="ghost-btn" id="inventory-csv-btn">Share as CSV</button>
+  `;
+  document.getElementById('inventory-reports-back-btn').addEventListener('click', ()=>{
+    adminTab = 'inventory';
+    renderAdmin();
+  });
+  document.getElementById('inventory-print-btn').addEventListener('click', printInventoryReport);
+  document.getElementById('inventory-csv-btn').addEventListener('click', shareInventoryCsv);
+}
+
+function printInventoryReport(){
+  const items = [...getTrackedInventoryItems()].sort((a,b) => {
+    const aLow = isLowStock(a), bLow = isLowStock(b);
+    if(aLow !== bLow) return aLow ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const rows = items.map(i => `
+    <tr style="${isLowStock(i) ? 'color:#8C4A2A; font-weight:600;' : ''}">
+      <td>${esc(i.name)}</td>
+      <td>${i._type === 'product' ? 'Product' : 'Supply'}</td>
+      <td>${i.quantity}</td>
+      <td>${i.reorderThreshold}</td>
+      <td>${i.lastCountedAt ? new Date(i.lastCountedAt).toLocaleDateString() : 'Never'}</td>
+      <td>${isLowStock(i) ? 'Reorder' : ''}</td>
+    </tr>
+  `).join('');
+  const printWindow = window.open('', '_blank');
+  if(!printWindow){ alert('Please allow pop-ups to generate the report.'); return; }
+  printWindow.document.write(`
+    <html><head><title>Inventory Report — ${new Date().toLocaleDateString()}</title>
+    <style>
+      body{ font-family: Georgia, serif; padding: 30px; color:#2B2A24; }
+      h1{ font-size: 18px; margin-bottom: 4px; }
+      .meta{ color:#5B584C; margin-bottom: 20px; font-size: 12px; }
+      table{ width:100%; border-collapse: collapse; font-size: 13px; }
+      th{ text-align:left; border-bottom:2px solid #2B2A24; padding:6px 8px; font-size:11px; text-transform:uppercase; }
+      td{ padding:6px 8px; border-bottom:1px solid #ddd; }
+    </style></head>
+    <body>
+      <h1>Inventory Report</h1>
+      <div class="meta">${new Date().toLocaleString()}</div>
+      <table>
+        <tr><th>Item</th><th>Type</th><th>Count</th><th>Reorder At</th><th>Last Counted</th><th></th></tr>
+        ${rows}
+      </table>
+    </body></html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(()=>{ printWindow.print(); }, 300);
+}
+
+async function shareInventoryCsv(){
+  const items = getTrackedInventoryItems();
+  const header = 'Item,Type,Count,Reorder At,Last Counted,Status\n';
+  const rows = items.map(i => {
+    const status = isLowStock(i) ? 'Reorder' : 'OK';
+    const lastCounted = i.lastCountedAt ? new Date(i.lastCountedAt).toLocaleDateString() : 'Never';
+    const type = i._type === 'product' ? 'Product' : 'Supply';
+    const name = `"${String(i.name).replace(/"/g, '""')}"`;
+    return `${name},${type},${i.quantity},${i.reorderThreshold},${lastCounted},${status}`;
+  }).join('\n');
+  const csvText = header + rows;
+  const filename = `inventory-${new Date().toISOString().slice(0,10)}.csv`;
+  const file = new File([csvText], filename, { type: 'text/csv' });
+
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{
+      await navigator.share({ files: [file], title: 'Inventory Report' });
+      return;
+    }catch(e){
+      if(e && e.name === 'AbortError') return; // user cancelled the share sheet, not an error
+    }
+  }
+  // Fallback for browsers without file-sharing support — open the CSV
+  // as plain text in a new tab so it can be copied or saved manually.
+  const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
+  const fallbackWindow = window.open(dataUri, '_blank');
+  if(!fallbackWindow){
+    alert("Couldn't open the share sheet or a new tab. Please allow pop-ups and try again.");
+  }
+}
+
+function renderAdminInventoryTab(){
+  const content = document.getElementById('admin-tab-content');
+  const trackedCount = [...loadProducts(), ...loadSupplies()].filter(isLowStock).length;
+
+  content.innerHTML = `
+    <div class="block-label">Inventory</div>
+    ${trackedCount ? `<p class="caption" style="color:#8C4A2A;">${trackedCount} item${trackedCount===1?'':'s'} need reordering</p>` : ''}
+    <button class="primary-btn" id="inventory-take-count-btn" style="margin-bottom:24px;">Take Inventory</button>
+    <div class="grid">
+      <button class="card-btn" id="inventory-products-btn">
+        <span><span class="name">Products</span><span class="meta">Manage ingredients</span></span>
+        ${iconArrow()}
+      </button>
+      <button class="card-btn" id="inventory-supplies-btn">
+        <span><span class="name">Supplies</span><span class="meta">Linens, towels, and more</span></span>
+        ${iconArrow()}
+      </button>
+      <button class="card-btn" id="inventory-reports-btn">
+        <span><span class="name">Reports</span><span class="meta">Printable and CSV inventory reports</span></span>
+        ${iconArrow()}
+      </button>
+    </div>
+  `;
+
+  document.getElementById('inventory-take-count-btn').addEventListener('click', openTakeInventory);
+  document.getElementById('inventory-products-btn').addEventListener('click', ()=>{ adminTab = 'products'; renderAdmin(); });
+  document.getElementById('inventory-supplies-btn').addEventListener('click', ()=>{ adminTab = 'supplies'; renderAdmin(); });
+  document.getElementById('inventory-reports-btn').addEventListener('click', openInventoryReports);
 }
 
 function renderAdminProductsTab(){
@@ -6603,7 +6893,6 @@ function closeAgenda(){
   setActiveNavTab('home');
 }
 
-document.getElementById('open-agenda').addEventListener('click', openAgenda);
 
 /* ---------- My Account (self-service password + security question) ---------- */
 
