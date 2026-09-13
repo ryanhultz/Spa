@@ -103,23 +103,6 @@
     font-weight:500;
     color:var(--sage-deep);
   }
-  .logout-btn{
-    all:unset;
-    box-sizing:border-box;
-    cursor:pointer;
-    flex:none;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10.5px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:#fff;
-    border:1px solid var(--sage-deep);
-    border-radius:999px;
-    padding:7px 12px;
-    margin-top:6px;
-    background:var(--sage);
-  }
-  .logout-btn:active{ background:var(--sage-deep); }
   .sub{
     font-size:14.5px;
     color:var(--ink-soft);
@@ -1315,10 +1298,6 @@
 <div class="app">
   <div class="home-header-row">
     <h1 class="title">The Ledger</h1>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <button class="logout-btn" id="my-account-btn" title="My Account">My Account</button>
-      <button class="logout-btn" id="logout-btn" title="Log out">Log Out</button>
-    </div>
   </div>
 
   <div id="home-schedule"></div>
@@ -1366,7 +1345,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.23.0</div>
+    <div class="app-version">v1.24.1</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1651,6 +1630,129 @@ async function deleteUserOnServer(username){
   }catch(e){
     return { ok:false, status:0, error:"Couldn't reach the server." };
   }
+}
+
+/* ---------- Messaging: data layer ---------- */
+
+let threadsCache = [];
+let currentThreadId = null;
+let currentThreadMessages = [];
+let currentThreadInfo = null;
+let messageBurstInterval = null;
+let messageBurstTimeout = null;
+
+async function refreshThreadsFromServer(){
+  if(!isSyncConfigured()) return;
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads`, { headers: authHeaders() });
+    if(!res.ok) return;
+    const data = await res.json();
+    if(Array.isArray(data)) threadsCache = data;
+  }catch(e){}
+  updateMessagesBadge();
+}
+
+function updateMessagesBadge(){
+  const badge = document.getElementById('nav-messages-badge');
+  if(!badge) return;
+  const total = threadsCache.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
+  if(total > 0){
+    badge.textContent = total > 99 ? '99+' : String(total);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+async function createThread(type, participantUsernames, name){
+  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ type, participantUsernames, name })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+async function fetchThreadDetail(threadId){
+  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}`, { headers: authHeaders() });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+async function sendMessageToThread(threadId, text){
+  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/messages`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ text })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+async function deleteMessageFromThread(threadId, msgId){
+  if(!isSyncConfigured()) return { ok:false };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/messages/${msgId}/delete`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ threadId })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+async function deleteThreadOnServer(threadId){
+  if(!isSyncConfigured()) return { ok:false };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/delete`, {
+      method: 'POST',
+      headers: authHeaders()
+    });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+async function updateGroupMember(threadId, action, username){
+  if(!isSyncConfigured()) return { ok:false };
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/members`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ action, username })
+    });
+    return await res.json();
+  }catch(e){
+    return { ok:false, error: "Couldn't reach the server." };
+  }
+}
+
+// Other participants in a thread, from the current user's point of view —
+// used for both the thread-list preview and the thread header.
+function otherParticipants(thread){
+  const me = getCurrentUser();
+  return (thread.participants || []).filter(p => p.toLowerCase() !== (me || '').toLowerCase());
+}
+function threadDisplayName(thread){
+  if(thread.type === 'group') return thread.name || 'Group';
+  const others = otherParticipants(thread);
+  return others.length ? others.join(', ') : thread.name || 'Conversation';
 }
 
 async function fetchBackupList(){
@@ -2451,6 +2553,7 @@ function setActiveNavTab(tab){
 // separate from in-flow navigation elsewhere in the app (like a product
 // link inside a protocol), which can still stack normally.
 function closeAllOverlaysForNav(){
+  stopMessageBurst();
   document.querySelectorAll('.detail.open').forEach(el => el.classList.remove('open'));
 }
 
@@ -2521,20 +2624,319 @@ function renderMenuScreen(){
 
 // Placeholder until the full messaging feature is built — gives the nav
 // item a real destination now rather than a dead button.
-function openMessagesPlaceholder(){
+let messagesScreenStep = 'list'; // 'list' | 'new'
+let newMessageSelectedUsernames = [];
+let newMessageIsGroup = false;
+
+async function openMessages(){
+  messagesScreenStep = 'list';
+  await refreshThreadsFromServer();
+  renderMessagesScreen();
+  document.getElementById('messages-overlay').classList.add('open');
+  document.getElementById('messages-overlay').scrollTop = 0;
+}
+function closeMessagesScreen(){
+  document.getElementById('messages-overlay').classList.remove('open');
+  setActiveNavTab('home');
+}
+
+function renderMessagesScreen(){
+  if(messagesScreenStep === 'new'){
+    renderNewMessageScreen();
+    return;
+  }
   const inner = document.getElementById('messages-inner');
+  const me = getCurrentUser();
+  const sorted = [...threadsCache].sort((a,b) => {
+    const at = a.lastMessage ? a.lastMessage.timestamp : '';
+    const bt = b.lastMessage ? b.lastMessage.timestamp : '';
+    return bt.localeCompare(at);
+  });
+
   inner.innerHTML = `
     <button class="back-btn" id="messages-back-btn"><span class="chev">←</span> Home</button>
     <div class="agenda-step">
       <h2>Messages</h2>
-      <p class="caption">Messaging is coming soon.</p>
+      <button class="primary-btn" id="new-message-btn">New Message</button>
+      <div class="block-label" style="margin-top:24px;">Conversations</div>
+      ${sorted.length ? sorted.map(t => `
+        <button class="card-btn thread-row-btn" data-id="${t.id}">
+          <span>
+            <span class="name">${escapeHtml(threadDisplayName(t))}${t.unreadCount ? ` <span class="reorder-badge">${t.unreadCount}</span>` : ''}</span>
+            <span class="meta">${t.lastMessage ? escapeHtml(t.lastMessage.sender === me ? 'You: ' : '') + escapeHtml(t.lastMessage.text).slice(0,60) : 'No messages yet'}</span>
+          </span>
+          ${iconArrow()}
+        </button>
+      `).join('') : `<p class="caption">No conversations yet. Tap New Message to start one.</p>`}
     </div>
   `;
-  document.getElementById('messages-back-btn').addEventListener('click', ()=>{
-    document.getElementById('messages-overlay').classList.remove('open');
-    setActiveNavTab('home');
+
+  document.getElementById('messages-back-btn').addEventListener('click', closeMessagesScreen);
+  document.getElementById('new-message-btn').addEventListener('click', ()=>{
+    newMessageSelectedUsernames = [];
+    newMessageIsGroup = false;
+    messagesScreenStep = 'new';
+    renderMessagesScreen();
   });
-  document.getElementById('messages-overlay').classList.add('open');
+  inner.querySelectorAll('.thread-row-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      openThreadDetail(btn.dataset.id);
+    });
+  });
+}
+
+function renderNewMessageScreen(){
+  const inner = document.getElementById('messages-inner');
+  const me = getCurrentUser();
+  const others = loadUsers().filter(u => u.username.toLowerCase() !== (me || '').toLowerCase());
+
+  inner.innerHTML = `
+    <button class="back-btn" id="new-message-back-btn"><span class="chev">←</span> Messages</button>
+    <div class="agenda-step">
+      <h2>New Message</h2>
+      <p class="caption">${newMessageIsGroup ? 'Choose everyone to include, then name the group.' : 'Choose one person, or switch to a group.'}</p>
+      <div class="perm-chip-row">
+        <button class="perm-chip ${!newMessageIsGroup ? 'active' : ''}" id="new-message-mode-dm">Direct Message</button>
+        <button class="perm-chip ${newMessageIsGroup ? 'active' : ''}" id="new-message-mode-group">Group</button>
+      </div>
+      ${newMessageIsGroup ? `<div class="field"><label>Group Name</label><input type="text" id="new-group-name" placeholder="e.g. Front Desk"></div>` : ''}
+      <div class="block-label" style="margin-top:20px;">${newMessageIsGroup ? 'Add People' : 'Choose Someone'}</div>
+      ${others.length ? others.map(u => `
+        <label class="choice-checkbox-item" style="padding:8px 0;">
+          <input type="${newMessageIsGroup ? 'checkbox' : 'radio'}" name="new-message-recipient" class="new-message-recipient-input" value="${escapeHtml(u.username)}" ${newMessageSelectedUsernames.includes(u.username) ? 'checked' : ''}>
+          ${escapeHtml(u.username)}
+        </label>
+      `).join('') : `<p class="caption">No other users yet.</p>`}
+      <button class="primary-btn" id="start-thread-btn" style="margin-top:20px;">Start Conversation</button>
+    </div>
+  `;
+
+  document.getElementById('new-message-back-btn').addEventListener('click', ()=>{
+    messagesScreenStep = 'list';
+    renderMessagesScreen();
+  });
+  document.getElementById('new-message-mode-dm').addEventListener('click', ()=>{
+    newMessageIsGroup = false;
+    newMessageSelectedUsernames = newMessageSelectedUsernames.slice(0,1);
+    renderNewMessageScreen();
+  });
+  document.getElementById('new-message-mode-group').addEventListener('click', ()=>{
+    newMessageIsGroup = true;
+    renderNewMessageScreen();
+  });
+  inner.querySelectorAll('.new-message-recipient-input').forEach(input=>{
+    input.addEventListener('change', ()=>{
+      if(newMessageIsGroup){
+        if(input.checked) newMessageSelectedUsernames.push(input.value);
+        else newMessageSelectedUsernames = newMessageSelectedUsernames.filter(u => u !== input.value);
+      } else {
+        newMessageSelectedUsernames = [input.value];
+      }
+    });
+  });
+  document.getElementById('start-thread-btn').addEventListener('click', async ()=>{
+    if(!newMessageSelectedUsernames.length){ alert('Choose at least one person.'); return; }
+    const groupName = newMessageIsGroup ? document.getElementById('new-group-name').value.trim() : '';
+    if(newMessageIsGroup && !groupName){ alert('Enter a group name.'); return; }
+    const result = await createThread(newMessageIsGroup ? 'group' : 'dm', newMessageSelectedUsernames, groupName);
+    if(!result.ok){ alert(result.error || 'Could not start that conversation.'); return; }
+    await refreshThreadsFromServer();
+    messagesScreenStep = 'list';
+    openThreadDetail(result.thread.id);
+  });
+}
+
+async function openThreadDetail(threadId){
+  stopMessageBurst();
+  const result = await fetchThreadDetail(threadId);
+  if(!result.ok){
+    alert(result.error || 'Could not open that conversation.');
+    messagesScreenStep = 'list';
+    renderMessagesScreen();
+    return;
+  }
+  currentThreadId = threadId;
+  currentThreadInfo = result.thread;
+  currentThreadMessages = result.messages;
+  renderThreadDetail();
+  refreshThreadsFromServer(); // updates the badge now that this thread is marked read
+}
+
+function closeThreadDetail(){
+  stopMessageBurst();
+  currentThreadId = null;
+  currentThreadInfo = null;
+  currentThreadMessages = [];
+  messagesScreenStep = 'list';
+  renderMessagesScreen();
+}
+
+function stopMessageBurst(){
+  if(messageBurstInterval){ clearInterval(messageBurstInterval); messageBurstInterval = null; }
+  if(messageBurstTimeout){ clearTimeout(messageBurstTimeout); messageBurstTimeout = null; }
+}
+// A short, fast poll window right after activity in this specific thread —
+// nobody else's polling rate changes because of this. New activity found
+// during the burst extends it; after 5 quiet minutes it stops on its own
+// and this thread just goes back to the normal 15-minute cycle.
+function startMessageBurst(threadId){
+  stopMessageBurst();
+  messageBurstInterval = setInterval(async ()=>{
+    if(currentThreadId !== threadId) { stopMessageBurst(); return; }
+    const result = await fetchThreadDetail(threadId);
+    if(result.ok){
+      const foundNew = result.messages.length !== currentThreadMessages.length;
+      currentThreadMessages = result.messages;
+      renderThreadMessagesList();
+      if(foundNew){ startMessageBurst(threadId); refreshThreadsFromServer(); }
+    }
+  }, 20000);
+  messageBurstTimeout = setTimeout(stopMessageBurst, 5 * 60 * 1000);
+}
+
+function renderThreadDetail(){
+  const inner = document.getElementById('messages-inner');
+  const thread = currentThreadInfo;
+  const isCreator = thread.creatorUsername.toLowerCase() === (getCurrentUser() || '').toLowerCase();
+
+  inner.innerHTML = `
+    <button class="back-btn" id="thread-back-btn"><span class="chev">←</span> Messages</button>
+    <div class="agenda-step">
+      <h2>${escapeHtml(threadDisplayName(thread))}</h2>
+      ${thread.type === 'group' ? `<p class="caption">${escapeHtml(thread.participants.join(', '))}</p>` : ''}
+      ${isCreator ? `
+        <div class="perm-chip-row">
+          ${thread.type === 'group' ? `<button class="perm-chip" id="manage-group-btn">Manage Group</button>` : ''}
+          <button class="perm-chip" id="delete-thread-btn">${thread.type === 'group' ? 'Delete Group' : 'Delete Conversation'}</button>
+        </div>
+      ` : ''}
+      <div id="thread-messages-list" style="margin-top:20px;"></div>
+      <div style="position:sticky; bottom:64px; background:var(--stone); padding-top:10px; margin-top:16px;">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="thread-compose-input" placeholder="Type a message…" style="flex:1;">
+          <button class="primary-btn" id="thread-send-btn" style="width:auto; padding:0 20px; margin-top:0;">Send</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderThreadMessagesList();
+
+  document.getElementById('thread-back-btn').addEventListener('click', closeThreadDetail);
+  const sendBtn = document.getElementById('thread-send-btn');
+  const composeInput = document.getElementById('thread-compose-input');
+  const doSend = async ()=>{
+    const text = composeInput.value.trim();
+    if(!text) return;
+    composeInput.value = '';
+    const result = await sendMessageToThread(currentThreadId, text);
+    if(!result.ok){ alert(result.error || 'Could not send that message.'); return; }
+    currentThreadMessages.unshift(result.message);
+    renderThreadMessagesList();
+    startMessageBurst(currentThreadId);
+    refreshThreadsFromServer();
+  };
+  sendBtn.addEventListener('click', doSend);
+  composeInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') doSend(); });
+
+  const deleteThreadBtn = document.getElementById('delete-thread-btn');
+  if(deleteThreadBtn){
+    deleteThreadBtn.addEventListener('click', async ()=>{
+      if(!confirm(`Delete this ${thread.type === 'group' ? 'group' : 'conversation'} for everyone? This cannot be undone.`)) return;
+      const result = await deleteThreadOnServer(currentThreadId);
+      if(!result.ok){ alert(result.error || 'Could not delete.'); return; }
+      closeThreadDetail();
+      await refreshThreadsFromServer();
+      renderMessagesScreen();
+    });
+  }
+  const manageBtn = document.getElementById('manage-group-btn');
+  if(manageBtn){
+    manageBtn.addEventListener('click', renderGroupManageScreen);
+  }
+
+  // Start the fast window immediately on opening too, since opening a
+  // thread usually means you're actively expecting a reply right now.
+  startMessageBurst(currentThreadId);
+}
+
+function renderThreadMessagesList(){
+  const container = document.getElementById('thread-messages-list');
+  if(!container) return;
+  const me = getCurrentUser();
+  const ordered = [...currentThreadMessages].reverse(); // oldest first for natural reading order
+  container.innerHTML = ordered.map(m => {
+    const isMine = m.sender.toLowerCase() === (me || '').toLowerCase();
+    return `
+      <div style="display:flex; flex-direction:column; align-items:${isMine ? 'flex-end' : 'flex-start'}; margin-bottom:10px;">
+        ${currentThreadInfo.type === 'group' && !isMine ? `<span style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(m.sender)}</span>` : ''}
+        <div style="max-width:78%; background:${isMine ? 'var(--sage)' : 'var(--card)'}; color:${isMine ? '#fff' : 'var(--ink)'}; border-radius:14px; padding:9px 13px; font-size:14px; position:relative;">
+          ${escapeHtml(m.text)}
+          ${isMine ? `<button class="delete-message-btn" data-id="${m.id}" style="all:unset; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.75;">✕</button>` : ''}
+        </div>
+        <span style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${new Date(m.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+    `;
+  }).join('');
+  container.querySelectorAll('.delete-message-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this message?')) return;
+      const result = await deleteMessageFromThread(currentThreadId, btn.dataset.id);
+      if(!result.ok){ alert(result.error || 'Could not delete that message.'); return; }
+      currentThreadMessages = currentThreadMessages.filter(m => m.id !== btn.dataset.id);
+      renderThreadMessagesList();
+    });
+  });
+  container.scrollIntoView({ block: 'end' });
+}
+
+function renderGroupManageScreen(){
+  const inner = document.getElementById('messages-inner');
+  const thread = currentThreadInfo;
+  const me = getCurrentUser();
+  const others = loadUsers().filter(u =>
+    u.username.toLowerCase() !== (me || '').toLowerCase() &&
+    !thread.participants.some(p => p.toLowerCase() === u.username.toLowerCase())
+  );
+
+  inner.innerHTML = `
+    <button class="back-btn" id="manage-back-btn"><span class="chev">←</span> ${escapeHtml(threadDisplayName(thread))}</button>
+    <div class="agenda-step">
+      <h2>Manage Group</h2>
+      <div class="block-label">Members</div>
+      ${thread.participants.map(p => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${escapeHtml(p)}${p.toLowerCase() === thread.creatorUsername.toLowerCase() ? ' <span class="admin-supply-empty">(creator)</span>' : ''}</div>
+          ${p.toLowerCase() !== thread.creatorUsername.toLowerCase() ? `<button class="ghost-btn remove-member-btn" data-username="${escapeHtml(p)}">Remove</button>` : ''}
+        </div>
+      `).join('')}
+      <div class="block-label" style="margin-top:24px;">Add Someone</div>
+      ${others.length ? others.map(u => `
+        <div class="admin-user-row">
+          <div class="admin-user-name">${escapeHtml(u.username)}</div>
+          <button class="ghost-btn add-member-btn" data-username="${escapeHtml(u.username)}">Add</button>
+        </div>
+      `).join('') : `<p class="caption">Everyone is already in this group.</p>`}
+    </div>
+  `;
+
+  document.getElementById('manage-back-btn').addEventListener('click', ()=>{ renderThreadDetail(); });
+  inner.querySelectorAll('.remove-member-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const result = await updateGroupMember(currentThreadId, 'remove', btn.dataset.username);
+      if(!result.ok){ alert(result.error || 'Could not remove that person.'); return; }
+      currentThreadInfo = result.thread;
+      renderGroupManageScreen();
+    });
+  });
+  inner.querySelectorAll('.add-member-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const result = await updateGroupMember(currentThreadId, 'add', btn.dataset.username);
+      if(!result.ok){ alert(result.error || 'Could not add that person.'); return; }
+      currentThreadInfo = result.thread;
+      renderGroupManageScreen();
+    });
+  });
 }
 
 document.getElementById('nav-home-btn').addEventListener('click', ()=>{
@@ -2548,7 +2950,7 @@ document.getElementById('nav-agenda-btn').addEventListener('click', ()=>{
 });
 document.getElementById('nav-messages-btn').addEventListener('click', ()=>{
   closeAllOverlaysForNav();
-  openMessagesPlaceholder();
+  openMessages();
   setActiveNavTab('messages');
 });
 document.getElementById('nav-menu-btn').addEventListener('click', ()=>{
@@ -2570,6 +2972,7 @@ const ADMIN_SECTIONS = [
   { key: 'backup', name: 'Backup', meta: 'Back up and restore all data' },
   { key: 'errors', name: 'Error Log', meta: 'Review recent app errors' },
   { key: 'settings', name: 'Settings', meta: 'Rooms, durations, categories, and Home links' },
+  { key: 'messages', name: 'Messages', meta: 'View all conversations (oversight)' },
 ];
 
 function getEffectiveAdminPermissions(){
@@ -2726,6 +3129,7 @@ function renderAdmin(){
   else if(adminTab === 'backup') renderAdminBackupTab();
   else if(adminTab === 'errors') renderAdminErrorsTab();
   else if(adminTab === 'settings') renderAdminSettingsTab();
+  else if(adminTab === 'messages') renderAdminMessagesTab();
   else renderAdminActivityTab();
 }
 
@@ -3570,6 +3974,81 @@ function renderAdminErrorsTab(){
       renderAdminErrorsTab();
     });
   }
+}
+
+/* ---------- Messages oversight (Management → Messages) ---------- */
+
+let oversightThreads = [];
+let oversightSelectedThreadId = null;
+
+async function renderAdminMessagesTab(){
+  const content = document.getElementById('admin-tab-content');
+  content.innerHTML = `<p class="caption">Loading conversations…</p>`;
+  if(!isSyncConfigured()){
+    content.innerHTML = `<p class="caption">Sync isn't set up yet on this device.</p>`;
+    return;
+  }
+  try{
+    const res = await fetch(`${SYNC_API_BASE}/messages/oversight`, { headers: authHeaders() });
+    const data = await res.json();
+    oversightThreads = Array.isArray(data) ? data : [];
+  }catch(e){
+    oversightThreads = [];
+  }
+  renderOversightList();
+}
+
+function renderOversightList(){
+  const content = document.getElementById('admin-tab-content');
+  if(oversightSelectedThreadId){
+    renderOversightThreadDetail();
+    return;
+  }
+  const sorted = [...oversightThreads].sort((a,b) => {
+    const at = a.messages[0] ? a.messages[0].timestamp : a.createdAt;
+    const bt = b.messages[0] ? b.messages[0].timestamp : b.createdAt;
+    return bt.localeCompare(at);
+  });
+  content.innerHTML = `
+    <div class="block-label">All Conversations</div>
+    <p class="caption">Every direct message and group in the system — visible here because of the Messages permission, independent of whether you're actually part of the conversation.</p>
+    ${sorted.length ? sorted.map(t => `
+      <div class="admin-user-row">
+        <button class="admin-product-toggle oversight-thread-btn" data-id="${t.id}">
+          <span class="admin-user-name">${t.type === 'group' ? escapeHtml(t.name || 'Group') : escapeHtml(t.participants.join(', '))}</span>
+          <span class="tap-hint">${t.messages.length} message${t.messages.length===1?'':'s'} · Started by ${escapeHtml(t.creatorUsername)}</span>
+        </button>
+      </div>
+    `).join('') : `<p class="caption">No conversations yet.</p>`}
+  `;
+  content.querySelectorAll('.oversight-thread-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      oversightSelectedThreadId = btn.dataset.id;
+      renderOversightList();
+    });
+  });
+}
+
+function renderOversightThreadDetail(){
+  const content = document.getElementById('admin-tab-content');
+  const thread = oversightThreads.find(t => t.id === oversightSelectedThreadId);
+  if(!thread){ oversightSelectedThreadId = null; renderOversightList(); return; }
+  const ordered = [...thread.messages].reverse();
+  content.innerHTML = `
+    <button class="ghost-btn" id="oversight-back-btn" style="margin-bottom:16px;">← All Conversations</button>
+    <div class="block-label">${thread.type === 'group' ? escapeHtml(thread.name || 'Group') : escapeHtml(thread.participants.join(', '))}</div>
+    <p class="caption">Participants: ${escapeHtml(thread.participants.join(', '))} · Started by ${escapeHtml(thread.creatorUsername)}</p>
+    ${ordered.length ? ordered.map(m => `
+      <div class="admin-user-row">
+        <div class="admin-user-name">${escapeHtml(m.sender)}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${new Date(m.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span></div>
+        <div style="font-size:13px; color:var(--ink); max-width:60%; text-align:right;">${escapeHtml(m.text)}</div>
+      </div>
+    `).join('') : `<p class="caption">No messages yet.</p>`}
+  `;
+  document.getElementById('oversight-back-btn').addEventListener('click', ()=>{
+    oversightSelectedThreadId = null;
+    renderOversightList();
+  });
 }
 
 /* ---------- Settings: Rooms / Durations / Categories / Home Links ---------- */
@@ -4649,6 +5128,7 @@ async function bootstrapAuth(){
   await runDemoAccountSeed();
   checkAuthAndRender();
   renderHomeLinks();
+  refreshThreadsFromServer();
   setInterval(async ()=>{
     await refreshUsersFromServer();
     await refreshActivityFromServer();
@@ -4664,6 +5144,7 @@ async function bootstrapAuth(){
     await refreshSubProtocolsFromServer();
     await refreshShiftTemplatesFromServer();
     await refreshAnnouncementFromServer();
+    await refreshThreadsFromServer();
     renderHomeLinks();
     // Only touch the auth screen if someone is already logged in (to catch
     // an admin removing them) — never redraw an in-progress login/create form.
@@ -5885,8 +6366,6 @@ function closeAgenda(){
 }
 
 document.getElementById('open-agenda').addEventListener('click', openAgenda);
-document.getElementById('logout-btn').addEventListener('click', logout);
-document.getElementById('my-account-btn').addEventListener('click', openMyAccount);
 
 /* ---------- My Account (self-service password + security question) ---------- */
 
