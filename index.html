@@ -1654,7 +1654,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.31.1</div>
+    <div class="app-version">v1.31.2</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -3599,10 +3599,11 @@ function renderAdminUserDetail(){
     await refreshUsersFromServer();
     renderAdminUsersTab();
   });
-  content.querySelectorAll('.perm-chip').forEach(btn=>{
+  content.querySelectorAll('.perm-chip:not(#admin-toggle-demo-btn)').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const username = btn.dataset.username;
       const key = btn.dataset.perm;
+      if(!key) return; // guards against any future chip sharing this class without a real permission key
       await refreshUsersFromServer();
       const u = findUser(username);
       if(!u) return;
