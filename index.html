@@ -242,18 +242,20 @@
     z-index:100;
     overflow-y:auto;
     overflow-x:hidden;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
     -webkit-overflow-scrolling:touch;
   }
   .auth-gate.hidden{ display:none; }
+  .auth-scroll{
+    max-width:560px;
+    margin:0 auto;
+    min-height:100%;
+  }
   .auth-inner{
     max-width:420px;
     width:100%;
     box-sizing:border-box;
     margin:0 auto;
-    padding:calc(48px + env(safe-area-inset-top)) 24px calc(48px + env(safe-area-inset-bottom));
+    padding:8px 24px calc(48px + env(safe-area-inset-bottom));
   }
   .auth-eyebrow{
     font-family:'JetBrains Mono',monospace;
@@ -743,6 +745,13 @@
     background:var(--stone);
     border-radius:50% 50% 0 0 / 100% 100% 0 0;
     transform:scaleX(1.6);
+  }
+  /* The login screen reuses the Home hero, minus the greeting and date —
+     there's nobody identified yet, so it's branding only. Declared after
+     .home-hero so these overrides actually win. */
+  .auth-hero{
+    margin:0 0 20px;
+    padding:calc(52px + env(safe-area-inset-top)) 24px 64px;
   }
   .home-hero-content{
     position:relative;
@@ -1547,7 +1556,26 @@
 <body>
 
 <div class="auth-gate" id="auth-gate">
-  <div class="auth-inner" id="auth-inner"></div>
+  <div class="auth-scroll">
+    <div class="home-hero auth-hero">
+      <div class="home-hero-content">
+        <div class="home-brand">
+          <svg class="home-sprout" viewBox="0 0 60 80" fill="none" aria-hidden="true">
+            <path d="M30 74 L30 30" stroke="#A8C49A" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M30 30 C30 14, 36 6, 44 2 C46 14, 42 26, 30 30 Z" fill="#A8C49A"/>
+            <path d="M30 40 C20 38, 12 30, 8 20 C20 20, 30 28, 30 40 Z" fill="#A8C49A"/>
+            <path d="M30 50 C40 48, 50 42, 54 32 C42 31, 32 38, 30 50 Z" fill="#A8C49A"/>
+            <path d="M8 74 L52 74" stroke="#A8C49A" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          </svg>
+          <div class="home-brand-text">
+            <h1 class="title">The Ledger</h1>
+            <p class="home-tagline">Every detail, in its place</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-inner" id="auth-inner"></div>
+  </div>
 </div>
 
 <div class="detail" id="admin-overlay">
@@ -1626,7 +1654,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.30.3</div>
+    <div class="app-version">v1.31.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2618,7 +2646,6 @@ function renderAuthView(){
 
   if(authView === 'create'){
     inner.innerHTML = `
-      <div class="auth-eyebrow">The Ledger</div>
       <h2>Create Account</h2>
       <p class="caption">New accounts need an invitation code from your admin.</p>
       ${errorHtml}
@@ -2651,7 +2678,6 @@ function renderAuthView(){
   } else if(authView === 'recover'){
     if(recoverStep === 'answer'){
       inner.innerHTML = `
-        <div class="auth-eyebrow">The Ledger</div>
         <h2>Reset Password</h2>
         <p class="caption">${recoverQuestion}</p>
         ${errorHtml}
@@ -2670,7 +2696,6 @@ function renderAuthView(){
       });
     } else {
       inner.innerHTML = `
-        <div class="auth-eyebrow">The Ledger</div>
         <h2>Forgot Password</h2>
         <p class="caption">Enter your username to see your recovery question.</p>
         ${errorHtml}
@@ -2688,7 +2713,6 @@ function renderAuthView(){
     }
   } else {
     inner.innerHTML = `
-      <div class="auth-eyebrow">The Ledger</div>
       <h2>Log In</h2>
       <p class="caption">Enter your username and password to continue.</p>
       ${syncStatusWarningHtml()}
