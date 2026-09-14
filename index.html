@@ -1654,7 +1654,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.31.0</div>
+    <div class="app-version">v1.31.1</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2722,7 +2722,7 @@ function renderAuthView(){
       <button class="primary-btn" id="auth-login-btn">Log In</button>
       <div class="auth-link-row">New here? <button id="auth-show-create">Create an account</button></div>
       <div class="auth-link-row"><button id="auth-show-recover">Forgot password?</button></div>
-      <div class="auth-admin-link"><button id="auth-show-admin">Management</button></div>
+      <div class="auth-admin-link"><button id="auth-show-admin">Menu</button></div>
       <div class="copyright-line">© 2026 Ryan Hultz</div>
     `;
     document.getElementById('auth-login-btn').addEventListener('click', ()=>{
@@ -2927,7 +2927,7 @@ function renderMenuScreen(){
     <div class="agenda-step">
       <h2>Menu</h2>
       ${visibleSections.length ? `
-        <div class="block-label">Management</div>
+        <div class="block-label">Sections</div>
         <div class="grid">
           ${visibleSections.map(s => `
             <button class="card-btn menu-admin-section-btn" data-tab="${s.key}">
@@ -3343,7 +3343,7 @@ function getEffectiveAdminPermissions(){
 function getAdminActingUsername(){
   const current = getCurrentUser();
   if(adminSessionMode === 'master'){
-    return current ? `${current} (master access)` : 'Master Management';
+    return current ? `${current} (master access)` : 'Master';
   }
   return current || 'Unknown';
 }
@@ -3377,10 +3377,10 @@ function renderAdmin(){
     inner.innerHTML = `
       <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
       <div class="agenda-step">
-        <h2>Management</h2>
-        <p class="caption">Enter the management password to continue.</p>
+        <h2>Menu</h2>
+        <p class="caption">Enter the master password to continue.</p>
         <div id="admin-pw-error"></div>
-        <div class="field"><label>Management Password</label><input type="password" id="admin-password-input"></div>
+        <div class="field"><label>Master Password</label><input type="password" id="admin-password-input"></div>
         <button class="primary-btn" id="admin-unlock-btn">Unlock</button>
       </div>
     `;
@@ -3445,7 +3445,7 @@ function renderAdmin(){
               </button>
             `).join('')}
           </div>
-        ` : `<p class="caption">Your account doesn't have access to any management sections yet — ask an existing manager to grant access in Management → Users.</p>`}
+        ` : `<p class="caption">Your account doesn't have access to any management sections yet — ask an existing manager to grant access in Menu → Users.</p>`}
         <div class="copyright-line">© 2026 Ryan Hultz</div>
       </div>
     `;
@@ -3910,7 +3910,7 @@ function renderAdminProtocolsTab(){
         ${protocolTableMakeupRows.map((row, idx) => tableMakeupRowHtml(row, idx, supplies)).join('')}
       </div>
       <button class="ghost-btn add-row-btn" id="add-tmu-row-btn" type="button">+ Add Layer</button>
-      ${!supplies.length ? `<p class="caption">No supplies yet — add some in Management → Supplies first.</p>` : ''}
+      ${!supplies.length ? `<p class="caption">No supplies yet — add some in Menu → Inventory → Supplies first.</p>` : ''}
     </div>
 
     <div class="field">
@@ -3919,7 +3919,7 @@ function renderAdminProtocolsTab(){
         ${protocolPrepRows.map((row, idx) => prepRowHtml(row, idx, products)).join('')}
       </div>
       <button class="ghost-btn add-row-btn" id="add-prep-row-btn" type="button">+ Add Prep Item</button>
-      ${!products.length ? `<p class="caption">No products yet — add some in Management → Products first.</p>` : ''}
+      ${!products.length ? `<p class="caption">No products yet — add some in Menu → Inventory → Products first.</p>` : ''}
     </div>
 
     <div class="field">
@@ -4269,7 +4269,7 @@ function renderAdminAllergensTab(){
     btn.addEventListener('click', ()=>{
       const id = btn.dataset.id;
       if(!id){
-        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Management → Products.`);
+        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Menu → Inventory → Products.`);
         return;
       }
       const allergen = loadAllergens().find(a => a.id === id);
@@ -6542,7 +6542,7 @@ function renderAllergyList(){
             </button>
           `).join('')}
         </div>
-      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Management → Allergies.</p>`}
+      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Menu → Allergies.</p>`}
     </div>
   `;
 
@@ -6692,7 +6692,7 @@ function renderProductsBrowseList(){
             </button>
           `).join('')}
         </div>
-      ` : `<p class="caption">No products yet — add some in Management → Products.</p>`}
+      ` : `<p class="caption">No products yet — add some in Menu → Inventory → Products.</p>`}
     </div>
   `;
 
