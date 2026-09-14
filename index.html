@@ -406,10 +406,23 @@
     padding:12px 0;
     border-bottom:1px solid var(--line);
     display:flex;
+    flex-wrap:wrap;
     align-items:baseline;
     gap:10px;
     font-size:14.5px;
     line-height:1.4;
+    min-width:0;
+  }
+  .tray li .prep-product-link{
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+  .prep-choice-line{
+    flex:1 1 100%;
+    min-width:0;
+    display:block;
+    overflow-wrap:anywhere;
+    line-height:1.7;
   }
   .tray li:last-child{ border-bottom:none; }
   .tray li::before{
@@ -1390,6 +1403,42 @@
     border-radius:10px;
     padding:10px 12px;
   }
+  .thread-compose-bar{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:calc(64px + env(safe-area-inset-bottom));
+    z-index:210;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:10px 20px;
+    background:var(--stone);
+    border-top:1px solid var(--line);
+    max-width:560px;
+    margin:0 auto;
+    box-sizing:border-box;
+  }
+  .thread-compose-bar input{
+    flex:1;
+    min-width:0;
+    box-sizing:border-box;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  .thread-compose-bar .primary-btn{
+    width:auto;
+    flex:none;
+    margin-top:0;
+    padding:12px 20px;
+  }
   .choice-checkbox-item{
     display:flex;
     align-items:center;
@@ -1397,11 +1446,17 @@
     font-size:13px;
   }
   .choice-checkbox-item input{
-    all:unset;
-    box-sizing:border-box;
+    -webkit-appearance:none;
+    appearance:none;
+    margin:0;
+    padding:0;
+    display:block;
     width:18px;
     height:18px;
-    flex:none;
+    min-width:18px;
+    min-height:18px;
+    flex:0 0 18px;
+    box-sizing:border-box;
     border:1.5px solid var(--line);
     border-radius:5px;
     background:var(--card);
@@ -1571,7 +1626,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.30.1</div>
+    <div class="app-version">v1.30.3</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -3081,12 +3136,10 @@ function renderThreadDetail(){
           <button class="perm-chip" id="delete-thread-btn">${thread.type === 'group' ? 'Delete Group' : 'Delete Conversation'}</button>
         </div>
       ` : ''}
-      <div id="thread-messages-list" style="margin-top:20px;"></div>
-      <div style="position:sticky; bottom:64px; background:var(--stone); padding-top:10px; margin-top:16px;">
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="thread-compose-input" placeholder="Type a message…" style="flex:1;">
-          <button class="primary-btn" id="thread-send-btn" style="width:auto; padding:0 20px; margin-top:0;">Send</button>
-        </div>
+      <div id="thread-messages-list" style="margin-top:20px; padding-bottom:76px;"></div>
+      <div class="thread-compose-bar">
+        <input type="text" id="thread-compose-input" placeholder="Type a message…">
+        <button class="primary-btn" id="thread-send-btn">Send</button>
       </div>
     </div>
   `;
@@ -3158,7 +3211,10 @@ function renderThreadMessagesList(){
       renderThreadMessagesList();
     });
   });
-  container.scrollIntoView({ block: 'end' });
+  // Scroll the overlay itself rather than using scrollIntoView, which
+  // pulls the whole page around and fights with the fixed compose bar.
+  const overlay = document.getElementById('messages-overlay');
+  if(overlay) overlay.scrollTop = overlay.scrollHeight;
 }
 
 function renderGroupManageScreen(){
@@ -6814,7 +6870,7 @@ function openDetail(id){
           const joined = linkHtml.length === 1 ? linkHtml[0]
             : linkHtml.length === 2 ? `${linkHtml[0]} or ${linkHtml[1]}`
             : `${linkHtml.slice(0, -1).join(', ')}, or ${linkHtml[linkHtml.length - 1]}`;
-          return `<li>${p.amount ? escapeHtml(p.amount) + ' — ' : ''}${joined} <span class="note">(guest's choice)</span></li>`;
+          return `<li><span class="prep-choice-line">${p.amount ? escapeHtml(p.amount) + ' — ' : ''}${joined} <span class="note">(guest's choice)</span></span></li>`;
         }
       }
       return `<li>${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</li>`;
