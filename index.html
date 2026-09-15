@@ -218,6 +218,18 @@
     color:rgba(255,255,255,0.8);
     margin-top:4px;
   }
+  .turn-indicator{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:rgba(255,255,255,0.6);
+    margin-top:6px;
+  }
+  .turn-indicator.my-turn{
+    color:#F0C79A;
+  }
   .card-btn .arrow{
     width:30px;height:30px;
     border-radius:50%;
@@ -1569,7 +1581,7 @@
           </svg>
           <div class="home-brand-text">
             <h1 class="title">The Ledger</h1>
-            <p class="home-tagline">Every detail, in its place</p>
+            <p class="home-tagline">Every detail, in one place</p>
           </div>
         </div>
       </div>
@@ -1596,7 +1608,7 @@
           </svg>
           <div class="home-brand-text">
             <h1 class="title">The Ledger</h1>
-            <p class="home-tagline">Every detail, in its place</p>
+            <p class="home-tagline">Every detail, in one place</p>
           </div>
         </div>
         <span class="home-date-pill" id="home-date-pill"></span>
@@ -1654,7 +1666,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.31.2</div>
+    <div class="app-version">v1.33.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1705,6 +1717,8 @@
 <div class="detail" id="detail">
   <div class="detail-inner" id="detail-inner"></div>
 </div>
+
+<div id="thread-compose-bar-container"></div>
 
 <div id="bottom-nav">
   <button class="bottom-nav-btn" id="nav-home-btn" data-nav="home">
@@ -3009,15 +3023,20 @@ function renderMessagesScreen(){
       <h2>Messages</h2>
       <button class="primary-btn" id="new-message-btn">New Message</button>
       <div class="block-label" style="margin-top:24px;">Conversations</div>
-      ${sorted.length ? sorted.map(t => `
+      ${sorted.length ? `<div class="grid">${sorted.map(t => {
+        const myTurn = t.lastMessage && t.lastMessage.sender && t.lastMessage.sender.toLowerCase() !== (me || '').toLowerCase();
+        const turnLabel = t.lastMessage ? (myTurn ? 'Waiting on you' : 'Waiting on reply') : '';
+        return `
         <button class="card-btn thread-row-btn" data-id="${t.id}">
           <span>
             <span class="name">${escapeHtml(threadDisplayName(t))}${t.unreadCount ? ` <span class="reorder-badge">${t.unreadCount}</span>` : ''}</span>
             <span class="meta">${t.lastMessage ? escapeHtml(t.lastMessage.sender === me ? 'You: ' : '') + escapeHtml(t.lastMessage.text).slice(0,60) : 'No messages yet'}</span>
+            ${turnLabel ? `<span class="turn-indicator ${myTurn ? 'my-turn' : ''}">${turnLabel}</span>` : ''}
           </span>
           ${iconArrow()}
         </button>
-      `).join('') : `<p class="caption">No conversations yet. Tap New Message to start one.</p>`}
+      `;
+      }).join('')}</div>` : `<p class="caption">No conversations yet. Tap New Message to start one.</p>`}
     </div>
   `;
 
@@ -3124,6 +3143,8 @@ function closeThreadDetail(){
 function stopMessageBurst(){
   if(messageBurstInterval){ clearInterval(messageBurstInterval); messageBurstInterval = null; }
   if(messageBurstTimeout){ clearTimeout(messageBurstTimeout); messageBurstTimeout = null; }
+  const composeBarContainer = document.getElementById('thread-compose-bar-container');
+  if(composeBarContainer) composeBarContainer.innerHTML = '';
 }
 // A short, fast poll window right after activity in this specific thread —
 // nobody else's polling rate changes because of this. New activity found
@@ -3161,10 +3182,19 @@ function renderThreadDetail(){
         </div>
       ` : ''}
       <div id="thread-messages-list" style="margin-top:20px; padding-bottom:76px;"></div>
-      <div class="thread-compose-bar">
-        <input type="text" id="thread-compose-input" placeholder="Type a message…">
-        <button class="primary-btn" id="thread-send-btn">Send</button>
-      </div>
+    </div>
+  `;
+
+  // Rendered into a true top-level element (outside the sliding Messages
+  // overlay), the same way the persistent nav bar is — a .detail overlay's
+  // own slide-open transform would otherwise re-anchor anything inside it
+  // marked position:fixed, making it drift with scrolling instead of
+  // staying locked to the actual screen.
+  const composeBarContainer = document.getElementById('thread-compose-bar-container');
+  composeBarContainer.innerHTML = `
+    <div class="thread-compose-bar">
+      <input type="text" id="thread-compose-input" placeholder="Type a message…">
+      <button class="primary-btn" id="thread-send-btn">Send</button>
     </div>
   `;
 
@@ -3471,7 +3501,7 @@ function renderAdmin(){
 
   const sectionMeta = ADMIN_SECTIONS.find(s => s.key === adminTab);
   inner.innerHTML = `
-    <button class="back-btn" id="admin-back"><span class="chev">←</span> Admin</button>
+    <button class="back-btn" id="admin-back"><span class="chev">←</span> Menu</button>
     <div class="agenda-step">
       <h2>${sectionMeta ? sectionMeta.name : 'Menu'}</h2>
       ${syncStatusWarningHtml()}

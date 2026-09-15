@@ -1,10 +1,17 @@
 /**
- * Spa Therapist Operations Portal (STOP) — Service Worker
+ * The Ledger — Service Worker
  *
- * Purpose: faster repeat loads (serves the app shell from cache
- * instantly, then refreshes it in the background) and unlocks
- * Android Chrome's native "Install app" prompt, which requires a
- * registered service worker to appear at all.
+ * Purpose: unlocks Android Chrome's native "Install app" prompt, which
+ * requires a registered service worker to appear at all, and provides
+ * an offline fallback if the app is opened with no connection.
+ *
+ * Caching strategy: network-first. Every load tries the real network
+ * first, so a newly deployed update is visible on the very next load —
+ * not the load after that. The cache is only ever consulted as a
+ * fallback when there's no network at all. (An earlier version served
+ * the cached copy first and refreshed it quietly in the background,
+ * which meant a deployed update could take two reopens to actually
+ * show up — this version fixes that.)
  *
  * This does NOT provide offline data access — the app depends on a
  * live connection to the Cloudflare Worker for logins, schedules,
@@ -13,14 +20,23 @@
  * the network, untouched.
  */
 
-const CACHE_NAME = 'stop-shell-v1';
+const CACHE_NAME = 'stop-shell-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      // Clear out any cache from a previous version of this service
+      // worker, so nothing stale lingers in storage indefinitely.
+      caches.keys().then((names) =>
+        Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+      ),
+    ])
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -35,18 +51,19 @@ self.addEventListener('fetch', (event) => {
   // the Cloudflare Worker or any other origin is left completely alone.
   if(url.origin !== self.location.origin) return;
 
+  // Network-first: always try to fetch the latest version first, so a
+  // newly deployed update is visible on the very next load rather than
+  // needing an extra reopen. The cache exists purely as an offline
+  // fallback for when there's no connection at all — it's a safety net,
+  // not the default source of truth the way it was before.
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(req);
-      const networkFetch = fetch(req)
-        .then((res) => {
-          if(res && res.ok) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      // Stale-while-revalidate: serve the cached shell instantly if we
-      // have one, while quietly fetching a fresh copy for next time.
-      return cached || networkFetch;
-    })
+    fetch(req)
+      .then((res) => {
+        if(res && res.ok){
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
+        }
+        return res;
+      })
+      .catch(() => caches.open(CACHE_NAME).then((cache) => cache.match(req)))
   );
 });
