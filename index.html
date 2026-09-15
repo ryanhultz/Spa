@@ -2105,6 +2105,185 @@
     text-transform:uppercase;
     color:var(--ink-soft);
   }
+  /* ============ v1.36.0 — Inventory ============ */
+  .is-hidden{ display:none !important; }
+  /* Breathing room between a screen title and what follows */
+  #admin-tab-content > .editor-subtitle{ margin:6px 0 18px; }
+  #admin-tab-content > .summary-pills,
+  #admin-tab-content > .resume-card{ margin-top:16px; }
+  #admin-tab-content > .caption:first-child{ margin-top:6px; }
+  /* The sticky bar's faded top edge shouldn't block taps on what's beneath it */
+  .editor-actions{ pointer-events:none; }
+  .editor-actions > *{ pointer-events:auto; }
+  .row-chip.primary{ background:var(--sage); border-color:var(--sage-deep); color:#fff; }
+  .row-chip.primary .ico{ width:13px; height:13px; }
+  .protocol-group-label .count.warn{ background:var(--warn-bg); color:var(--warn-ink); }
+  .warn-caption{ display:flex; align-items:center; gap:6px; color:var(--warn-ink); }
+  .warn-caption .ico{ width:15px; height:15px; }
+
+  .resume-card{
+    background:var(--card);
+    border:1px solid var(--gold-soft);
+    border-radius:16px;
+    padding:14px;
+  }
+  .resume-main{ display:flex; align-items:center; gap:12px; }
+  .resume-icon{
+    flex:none;
+    width:40px; height:40px;
+    border-radius:50%;
+    background:var(--stone-deep);
+    color:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .resume-icon .ico{ width:20px; height:20px; }
+  .resume-text b{ display:block; font-size:15px; font-weight:600; }
+  .resume-text small{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-soft); }
+  .resume-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+  .reorder-list{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:2px 14px;
+    margin-bottom:10px;
+  }
+  .reorder-line, .review-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .reorder-line:last-child, .review-line:last-child{ border-bottom:none; }
+  .reorder-line b{ font-weight:600; }
+  .reorder-line small{ display:block; margin-top:1px; font-size:12px; color:var(--ink-soft); font-weight:400; }
+  .reorder-line .qty{ text-align:right; white-space:nowrap; color:var(--warn-ink); font-weight:600; font-size:13.5px; }
+  .review-line .delta{ white-space:nowrap; color:var(--ink-soft); font-variant-numeric:tabular-nums; font-size:13.5px; }
+  .review-line .delta b{ color:var(--ink); }
+  .review-line.low .delta b{ color:var(--warn-ink); }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 22px; }
+  .all-good{ display:flex; align-items:center; gap:8px; margin:0 0 22px; font-size:13.5px; color:var(--sage-text); }
+  .all-good .ico{ width:18px; height:18px; flex:none; }
+
+  .count-toolbar{ display:flex; align-items:center; gap:12px; margin:0 0 14px; }
+  .count-toolbar .row-chip{ margin-left:auto; flex:none; }
+  .count-progress{ flex:1; min-width:0; display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  .count-progress:empty{ visibility:hidden; }
+  .count-progress .bar{ flex:1; height:6px; border-radius:999px; background:var(--stone-deep); overflow:hidden; }
+  .count-progress .bar span{ display:block; height:100%; border-radius:inherit; background:var(--sage); transition:width .2s ease; }
+  .count-group{ margin-bottom:18px; }
+  .count-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 12px 12px 14px;
+    margin-bottom:8px;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .count-row.counted{ border-color:var(--sage); box-shadow:inset 3px 0 0 var(--sage); }
+  .count-row-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .count-name{ min-width:0; text-align:left; }
+  .count-name b{ display:block; font-family:'Fraunces',serif; font-weight:500; font-size:15.5px; line-height:1.3; }
+  .count-name small{ display:block; margin-top:1px; font-size:12px; color:var(--ink-soft); }
+  .count-meta{ margin-top:3px; font-size:12px; line-height:1.45; color:var(--ink-soft); }
+  .count-meta b{ color:var(--ink); font-weight:600; }
+  .count-check{ color:var(--sage-text); opacity:0; transition:opacity .15s ease; }
+  .count-check .ico{ width:20px; height:20px; }
+  .count-row.counted .count-check{ opacity:1; }
+  .count-controls{ display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .step-btn{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    flex:none;
+    width:42px; height:42px;
+    border-radius:12px;
+    background:var(--stone);
+    border:1px solid var(--line);
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-btn .ico{ width:18px; height:18px; stroke-width:2.2; }
+  .step-btn:active{ background:var(--stone-deep); }
+  .count-input{
+    all:unset;
+    box-sizing:border-box;
+    flex:none;
+    width:68px; height:42px;
+    text-align:center;
+    background:var(--stone);
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-family:'Inter',sans-serif;
+    font-size:18px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink);
+  }
+  .count-input:focus{ border-color:var(--gold); }
+  .count-input::placeholder{ color:var(--ink-soft); font-weight:400; opacity:.6; }
+  .new-badge{
+    display:inline-block;
+    flex:none;
+    padding:3px 8px;
+    border-radius:999px;
+    background:var(--gold);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    vertical-align:2px;
+  }
+  .track-toggle{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .track-form{ margin-top:12px; padding-top:14px; border-top:1px dashed var(--line); }
+  .track-form .field input{ background:var(--stone); font-size:16px; }
+
+  .summary-pills{ display:flex; gap:8px; margin:0 0 18px; }
+  .summary-pill{
+    flex:1;
+    min-width:0;
+    text-align:center;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 6px;
+  }
+  .summary-pill b{ display:block; font-family:'Fraunces',serif; font-weight:500; font-size:24px; line-height:1.1; }
+  .summary-pill span{
+    display:block;
+    margin-top:2px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  details.skipped-list, details.ingredients-details{ margin:14px 0 4px; }
+  details.skipped-list > summary, details.ingredients-details > summary{
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--sage-text);
+    padding:6px 0;
+  }
+  details.ingredients-details{ margin:10px 0 0; }
+  .usage-line{ display:flex; align-items:flex-start; gap:8px; margin:6px 0 0; font-size:13px; line-height:1.45; color:var(--ink-soft); }
+  .usage-line .ico{ width:15px; height:15px; margin-top:2px; color:var(--sage-text); }
+  .usage-line b{ color:var(--ink); font-weight:600; }
+  /* 16px text stops iPhones zooming the page when a box is tapped */
+  .form-group .field input, .form-group .field textarea, .form-group .field select, .search-field input{ font-size:16px; }
 </style>
 </head>
 <body>
@@ -2208,7 +2387,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.35.0</div>
+    <div class="app-version">v1.36.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2354,6 +2533,9 @@ const ICONS = {
   chevronUp:'<path d="m6 14.5 6-6 6 6"/>',
   chevronDown:'<path d="m6 9.5 6 6 6-6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  minus:'<path d="M5 12h14"/>',
+  share:'<path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M6 11.5H5.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H18"/>',
+  printer:'<path d="M7 8V3.5h10V8"/><rect x="3.5" y="8" width="17" height="8.5" rx="2"/><path d="M7 13.5h10v7H7z"/>',
   search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
   eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
   copy:'<rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/>',
@@ -2554,6 +2736,7 @@ function uiConfirm(message, opts){
     message: body,
     tone: danger ? 'danger' : 'info',
     confirmText: opts.confirmText || (verb.charAt(0).toUpperCase() + verb.slice(1).toLowerCase()),
+    cancelText: opts.cancelText,
     danger
   });
 }
@@ -4214,6 +4397,7 @@ function closeAdmin(){
 function renderAdmin(){
   const inner = document.getElementById('admin-inner');
   captureProtocolDraft();
+  captureItemDraft();
 
   if(!adminUnlocked){
     inner.innerHTML = `
@@ -4295,6 +4479,7 @@ function renderAdmin(){
     inner.querySelectorAll('[data-admin-tab]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         adminTab = btn.dataset.adminTab;
+        if(adminTab === 'inventory'){ inventoryView = 'home'; countStep = 'counting'; }
         renderAdmin();
       });
     });
@@ -5161,7 +5346,7 @@ function renderProtocolList(content){
     ` : ''}
     <div id="admin-protocol-list">
       ${protocols.length ? groupsHtml : `<p class="caption">No protocols yet. Tap Add Protocol to create the first one.</p>`}
-      <p class="caption hidden" id="admin-protocol-search-empty">No protocols match that search.</p>
+      <p class="caption is-hidden" id="admin-protocol-search-empty">No protocols match that search.</p>
     </div>
   `;
   bindSubNav();
@@ -5180,7 +5365,7 @@ function renderProtocolList(content){
       if(groupVisible) anyVisible = true;
     });
     const empty = document.getElementById('admin-protocol-search-empty');
-    if(empty) empty.classList.toggle('hidden', anyVisible || !protocols.length);
+    if(empty) empty.classList.toggle('is-hidden', anyVisible || !protocols.length);
   };
   const search = document.getElementById('admin-protocol-search');
   if(search){
@@ -6167,223 +6352,776 @@ async function loadBackupListIntoTab(){
   });
 }
 
-let editingProductId = null;
+/* ============ Admin → Inventory (rebuilt in v1.36.0) ============
+ * Saves pull the latest shared lists first and change only the fields that
+ * were edited, so counts and edits made on other devices aren't overwritten.
+ * A count in progress is kept on this device until it's confirmed or discarded.
+ */
 
-// A Product or Supply is "low stock" only when BOTH a current quantity and
-// a reorder threshold have actually been set — leaving either blank means
-// this item simply isn't being tracked, not that it's silently at zero.
+// Stock is "tracked" only when both a count and a reorder level are set.
+function isStockTracked(item){
+  return !!item && item.quantity !== undefined && item.quantity !== null
+      && item.reorderThreshold !== undefined && item.reorderThreshold !== null;
+}
 function isLowStock(item){
-  return item.quantity !== undefined && item.quantity !== null
-      && item.reorderThreshold !== undefined && item.reorderThreshold !== null
-      && item.quantity <= item.reorderThreshold;
+  return isStockTracked(item) && item.quantity <= item.reorderThreshold;
 }
 
-/* ---------- Take Inventory ---------- */
+const INVENTORY_TYPES = {
+  products: { one:'Product', many:'Products', syncKey:'stop-products' },
+  supplies: { one:'Supply', many:'Supplies', syncKey:'stop-supplies' }
+};
+const UNIT_SUGGESTIONS = ['each','bottles','jars','tubes','packs','boxes','cases','sets','towels','sheets','oz','gallons'];
 
-let takeInventoryDraft = {}; // itemId -> { quantity, type }
-let takeInventoryStep = 'counting'; // 'counting' | 'add' | 'review'
-
-function openTakeInventory(){
-  takeInventoryStep = 'counting';
-  takeInventoryDraft = {};
-  renderTakeInventory();
+function loadInventoryList(type){ return type === 'products' ? loadProducts() : loadSupplies(); }
+function refreshInventoryList(type){ return type === 'products' ? refreshProductsFromServer() : refreshSuppliesFromServer(); }
+function setInventoryCache(type, list){
+  if(type === 'products') productsCache = list; else suppliesCache = list;
+  try{ localStorage.setItem(type === 'products' ? PRODUCTS_KEY : SUPPLIES_KEY, JSON.stringify(list)); }catch(e){}
 }
 
-function getTrackedInventoryItems(){
-  const products = loadProducts().map(p => ({...p, _type:'product'}));
-  const supplies = loadSupplies().map(s => ({...s, _type:'supply'}));
-  return [...products, ...supplies].filter(i => i.quantity !== undefined && i.quantity !== null && i.reorderThreshold !== undefined && i.reorderThreshold !== null);
+function itemDisplayName(item){ return item ? String(item.name || '') : ''; }
+function unitText(item, qty){
+  const unit = item && item.unit ? String(item.unit).trim() : '';
+  return unit ? `${qty} ${unit}` : `${qty}`;
 }
-function getUntrackedInventoryItems(){
-  const products = loadProducts().map(p => ({...p, _type:'product'}));
-  const supplies = loadSupplies().map(s => ({...s, _type:'supply'}));
-  return [...products, ...supplies].filter(i => !(i.quantity !== undefined && i.quantity !== null && i.reorderThreshold !== undefined && i.reorderThreshold !== null));
+function shortDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleDateString([], { month:'short', day:'numeric' });
+}
+function wholeNumberOrNull(v){
+  const t = String(v == null ? '' : v).trim();
+  if(!/^\d+$/.test(t)) return null;
+  return parseInt(t, 10);
+}
+function digitsOnly(input){
+  const clean = input.value.replace(/\D+/g, '').slice(0, 6);
+  if(clean !== input.value) input.value = clean;
+  return clean;
+}
+function setAdminScreenHeader(title, backLabel, onBack){
+  setProtocolAdminHeader(title, backLabel, onBack);
 }
 
-function renderTakeInventory(){
-  if(takeInventoryStep === 'add'){ renderTakeInventoryAddItem(); return; }
-  if(takeInventoryStep === 'review'){ renderTakeInventoryReview(); return; }
-
-  const content = document.getElementById('admin-tab-content');
-  const items = getTrackedInventoryItems();
-
-  content.innerHTML = `
-    <button class="ghost-btn" id="inventory-count-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Inventory</button>
-    <div class="block-label">Take Inventory</div>
-    <p class="caption">Enter the current count for each item. Anything not changed keeps its last known count, but is still marked as counted today.</p>
-    ${items.length ? items.map(item => `
-      <div class="admin-user-row">
-        <div class="admin-user-name">
-          ${escapeHtml(item.name)}
-          <span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${item.lastCountedAt ? `Last counted ${new Date(item.lastCountedAt).toLocaleDateString([], {month:'short', day:'numeric'})}` : 'Never counted'}</span>
-        </div>
-        <input type="number" min="0" step="1" class="inventory-count-input" data-id="${item.id}" data-type="${item._type}" value="${takeInventoryDraft[item.id] !== undefined ? takeInventoryDraft[item.id].quantity : item.quantity}" style="width:80px; font-size:14px; padding:8px 10px;">
-      </div>
-    `).join('') : `<p class="caption">No items are being tracked yet. Add one below to get started.</p>`}
-    <button class="ghost-btn" id="inventory-add-item-btn" style="margin-top:16px;">+ Add Item to Count</button>
-    ${items.length ? `<button class="primary-btn" id="inventory-review-btn" style="margin-top:16px;">Review Count</button>` : ''}
-  `;
-
-  document.getElementById('inventory-count-back-btn').addEventListener('click', ()=>{
-    adminTab = 'inventory';
-    renderAdmin();
-  });
-  document.getElementById('inventory-add-item-btn').addEventListener('click', ()=>{
-    content.querySelectorAll('.inventory-count-input').forEach(input=>{
-      takeInventoryDraft[input.dataset.id] = { quantity: parseInt(input.value, 10) || 0, type: input.dataset.type };
+/* ---------- Safe commit: refresh, apply only these changes, save ---------- */
+// changes: [{ type, op:'patch'|'add'|'remove', id, fields, item, fallback }]
+async function commitInventoryChanges(changes){
+  const types = [...new Set(changes.map(c => c.type))];
+  await Promise.all(types.map(refreshInventoryList));
+  const missing = [];
+  let failure = null;
+  for(const type of types){
+    let list = [...loadInventoryList(type)];
+    changes.filter(c => c.type === type).forEach(c => {
+      if(c.op === 'add'){
+        list.push(c.item);
+      } else if(c.op === 'remove'){
+        list = list.filter(i => i.id !== c.id);
+      } else {
+        let target = list.find(i => i.id === c.id);
+        if(!target && c.fallback){
+          target = { ...c.fallback };
+          list.push(target);
+        }
+        if(!target){ missing.push(c.label || c.id); return; }
+        Object.entries(c.fields).forEach(([k, v]) => {
+          if(v === undefined) delete target[k]; else target[k] = v;
+        });
+      }
     });
-    takeInventoryStep = 'add';
-    renderTakeInventory();
-  });
-  const reviewBtn = document.getElementById('inventory-review-btn');
-  if(reviewBtn){
-    reviewBtn.addEventListener('click', ()=>{
-      content.querySelectorAll('.inventory-count-input').forEach(input=>{
-        takeInventoryDraft[input.dataset.id] = { quantity: parseInt(input.value, 10) || 0, type: input.dataset.type };
-      });
-      takeInventoryStep = 'review';
-      renderTakeInventory();
-    });
+    setInventoryCache(type, list);
+    if(isSyncConfigured()){
+      const res = await syncPostChecked(INVENTORY_TYPES[type].syncKey, list);
+      if(!res.ok && !failure) failure = res.error || "Couldn't reach the shared database.";
+    }
+  }
+  return { ok: !failure, error: failure, missing };
+}
+
+function reportCommitProblems(result){
+  if(result.missing && result.missing.length){
+    uiAlert(`${result.missing.length === 1 ? `"${result.missing[0]}" was` : `${result.missing.length} items were`} removed on another device, so ${result.missing.length === 1 ? 'it was' : 'they were'} skipped.`, { tone:'warn' });
+  }
+  if(!result.ok){
+    uiAlert(`Saved on this device, but the shared database didn't take it: ${result.error}`, { tone:'error', dialog:true });
   }
 }
 
-function renderTakeInventoryAddItem(){
-  const content = document.getElementById('admin-tab-content');
-  const untracked = getUntrackedInventoryItems();
-
-  content.innerHTML = `
-    <button class="ghost-btn" id="inventory-add-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Take Inventory</button>
-    <div class="block-label">Add Item to Count</div>
-    <p class="caption">Choose an existing item that isn't tracked yet. Give it a starting count and a reorder threshold.</p>
-    ${untracked.length ? untracked.map(item => `
-      <div class="admin-user-row">
-        <div class="admin-user-name">${escapeHtml(item.name)}</div>
-        <button class="ghost-btn inventory-start-tracking-btn" data-id="${item.id}" data-type="${item._type}" data-name="${escapeHtml(item.name)}">Add</button>
-      </div>
-    `).join('') : `<p class="caption">Every existing Product and Supply is already tracked.</p>`}
-  `;
-
-  document.getElementById('inventory-add-back-btn').addEventListener('click', ()=>{
-    takeInventoryStep = 'counting';
-    renderTakeInventory();
-  });
-  content.querySelectorAll('.inventory-start-tracking-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const qty = await uiPrompt(`Starting count for "${btn.dataset.name}"?`, '0', { inputMode:'numeric' });
-      if(qty === null) return;
-      const threshold = await uiPrompt(`Reorder threshold for "${btn.dataset.name}"? (Flag as low stock at or below this number)`, '1', { inputMode:'numeric' });
-      if(threshold === null) return;
-      const list = btn.dataset.type === 'product' ? loadProducts() : loadSupplies();
-      const item = list.find(i => i.id === btn.dataset.id);
-      if(item){
-        item.quantity = parseInt(qty, 10) || 0;
-        item.reorderThreshold = parseInt(threshold, 10) || 0;
-        if(btn.dataset.type === 'product') saveProducts(list); else saveSupplies(list);
-        takeInventoryDraft[item.id] = { quantity: item.quantity, type: btn.dataset.type };
-      }
-      takeInventoryStep = 'counting';
-      renderTakeInventory();
-    });
+/* ---------- Where an item is used ---------- */
+function protocolsUsingItem(type, item){
+  const nameLc = itemDisplayName(item).trim().toLowerCase();
+  return loadCustomProtocols().filter(p => {
+    if(type === 'products'){
+      return (p.prep || []).some(x =>
+        x.productId === item.id
+        || (x.productIds || []).includes(item.id)
+        || (!x.productId && !(x.productIds || []).length && nameLc && String(x.t || '').toLowerCase().includes(nameLc))
+      );
+    }
+    return getTableMakeupItems(p).some(({ t, item: link }) =>
+      (link && link.supplyId === item.id)
+      || (!(link && link.supplyId) && tableMakeupRowFromSaved(t, null, [item]).supplyId === item.id)
+    );
   });
 }
-
-function renderTakeInventoryReview(){
-  const content = document.getElementById('admin-tab-content');
-  const items = getTrackedInventoryItems();
-  const changes = items.map(item => {
-    const draft = takeInventoryDraft[item.id];
-    const newQty = draft ? draft.quantity : item.quantity;
-    return { item, oldQty: item.quantity, newQty, changed: newQty !== item.quantity };
+// Linked uses follow renames on their own; plain-text mentions (from older
+// protocols) need their wording updated.
+function splitItemUsage(type, item){
+  const nameLc = itemDisplayName(item).trim().toLowerCase();
+  const linked = [], textOnly = [];
+  loadCustomProtocols().forEach(p => {
+    let isLinked = false, isText = false;
+    if(type === 'products'){
+      (p.prep || []).forEach(x => {
+        if(x.productId === item.id || (x.productIds || []).includes(item.id)) isLinked = true;
+        else if(!x.productId && !(x.productIds || []).length && nameLc && String(x.t || '').toLowerCase().includes(nameLc)) isText = true;
+      });
+    } else {
+      getTableMakeupItems(p).forEach(({ t, item: link }) => {
+        if(link && link.supplyId === item.id) isLinked = true;
+        else if(!(link && link.supplyId) && tableMakeupRowFromSaved(t, null, [item]).supplyId === item.id) isText = true;
+      });
+    }
+    if(isText) textOnly.push(p); else if(isLinked) linked.push(p);
   });
-  const changedCount = changes.filter(c => c.changed).length;
-  const nowLow = changes.filter(c => c.newQty <= c.item.reorderThreshold && !(c.item.quantity <= c.item.reorderThreshold));
+  return { linked, textOnly };
+}
+
+function replaceIgnoringCase(text, find, replacement){
+  const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(new RegExp(escaped, 'gi'), () => replacement);
+}
+
+// Brings older plain-text protocol lines along with a rename.
+async function updatePlainTextProtocolLines(type, oldItem, newName, protocolIds){
+  await refreshCustomProtocolsFromServer();
+  const ids = new Set(protocolIds);
+  const oldLc = itemDisplayName(oldItem).trim().toLowerCase();
+  const list = loadCustomProtocols().map(p => {
+    if(!ids.has(p.id)) return p;
+    const copy = JSON.parse(JSON.stringify(p));
+    if(type === 'products'){
+      copy.prep = (copy.prep || []).map(x => {
+        if(x.productId || (x.productIds || []).length) return x;
+        if(!String(x.t || '').toLowerCase().includes(oldLc)) return x;
+        return { ...x, t: replaceIgnoringCase(x.t, itemDisplayName(oldItem).trim(), newName) };
+      });
+    } else {
+      // Link the matching layers; the saved name is the old one, so the
+      // therapist view shows the new name straight away.
+      const layers = getTableMakeupItems(copy);
+      let changed = false;
+      const items = layers.map(({ t, item: link }) => {
+        if(link && link.supplyId) return link;
+        const row = tableMakeupRowFromSaved(t, null, [oldItem]);
+        if(row.supplyId === oldItem.id){
+          changed = true;
+          return { supplyId: oldItem.id, qty: row.qty || '', name: itemDisplayName(oldItem) };
+        }
+        return link || {};
+      });
+      if(changed) copy.tableMakeupItems = items;
+    }
+    return copy;
+  });
+  saveCustomProtocols(list);
+}
+
+function usageSummary(protocols){
+  const names = protocols.map(p => `"${p.name}"`);
+  if(names.length <= 4) return names.join(', ');
+  return `${names.slice(0, 4).join(', ')} and ${names.length - 4} more`;
+}
+
+/* ============ Inventory home ============ */
+
+let inventoryView = 'home'; // 'home' | 'count' | 'reports'
+
+function renderAdminInventoryTab(){
+  if(inventoryView === 'count'){ renderTakeInventory(); return; }
+  if(inventoryView === 'reports'){ renderInventoryReports(); return; }
+  const content = document.getElementById('admin-tab-content');
+  setAdminScreenHeader('Inventory', 'Menu', ()=>{ adminTab = null; renderAdmin(); });
+
+  const products = loadProducts();
+  const supplies = loadSupplies();
+  const all = [
+    ...products.map(i => ({ type:'products', item:i })),
+    ...supplies.map(i => ({ type:'supplies', item:i }))
+  ];
+  const tracked = all.filter(e => isStockTracked(e.item));
+  const low = tracked.filter(e => isLowStock(e.item))
+    .sort((a, b) => itemDisplayName(a.item).localeCompare(itemDisplayName(b.item)));
+  const draft = activeCountDraft();
+  const draftCounted = draft ? Object.values(draft.counts).filter(v => v !== '').length : 0;
 
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-review-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Keep Counting</button>
-    <div class="block-label">Review Count</div>
-    <p class="caption">${changedCount} of ${items.length} item${items.length===1?'':'s'} changed. Everything below will be marked as counted today.</p>
-    ${nowLow.length ? `<p class="caption" style="color:var(--warn-ink);">${nowLow.length} item${nowLow.length===1?'':'s'} will newly need reordering</p>` : ''}
-    ${changes.map(c => `
-      <div class="admin-user-row">
-        <div class="admin-user-name">${escapeHtml(c.item.name)}</div>
-        <div style="font-size:13px; color:${c.changed ? 'var(--ink)' : 'var(--ink-soft)'};">
-          ${c.changed ? `${c.oldQty} → <strong>${c.newQty}</strong>` : `${c.newQty} (unchanged)`}
+    ${draft ? `
+      <div class="resume-card">
+        <div class="resume-main">
+          <span class="resume-icon">${ico('clipboard')}</span>
+          <div class="resume-text">
+            <b>Count in progress</b>
+            <small>${draftCounted} item${draftCounted === 1 ? '' : 's'} counted · started ${escapeHtml(new Date(draft.startedAt).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }))}</small>
+          </div>
+        </div>
+        <div class="resume-actions">
+          <button type="button" class="row-chip danger" id="inventory-discard-count-btn">${ico('x')}Discard</button>
+          <button type="button" class="row-chip primary" id="inventory-resume-count-btn">Resume${ico('chevronRight')}</button>
         </div>
       </div>
-    `).join('')}
-    <button class="primary-btn" id="inventory-confirm-btn" style="margin-top:20px;">Confirm & Save</button>
+    ` : `<button class="primary-btn" id="inventory-take-count-btn">Take Inventory</button>`}
+
+    <div class="block-label protocol-group-label" style="margin-top:26px;">Needs reordering${low.length ? `<span class="count warn">${low.length}</span>` : ''}</div>
+    ${low.length ? `
+      <div class="reorder-list">
+        ${low.map(e => `
+          <div class="reorder-line">
+            <div><b>${escapeHtml(e.item.name)}</b><small>${escapeHtml([e.item.brand, INVENTORY_TYPES[e.type].one].filter(Boolean).join(' · '))}</small></div>
+            <div class="qty">${escapeHtml(unitText(e.item, e.item.quantity))} left<small>reorder at ${escapeHtml(String(e.item.reorderThreshold))}</small></div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="chip-row">
+        <button type="button" class="row-chip" id="inventory-share-reorder-btn">${ico('share')}Share list</button>
+        <button type="button" class="row-chip" id="inventory-print-reorder-btn">${ico('printer')}Print list</button>
+      </div>
+    ` : tracked.length
+      ? `<p class="all-good">${ico('checkCircle')}<span>Everything is above its reorder level.</span></p>`
+      : `<p class="caption">No stock is tracked yet. Use Take Inventory → Track an item, or turn on stock tracking when editing a product or supply.</p>`}
+
+    <div class="grid" style="margin-top:8px;">
+      <button class="card-btn" id="inventory-products-btn">
+        <span><span class="name">Products</span><span class="meta">${products.length} item${products.length === 1 ? '' : 's'} · ingredients and stock</span></span>
+        ${iconArrow()}
+      </button>
+      <button class="card-btn" id="inventory-supplies-btn">
+        <span><span class="name">Supplies</span><span class="meta">${supplies.length} item${supplies.length === 1 ? '' : 's'} · linens, towels, and more</span></span>
+        ${iconArrow()}
+      </button>
+      <button class="card-btn" id="inventory-reports-btn">
+        <span><span class="name">Reports</span><span class="meta">Print or share the full inventory</span></span>
+        ${iconArrow()}
+      </button>
+    </div>
   `;
 
-  document.getElementById('inventory-review-back-btn').addEventListener('click', ()=>{
-    takeInventoryStep = 'counting';
-    renderTakeInventory();
+  const takeBtn = document.getElementById('inventory-take-count-btn');
+  if(takeBtn) takeBtn.addEventListener('click', openTakeInventory);
+  const resumeBtn = document.getElementById('inventory-resume-count-btn');
+  if(resumeBtn) resumeBtn.addEventListener('click', openTakeInventory);
+  const discardBtn = document.getElementById('inventory-discard-count-btn');
+  if(discardBtn) discardBtn.addEventListener('click', discardCountDraft);
+  const shareBtn = document.getElementById('inventory-share-reorder-btn');
+  if(shareBtn) shareBtn.addEventListener('click', shareReorderList);
+  const printBtn = document.getElementById('inventory-print-reorder-btn');
+  if(printBtn) printBtn.addEventListener('click', () => printInventoryReport({ lowOnly:true }));
+  document.getElementById('inventory-products-btn').addEventListener('click', ()=>{ adminTab = 'products'; renderAdmin(); });
+  document.getElementById('inventory-supplies-btn').addEventListener('click', ()=>{ adminTab = 'supplies'; renderAdmin(); });
+  document.getElementById('inventory-reports-btn').addEventListener('click', ()=>{ inventoryView = 'reports'; renderAdminInventoryTab(); scrollAdminToTop(); });
+}
+
+function reorderListText(){
+  const low = [
+    ...loadProducts().map(i => ({ type:'products', item:i })),
+    ...loadSupplies().map(i => ({ type:'supplies', item:i }))
+  ].filter(e => isLowStock(e.item)).sort((a, b) => itemDisplayName(a.item).localeCompare(itemDisplayName(b.item)));
+  const lines = low.map(e => {
+    const brand = e.item.brand ? ` (${e.item.brand})` : '';
+    return `• ${e.item.name}${brand} — ${unitText(e.item, e.item.quantity)} left, reorder at ${e.item.reorderThreshold}`;
   });
-  document.getElementById('inventory-confirm-btn').addEventListener('click', ()=>{
-    const now = new Date().toISOString();
-    const products = loadProducts();
-    const supplies = loadSupplies();
-    let productsChanged = false, suppliesChanged = false;
-    changes.forEach(c => {
-      const list = c.item._type === 'product' ? products : supplies;
-      const target = list.find(i => i.id === c.item.id);
-      if(target){
-        target.quantity = c.newQty;
-        target.lastCountedAt = now;
-        if(c.item._type === 'product') productsChanged = true; else suppliesChanged = true;
-      }
+  return { count: low.length, text: `Reorder list — ${new Date().toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' })}\n${lines.join('\n')}` };
+}
+
+async function shareReorderList(){
+  const { count, text } = reorderListText();
+  if(!count){ uiAlert('Nothing needs reordering right now.'); return; }
+  if(navigator.share){
+    try{ await navigator.share({ title:'Reorder list', text }); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    uiAlert('Reorder list copied — paste it into a message or email.', { tone:'success' });
+  }catch(e){
+    uiDialog({ kind:'notice', title:'Reorder list', message:text, tone:'info', confirmText:'Done' });
+  }
+}
+
+/* ============ Take Inventory ============ */
+
+const COUNT_DRAFT_KEY = 'ledgerInventoryCountDraft_v1';
+let countDraft = null;          // { user, startedAt, counts:{key:'n'}, track:{key:{threshold,unit}} }
+let countStep = 'counting';     // 'counting' | 'add' | 'review'
+let countSearch = '';
+let trackSearch = '';
+let trackOpenKey = null;
+
+try{
+  const saved = JSON.parse(localStorage.getItem(COUNT_DRAFT_KEY));
+  if(saved && saved.counts && saved.track) countDraft = saved;
+}catch(e){}
+
+function persistCountDraft(){
+  try{
+    if(countDraft) localStorage.setItem(COUNT_DRAFT_KEY, JSON.stringify(countDraft));
+    else localStorage.removeItem(COUNT_DRAFT_KEY);
+  }catch(e){}
+}
+// A saved count belongs to whoever started it on this device.
+function activeCountDraft(){
+  if(!countDraft) return null;
+  if(countDraft.user && countDraft.user !== getAdminActingUsername()) return null;
+  return countDraft;
+}
+function entryKey(type, id){ return `${type}:${id}`; }
+
+function inventoryEntries(){
+  return [
+    ...loadProducts().map(i => ({ type:'products', key:entryKey('products', i.id), item:i })),
+    ...loadSupplies().map(i => ({ type:'supplies', key:entryKey('supplies', i.id), item:i }))
+  ];
+}
+function countableEntries(){
+  const d = activeCountDraft();
+  return inventoryEntries().filter(e => isStockTracked(e.item) || (d && d.track[e.key]));
+}
+function sortEntries(list){
+  return list.sort((a, b) => itemDisplayName(a.item).localeCompare(itemDisplayName(b.item), undefined, { sensitivity:'base' }));
+}
+
+function openTakeInventory(){
+  if(!activeCountDraft()){
+    countDraft = { user: getAdminActingUsername(), startedAt: new Date().toISOString(), counts: {}, track: {} };
+    persistCountDraft();
+  }
+  countStep = 'counting';
+  countSearch = '';
+  inventoryView = 'count';
+  renderTakeInventory();
+  scrollAdminToTop();
+}
+
+function leaveCountToInventory(){
+  // The draft stays saved on this device; the Inventory screen offers Resume.
+  inventoryView = 'home';
+  countStep = 'counting';
+  renderAdminInventoryTab();
+  scrollAdminToTop();
+}
+
+async function discardCountDraft(){
+  if(!(await uiConfirm("Discard this count? Counts entered on this phone will be cleared. Nothing has been saved yet."))) return;
+  countDraft = null;
+  persistCountDraft();
+  inventoryView = 'home';
+  countStep = 'counting';
+  renderAdminInventoryTab();
+}
+
+function renderTakeInventory(){
+  const content = document.getElementById('admin-tab-content');
+  if(!activeCountDraft()){ openTakeInventory(); return; }
+  if(countStep === 'add'){ renderTrackItemScreen(content); return; }
+  if(countStep === 'review'){ renderCountReview(content); return; }
+
+  setAdminScreenHeader('Take Inventory', 'Inventory', leaveCountToInventory);
+  const d = countDraft;
+  const entries = sortEntries(countableEntries());
+  const groups = ['products', 'supplies'].map(type => ({ type, list: entries.filter(e => e.type === type) })).filter(g => g.list.length);
+
+  const rowHtml = (e) => {
+    const it = e.item;
+    const pending = d.track[e.key];
+    const prev = pending ? null : it.quantity;
+    const threshold = pending ? pending.threshold : it.reorderThreshold;
+    const unit = pending ? pending.unit : it.unit;
+    const value = d.counts[e.key] !== undefined ? d.counts[e.key] : '';
+    const meta = pending
+      ? `New · reorder at ${threshold}${unit ? ` · ${unit}` : ''}`
+      : [
+          `Was <b>${escapeHtml(unitText(it, prev))}</b>`,
+          `reorder at ${escapeHtml(String(threshold))}`,
+          it.lastCountedAt ? `counted ${escapeHtml(shortDate(it.lastCountedAt))}` : 'never counted'
+        ].join(' · ');
+    return `
+      <div class="count-row ${value !== '' ? 'counted' : ''}" data-key="${escapeHtml(e.key)}" data-prev="${prev == null ? '' : prev}" data-search="${escapeHtml([it.name, it.brand].filter(Boolean).join(' ').toLowerCase())}">
+        <div class="count-row-top">
+          <div class="count-name"><b>${escapeHtml(it.name)}</b>${it.brand ? `<small>${escapeHtml(it.brand)}</small>` : ''}</div>
+          ${pending ? `<span class="new-badge">New</span>` : `<span class="count-check" aria-hidden="true">${ico('checkCircle')}</span>`}
+        </div>
+        <div class="count-meta">${meta}</div>
+        <div class="count-controls">
+          ${prev != null ? `<button type="button" class="row-chip count-same-btn">Same</button>` : ''}
+          <button type="button" class="row-chip count-clear-btn ${value === '' ? 'is-hidden' : ''}">Skip</button>
+          <span class="row-spacer"></span>
+          <button type="button" class="step-btn" data-step="-1" aria-label="One less">${ico('minus')}</button>
+          <input class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="–" value="${escapeHtml(value)}" aria-label="Count for ${escapeHtml(it.name)}">
+          <button type="button" class="step-btn" data-step="1" aria-label="One more">${ico('plus')}</button>
+        </div>
+      </div>
+    `;
+  };
+
+  content.innerHTML = `
+    <p class="caption" style="margin-top:0;">Enter what's on the shelf. Only items you count are updated — leave one blank to skip it.</p>
+    <div class="count-toolbar">
+      <div class="count-progress" id="count-progress"></div>
+      <button type="button" class="row-chip" id="count-track-item-btn">${ico('plus')}Track an item</button>
+    </div>
+    ${entries.length ? `
+      <label class="search-field">
+        ${ico('search')}
+        <input type="search" id="count-search" placeholder="Search ${entries.length} item${entries.length === 1 ? '' : 's'}" value="${escapeHtml(countSearch)}" autocomplete="off" aria-label="Search items">
+      </label>
+    ` : ''}
+    <div id="count-list">
+      ${groups.map(g => `
+        <div class="count-group">
+          <div class="block-label protocol-group-label">${INVENTORY_TYPES[g.type].many}<span class="count">${g.list.length}</span></div>
+          ${g.list.map(rowHtml).join('')}
+        </div>
+      `).join('')}
+      ${entries.length ? `<p class="caption is-hidden" id="count-search-empty">No items match that search.</p>`
+        : `<p class="caption">No items are tracked yet. Tap Track an item to add one to this count.</p>`}
+    </div>
+    <div class="editor-actions">
+      <button type="button" class="ui-btn ui-btn-secondary" id="count-discard-btn">Discard</button>
+      <button type="button" class="ui-btn ui-btn-primary" id="count-review-btn">Review</button>
+    </div>
+  `;
+
+  const updateProgress = () => {
+    const total = entries.length;
+    const done = entries.filter(e => (d.counts[e.key] || '') !== '').length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    document.getElementById('count-progress').innerHTML = total
+      ? `<span>${done} of ${total} counted</span><span class="bar"><span style="width:${pct}%"></span></span>`
+      : '';
+    document.getElementById('count-review-btn').textContent = done ? `Review ${done}` : 'Review';
+  };
+  const setValue = (row, value) => {
+    const key = row.dataset.key;
+    if(value === '') delete d.counts[key]; else d.counts[key] = value;
+    persistCountDraft();
+    const input = row.querySelector('.count-input');
+    if(input.value !== value) input.value = value;
+    row.classList.toggle('counted', value !== '');
+    row.querySelector('.count-clear-btn').classList.toggle('is-hidden', value === '');
+    updateProgress();
+  };
+
+  content.querySelectorAll('.count-row').forEach(row => {
+    const input = row.querySelector('.count-input');
+    input.addEventListener('input', () => setValue(row, digitsOnly(input)));
+    input.addEventListener('focus', () => input.select());
+    row.querySelectorAll('.step-btn').forEach(btn => btn.addEventListener('click', () => {
+      const current = input.value !== '' ? parseInt(input.value, 10) : (row.dataset.prev !== '' ? parseInt(row.dataset.prev, 10) : 0);
+      setValue(row, String(Math.max(0, current + parseInt(btn.dataset.step, 10))));
+    }));
+    const same = row.querySelector('.count-same-btn');
+    if(same) same.addEventListener('click', () => setValue(row, row.dataset.prev));
+    row.querySelector('.count-clear-btn').addEventListener('click', () => setValue(row, ''));
+  });
+
+  const search = document.getElementById('count-search');
+  const applySearch = () => {
+    const q = countSearch.trim().toLowerCase();
+    let any = false;
+    content.querySelectorAll('.count-group').forEach(g => {
+      let groupAny = false;
+      g.querySelectorAll('.count-row').forEach(row => {
+        const show = !q || row.dataset.search.includes(q);
+        row.classList.toggle('is-hidden', !show);
+        if(show) groupAny = true;
+      });
+      g.classList.toggle('is-hidden', !groupAny);
+      if(groupAny) any = true;
     });
-    if(productsChanged) saveProducts(products);
-    if(suppliesChanged) saveSupplies(supplies);
-    logActivity(getAdminActingUsername(), `Completed an inventory count (${changedCount} item${changedCount===1?'':'s'} changed)`);
-    takeInventoryDraft = {};
-    takeInventoryStep = 'counting';
-    adminTab = 'inventory';
-    renderAdmin();
-    uiAlert('Inventory count saved.');
+    const empty = document.getElementById('count-search-empty');
+    if(empty) empty.classList.toggle('is-hidden', any);
+  };
+  if(search){
+    search.addEventListener('input', () => { countSearch = search.value; applySearch(); });
+    applySearch();
+  }
+
+  document.getElementById('count-track-item-btn').addEventListener('click', () => {
+    countStep = 'add';
+    trackSearch = '';
+    trackOpenKey = null;
+    renderTakeInventory();
+    scrollAdminToTop();
+  });
+  document.getElementById('count-discard-btn').addEventListener('click', discardCountDraft);
+  document.getElementById('count-review-btn').addEventListener('click', () => {
+    const done = entries.filter(e => (d.counts[e.key] || '') !== '').length;
+    if(!done){ uiAlert('Enter a count for at least one item first.'); return; }
+    countStep = 'review';
+    renderTakeInventory();
+    scrollAdminToTop();
+  });
+  updateProgress();
+}
+
+function renderTrackItemScreen(content){
+  setAdminScreenHeader('Track an Item', 'Take Inventory', () => { countStep = 'counting'; renderTakeInventory(); scrollAdminToTop(); });
+  const d = countDraft;
+  const untracked = sortEntries(inventoryEntries().filter(e => !isStockTracked(e.item) && !d.track[e.key]));
+  const groups = ['products', 'supplies'].map(type => ({ type, list: untracked.filter(e => e.type === type) })).filter(g => g.list.length);
+
+  content.innerHTML = `
+    <p class="caption" style="margin-top:0;">Pick something that isn't tracked yet. It joins this count and is saved when you confirm.</p>
+    ${untracked.length ? `
+      <label class="search-field">
+        ${ico('search')}
+        <input type="search" id="track-search" placeholder="Search ${untracked.length} untracked item${untracked.length === 1 ? '' : 's'}" value="${escapeHtml(trackSearch)}" autocomplete="off" aria-label="Search untracked items">
+      </label>
+    ` : `<p class="caption">Every product and supply is already tracked.</p>`}
+    <datalist id="unit-suggestions">${UNIT_SUGGESTIONS.map(u => `<option value="${u}">`).join('')}</datalist>
+    ${groups.map(g => `
+      <div class="count-group">
+        <div class="block-label protocol-group-label">${INVENTORY_TYPES[g.type].many}<span class="count">${g.list.length}</span></div>
+        ${g.list.map(e => `
+          <div class="count-row track-row" data-key="${escapeHtml(e.key)}" data-search="${escapeHtml([e.item.name, e.item.brand].filter(Boolean).join(' ').toLowerCase())}">
+            <button type="button" class="track-toggle" aria-expanded="${trackOpenKey === e.key}">
+              <span class="count-name"><b>${escapeHtml(e.item.name)}</b>${e.item.brand ? `<small>${escapeHtml(e.item.brand)}</small>` : ''}</span>
+              <span class="row-chip">${ico('plus')}Track</span>
+            </button>
+            <div class="track-form ${trackOpenKey === e.key ? '' : 'is-hidden'}">
+              <div class="field-pair">
+                <div class="field"><label>On hand now</label><input type="text" inputmode="numeric" pattern="[0-9]*" class="track-qty" placeholder="0"></div>
+                <div class="field"><label>Reorder at</label><input type="text" inputmode="numeric" pattern="[0-9]*" class="track-threshold" placeholder="e.g. 2"></div>
+              </div>
+              <div class="field"><label>Unit <span class="opt">optional</span></label><input type="text" class="track-unit" list="unit-suggestions" placeholder="bottles, cases, each…" value="${escapeHtml(e.item.unit || '')}"></div>
+              <button type="button" class="ui-btn ui-btn-primary track-add-btn" style="width:100%;">Add to count</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}
+    ${untracked.length ? `<p class="caption is-hidden" id="track-search-empty">No untracked items match that search.</p>` : ''}
+  `;
+
+  const search = document.getElementById('track-search');
+  if(search){
+    const apply = () => {
+      const q = trackSearch.trim().toLowerCase();
+      let any = false;
+      content.querySelectorAll('.count-group').forEach(g => {
+        let groupAny = false;
+        g.querySelectorAll('.track-row').forEach(row => {
+          const show = !q || row.dataset.search.includes(q);
+          row.classList.toggle('is-hidden', !show);
+          if(show) groupAny = true;
+        });
+        g.classList.toggle('is-hidden', !groupAny);
+        if(groupAny) any = true;
+      });
+      document.getElementById('track-search-empty').classList.toggle('is-hidden', any);
+    };
+    search.addEventListener('input', () => { trackSearch = search.value; apply(); });
+    apply();
+  }
+
+  content.querySelectorAll('.track-row').forEach(row => {
+    const form = row.querySelector('.track-form');
+    const toggle = row.querySelector('.track-toggle');
+    toggle.addEventListener('click', () => {
+      const open = form.classList.toggle('is-hidden') === false;
+      toggle.setAttribute('aria-expanded', String(open));
+      trackOpenKey = open ? row.dataset.key : null;
+      if(open) row.querySelector('.track-qty').focus();
+    });
+    row.querySelectorAll('.track-qty, .track-threshold').forEach(inp => inp.addEventListener('input', () => digitsOnly(inp)));
+    row.querySelector('.track-add-btn').addEventListener('click', () => {
+      const qty = wholeNumberOrNull(row.querySelector('.track-qty').value);
+      const threshold = wholeNumberOrNull(row.querySelector('.track-threshold').value);
+      if(qty === null){ uiAlert('Enter how many are on hand now.'); row.querySelector('.track-qty').focus(); return; }
+      if(threshold === null){ uiAlert('Enter the count to reorder at.'); row.querySelector('.track-threshold').focus(); return; }
+      const unit = row.querySelector('.track-unit').value.trim();
+      countDraft.track[row.dataset.key] = { threshold, unit };
+      countDraft.counts[row.dataset.key] = String(qty);
+      persistCountDraft();
+      const entry = inventoryEntries().find(e => e.key === row.dataset.key);
+      countStep = 'counting';
+      trackOpenKey = null;
+      renderTakeInventory();
+      uiAlert(`Added "${entry ? entry.item.name : 'item'}" to this count.`, { tone:'success' });
+    });
   });
 }
 
-/* ---------- Inventory Reports ---------- */
+function buildCountResults(){
+  const d = countDraft;
+  const entries = sortEntries(countableEntries());
+  const counted = [], skipped = [];
+  entries.forEach(e => {
+    const raw = d.counts[e.key];
+    if(raw === undefined || raw === ''){ skipped.push(e); return; }
+    const pending = d.track[e.key] || null;
+    const newQty = parseInt(raw, 10);
+    const oldQty = pending ? null : e.item.quantity;
+    const threshold = pending ? pending.threshold : e.item.reorderThreshold;
+    const unitItem = pending ? { unit: pending.unit } : e.item;
+    counted.push({
+      ...e, pending, newQty, oldQty, threshold, unitItem,
+      changed: pending ? true : newQty !== oldQty,
+      lowAfter: newQty <= threshold,
+      newlyLow: newQty <= threshold && !(oldQty !== null && oldQty <= threshold)
+    });
+  });
+  return { counted, skipped };
+}
 
-function openInventoryReports(){
-  const content = document.getElementById('admin-tab-content');
-  const items = getTrackedInventoryItems();
+function renderCountReview(content){
+  setAdminScreenHeader('Review Count', 'Keep counting', () => { countStep = 'counting'; renderTakeInventory(); scrollAdminToTop(); });
+  const { counted, skipped } = buildCountResults();
+  const changed = counted.filter(c => c.changed && !c.pending);
+  const low = counted.filter(c => c.lowAfter);
+
+  const line = (c) => `
+    <div class="review-line ${c.lowAfter ? 'low' : ''}">
+      <span>${escapeHtml(c.item.name)}${c.pending ? ` <span class="new-badge">New</span>` : ''}</span>
+      <span class="delta">${
+        c.pending ? `<b>${escapeHtml(unitText(c.unitItem, c.newQty))}</b>`
+        : c.changed ? `${escapeHtml(String(c.oldQty))} → <b>${escapeHtml(unitText(c.unitItem, c.newQty))}</b>`
+        : `<b>${escapeHtml(unitText(c.unitItem, c.newQty))}</b> · same`
+      }</span>
+    </div>
+  `;
+
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-reports-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Inventory</button>
-    <div class="block-label">Reports</div>
-    <p class="caption">${items.length} tracked item${items.length===1?'':'s'}.</p>
-    <button class="primary-btn" id="inventory-print-btn" style="margin-bottom:12px;">Print Report</button>
+    <div class="summary-pills">
+      <div class="summary-pill"><b>${counted.length}</b><span>Counted</span></div>
+      <div class="summary-pill"><b>${changed.length}</b><span>Changed</span></div>
+      <div class="summary-pill"><b>${skipped.length}</b><span>Skipped</span></div>
+    </div>
+
+    ${low.length ? `
+      <div class="block-label protocol-group-label">Will need reordering<span class="count warn">${low.length}</span></div>
+      <div class="reorder-list">
+        ${low.map(c => `
+          <div class="reorder-line">
+            <div><b>${escapeHtml(c.item.name)}</b><small>${c.newlyLow ? 'Newly low' : 'Still low'}</small></div>
+            <div class="qty">${escapeHtml(unitText(c.unitItem, c.newQty))}<small>reorder at ${escapeHtml(String(c.threshold))}</small></div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `<p class="all-good">${ico('checkCircle')}<span>Nothing you counted is at its reorder level.</span></p>`}
+
+    <div class="block-label" style="margin-top:22px;">Counted</div>
+    <div class="reorder-list">${counted.map(line).join('')}</div>
+
+    ${skipped.length ? `
+      <details class="skipped-list">
+        <summary>${skipped.length} not counted</summary>
+        <p class="caption" style="margin:6px 0 8px;">These keep their current count and last-counted date.</p>
+        <div class="reorder-list">
+          ${skipped.map(e => `<div class="review-line"><span>${escapeHtml(e.item.name)}</span><span class="delta">${escapeHtml(unitText(e.item, e.item.quantity))}</span></div>`).join('')}
+        </div>
+      </details>
+    ` : ''}
+
+    <div class="editor-actions">
+      <button type="button" class="ui-btn ui-btn-secondary" id="count-back-btn">Back</button>
+      <button type="button" class="ui-btn ui-btn-primary" id="count-confirm-btn">Confirm &amp; Save</button>
+    </div>
+  `;
+
+  document.getElementById('count-back-btn').addEventListener('click', () => { countStep = 'counting'; renderTakeInventory(); scrollAdminToTop(); });
+  const confirmBtn = document.getElementById('count-confirm-btn');
+  confirmBtn.addEventListener('click', async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving…';
+    const now = new Date().toISOString();
+    const changes = counted.map(c => {
+      const fields = { quantity: c.newQty, lastCountedAt: now };
+      if(c.pending){
+        fields.reorderThreshold = c.pending.threshold;
+        if(c.pending.unit) fields.unit = c.pending.unit;
+      }
+      return { type: c.type, op:'patch', id: c.item.id, fields, label: c.item.name };
+    });
+    const result = await commitInventoryChanges(changes);
+
+    const details = changed.map(c => `${c.item.name} ${c.oldQty}→${c.newQty}`);
+    const started = counted.filter(c => c.pending).map(c => `${c.item.name} (${c.newQty})`);
+    let action = `Completed an inventory count — ${counted.length} counted, ${changed.length} changed`;
+    if(details.length) action += `: ${details.slice(0, 10).join(', ')}${details.length > 10 ? `, +${details.length - 10} more` : ''}`;
+    if(started.length) action += `; started tracking ${started.slice(0, 5).join(', ')}${started.length > 5 ? `, +${started.length - 5} more` : ''}`;
+    logActivity(getAdminActingUsername(), action);
+
+    countDraft = null;
+    persistCountDraft();
+    countStep = 'counting';
+    inventoryView = 'home';
+    renderAdminInventoryTab();
+    scrollAdminToTop();
+    const lowNow = inventoryEntries().filter(e => isLowStock(e.item)).length;
+    uiAlert(`Count saved.${lowNow ? ` ${lowNow} item${lowNow === 1 ? ' needs' : 's need'} reordering.` : ''}`, { tone:'success' });
+    reportCommitProblems(result);
+  });
+}
+
+/* ============ Reports ============ */
+
+function renderInventoryReports(){
+  const content = document.getElementById('admin-tab-content');
+  setAdminScreenHeader('Reports', 'Inventory', () => { inventoryView = 'home'; renderAdminInventoryTab(); scrollAdminToTop(); });
+  const tracked = inventoryEntries().filter(e => isStockTracked(e.item));
+  const low = tracked.filter(e => isLowStock(e.item));
+  const untracked = inventoryEntries().length - tracked.length;
+  content.innerHTML = `
+    <div class="summary-pills">
+      <div class="summary-pill"><b>${tracked.length}</b><span>Tracked</span></div>
+      <div class="summary-pill"><b>${low.length}</b><span>To reorder</span></div>
+      <div class="summary-pill"><b>${untracked}</b><span>Not tracked</span></div>
+    </div>
+    <p class="caption">Reports include tracked items only.</p>
+    <button class="primary-btn" id="inventory-print-btn">Print Full Report</button>
+    <button class="ghost-btn" id="inventory-print-low-btn">Print Reorder List</button>
     <button class="ghost-btn" id="inventory-csv-btn">Share as CSV</button>
   `;
-  document.getElementById('inventory-reports-back-btn').addEventListener('click', ()=>{
-    adminTab = 'inventory';
-    renderAdmin();
-  });
-  document.getElementById('inventory-print-btn').addEventListener('click', printInventoryReport);
+  document.getElementById('inventory-print-btn').addEventListener('click', () => printInventoryReport({}));
+  document.getElementById('inventory-print-low-btn').addEventListener('click', () => printInventoryReport({ lowOnly:true }));
   document.getElementById('inventory-csv-btn').addEventListener('click', shareInventoryCsv);
 }
 
-function printInventoryReport(){
-  const items = [...getTrackedInventoryItems()].sort((a,b) => {
-    const aLow = isLowStock(a), bLow = isLowStock(b);
-    if(aLow !== bLow) return aLow ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
-  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const rows = items.map(i => `
-    <tr style="${isLowStock(i) ? 'color:var(--warn-ink); font-weight:600;' : ''}">
+function reportRows(lowOnly){
+  return inventoryEntries()
+    .filter(e => isStockTracked(e.item) && (!lowOnly || isLowStock(e.item)))
+    .sort((a, b) => {
+      const al = isLowStock(a.item), bl = isLowStock(b.item);
+      if(al !== bl) return al ? -1 : 1;
+      return itemDisplayName(a.item).localeCompare(itemDisplayName(b.item));
+    });
+}
+
+function printInventoryReport(opts){
+  opts = opts || {};
+  const rows = reportRows(!!opts.lowOnly);
+  if(opts.lowOnly && !rows.length){ uiAlert('Nothing needs reordering right now.'); return; }
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const title = opts.lowOnly ? 'Reorder List' : 'Inventory Report';
+  // The print window has none of the app's CSS, so colors here must be literal.
+  const body = rows.map(({ type, item: i }) => `
+    <tr class="${isLowStock(i) ? 'low' : ''}">
       <td>${esc(i.name)}</td>
-      <td>${i._type === 'product' ? 'Product' : 'Supply'}</td>
-      <td>${i.quantity}</td>
-      <td>${i.reorderThreshold}</td>
-      <td>${i.lastCountedAt ? new Date(i.lastCountedAt).toLocaleDateString() : 'Never'}</td>
+      <td>${esc(i.brand || '')}</td>
+      <td>${INVENTORY_TYPES[type].one}</td>
+      <td class="num">${esc(i.quantity)}</td>
+      <td>${esc(i.unit || '')}</td>
+      <td class="num">${esc(i.reorderThreshold)}</td>
+      <td>${i.lastCountedAt ? esc(new Date(i.lastCountedAt).toLocaleDateString()) : 'Never'}</td>
       <td>${isLowStock(i) ? 'Reorder' : ''}</td>
     </tr>
   `).join('');
   const printWindow = window.open('', '_blank');
-  if(!printWindow){ uiAlert('Please allow pop-ups to generate the report.'); return; }
+  if(!printWindow){ uiAlert('Please allow pop-ups to print the report.'); return; }
   printWindow.document.write(`
-    <html><head><title>Inventory Report — ${new Date().toLocaleDateString()}</title>
+    <html><head><title>${title} — ${new Date().toLocaleDateString()}</title>
     <style>
       body{ font-family: Georgia, serif; padding: 30px; color:#2B2A24; }
       h1{ font-size: 18px; margin-bottom: 4px; }
@@ -6391,13 +7129,15 @@ function printInventoryReport(){
       table{ width:100%; border-collapse: collapse; font-size: 13px; }
       th{ text-align:left; border-bottom:2px solid #2B2A24; padding:6px 8px; font-size:11px; text-transform:uppercase; }
       td{ padding:6px 8px; border-bottom:1px solid #ddd; }
+      td.num{ text-align:right; }
+      tr.low td{ color:#8C4A2A; font-weight:600; }
     </style></head>
     <body>
-      <h1>Inventory Report</h1>
-      <div class="meta">${new Date().toLocaleString()}</div>
+      <h1>${title}</h1>
+      <div class="meta">${esc(new Date().toLocaleString())} · ${rows.length} item${rows.length === 1 ? '' : 's'}</div>
       <table>
-        <tr><th>Item</th><th>Type</th><th>Count</th><th>Reorder At</th><th>Last Counted</th><th></th></tr>
-        ${rows}
+        <tr><th>Item</th><th>Brand</th><th>Type</th><th>Count</th><th>Unit</th><th>Reorder At</th><th>Last Counted</th><th></th></tr>
+        ${body}
       </table>
     </body></html>
   `);
@@ -6407,15 +7147,14 @@ function printInventoryReport(){
 }
 
 async function shareInventoryCsv(){
-  const items = getTrackedInventoryItems();
-  const header = 'Item,Type,Count,Reorder At,Last Counted,Status\n';
-  const rows = items.map(i => {
-    const status = isLowStock(i) ? 'Reorder' : 'OK';
-    const lastCounted = i.lastCountedAt ? new Date(i.lastCountedAt).toLocaleDateString() : 'Never';
-    const type = i._type === 'product' ? 'Product' : 'Supply';
-    const name = `"${String(i.name).replace(/"/g, '""')}"`;
-    return `${name},${type},${i.quantity},${i.reorderThreshold},${lastCounted},${status}`;
-  }).join('\n');
+  const cell = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const header = ['Item','Brand','Type','Count','Unit','Reorder At','Last Counted','Status'].join(',') + '\n';
+  const rows = reportRows(false).map(({ type, item: i }) => [
+    cell(i.name), cell(i.brand || ''), cell(INVENTORY_TYPES[type].one),
+    i.quantity, cell(i.unit || ''), i.reorderThreshold,
+    i.lastCountedAt ? String(i.lastCountedAt).slice(0, 10) : 'Never',
+    isLowStock(i) ? 'Reorder' : 'OK'
+  ].join(',')).join('\n');
   const csvText = header + rows;
   const filename = `inventory-${new Date().toISOString().slice(0,10)}.csv`;
   const file = new File([csvText], filename, { type: 'text/csv' });
@@ -6425,11 +7164,10 @@ async function shareInventoryCsv(){
       await navigator.share({ files: [file], title: 'Inventory Report' });
       return;
     }catch(e){
-      if(e && e.name === 'AbortError') return; // user cancelled the share sheet, not an error
+      if(e && e.name === 'AbortError') return; // cancelled the share sheet
     }
   }
-  // Fallback for browsers without file-sharing support — open the CSV
-  // as plain text in a new tab so it can be copied or saved manually.
+  // Fallback for browsers without file sharing — open the CSV in a new tab.
   const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
   const fallbackWindow = window.open(dataUri, '_blank');
   if(!fallbackWindow){
@@ -6437,210 +7175,401 @@ async function shareInventoryCsv(){
   }
 }
 
-function renderAdminInventoryTab(){
+/* ============ Products & Supplies ============ */
+
+const itemEditor = { type:null, open:false, id:null, draft:null, baseline:null, stockStart:null };
+const itemListSearch = { products:'', supplies:'' };
+let expandedItemKey = null;
+
+function renderAdminProductsTab(){ renderInventoryItemsTab('products'); }
+function renderAdminSuppliesTab(){ renderInventoryItemsTab('supplies'); }
+
+function renderInventoryItemsTab(type){
   const content = document.getElementById('admin-tab-content');
-  const trackedCount = [...loadProducts(), ...loadSupplies()].filter(isLowStock).length;
-
-  content.innerHTML = `
-    <div class="block-label">Inventory</div>
-    ${trackedCount ? `<p class="caption" style="color:var(--warn-ink);">${trackedCount} item${trackedCount===1?'':'s'} need reordering</p>` : ''}
-    <button class="primary-btn" id="inventory-take-count-btn" style="margin-bottom:24px;">Take Inventory</button>
-    <div class="grid">
-      <button class="card-btn" id="inventory-products-btn">
-        <span><span class="name">Products</span><span class="meta">Manage ingredients</span></span>
-        ${iconArrow()}
-      </button>
-      <button class="card-btn" id="inventory-supplies-btn">
-        <span><span class="name">Supplies</span><span class="meta">Linens, towels, and more</span></span>
-        ${iconArrow()}
-      </button>
-      <button class="card-btn" id="inventory-reports-btn">
-        <span><span class="name">Reports</span><span class="meta">Printable and CSV inventory reports</span></span>
-        ${iconArrow()}
-      </button>
-    </div>
-  `;
-
-  document.getElementById('inventory-take-count-btn').addEventListener('click', openTakeInventory);
-  document.getElementById('inventory-products-btn').addEventListener('click', ()=>{ adminTab = 'products'; renderAdmin(); });
-  document.getElementById('inventory-supplies-btn').addEventListener('click', ()=>{ adminTab = 'supplies'; renderAdmin(); });
-  document.getElementById('inventory-reports-btn').addEventListener('click', openInventoryReports);
+  if(!content) return;
+  captureItemDraft();
+  if(itemEditor.open && itemEditor.type === type) renderItemEditor(content, type);
+  else renderItemList(content, type);
 }
 
-function renderAdminProductsTab(){
-  const content = document.getElementById('admin-tab-content');
-  const products = loadProducts();
-  const editing = editingProductId ? products.find(p => p.id === editingProductId) : null;
+function stockDraftFromItem(item){
+  const hasAny = !!item && ((item.quantity !== undefined && item.quantity !== null) || (item.reorderThreshold !== undefined && item.reorderThreshold !== null));
+  return {
+    track: hasAny,
+    quantity: item && item.quantity != null ? String(item.quantity) : '',
+    threshold: item && item.reorderThreshold != null ? String(item.reorderThreshold) : '',
+    unit: item && item.unit ? item.unit : ''
+  };
+}
+function itemDraftFrom(type, item){
+  return {
+    brand: item ? item.brand || '' : '',
+    name: item ? item.name || '' : '',
+    description: item ? item.description || '' : '',
+    ingredients: item && item.ingredients ? item.ingredients.join(', ') : '',
+    ...stockDraftFromItem(item)
+  };
+}
 
-  content.innerHTML = `
-    <div class="block-label">${editing ? `Editing "${escapeHtml(editing.name)}"` : 'Add Product'}</div>
-    <div class="field"><label>Brand (optional)</label><input type="text" id="admin-new-product-brand" placeholder="e.g. Elemis" value="${editing ? escapeHtml(editing.brand || '') : ''}"></div>
-    <div class="field"><label>Product Name</label><input type="text" id="admin-new-product-name" value="${editing ? escapeHtml(editing.name) : ''}"></div>
-    <div class="field">
-      <label>Description (optional)</label>
-      <textarea id="admin-new-product-description" rows="3" placeholder="What it is, what it's for, how it's used">${editing ? escapeHtml(editing.description || '') : ''}</textarea>
-    </div>
-    <div class="field">
-      <label>Paste Ingredients</label>
-      <textarea id="admin-new-product-ingredients" rows="4" placeholder="Paste the ingredient list here — separated by commas, semicolons, or line breaks">${editing && editing.ingredients ? escapeHtml(editing.ingredients.join(', ')) : ''}</textarea>
-    </div>
-    <div class="field"><label>Current Stock (optional)</label><input type="number" id="admin-new-product-quantity" min="0" step="1" value="${editing && editing.quantity !== undefined && editing.quantity !== null ? editing.quantity : ''}"></div>
-    <div class="field"><label>Reorder At (optional)</label><input type="number" id="admin-new-product-reorder" min="0" step="1" placeholder="Flag as low stock at or below this number" value="${editing && editing.reorderThreshold !== undefined && editing.reorderThreshold !== null ? editing.reorderThreshold : ''}"></div>
-    <button class="primary-btn" id="admin-add-product-btn">${editing ? 'Save Changes' : 'Add Product'}</button>
-    ${editing ? `<button class="ghost-btn" id="admin-cancel-product-btn">Cancel Edit</button>` : ''}
+const ITEM_FIELD_IDS = {
+  brand:'inv-item-brand', name:'inv-item-name', description:'inv-item-description',
+  ingredients:'inv-item-ingredients', quantity:'inv-item-quantity', threshold:'inv-item-threshold', unit:'inv-item-unit'
+};
+function captureItemDraft(){
+  if(!itemEditor.open || !itemEditor.draft) return;
+  if(!document.getElementById(ITEM_FIELD_IDS.name)) return;
+  Object.entries(ITEM_FIELD_IDS).forEach(([k, id]) => {
+    const el = document.getElementById(id);
+    if(el) itemEditor.draft[k] = el.value;
+  });
+  const track = document.getElementById('inv-item-track');
+  if(track) itemEditor.draft.track = track.checked;
+}
+function itemEditorSnapshot(){
+  captureItemDraft();
+  return JSON.stringify(itemEditor.draft);
+}
+function closeItemEditor(){
+  Object.assign(itemEditor, { type:null, open:false, id:null, draft:null, baseline:null, stockStart:null });
+}
+function openItemEditor(type, id){
+  const item = id ? loadInventoryList(type).find(i => i.id === id) : null;
+  Object.assign(itemEditor, { type, open:true, id: id || null, draft: itemDraftFrom(type, item) });
+  itemEditor.stockStart = JSON.stringify(stockDraftFromItem(item));
+  renderInventoryItemsTab(type);
+  itemEditor.baseline = itemEditorSnapshot();
+  scrollAdminToTop();
+}
+async function leaveItemEditor(){
+  const type = itemEditor.type;
+  if(itemEditor.baseline && itemEditorSnapshot() !== itemEditor.baseline){
+    if(!(await uiConfirm("Discard unsaved changes? Your edits haven't been saved."))) return;
+  }
+  const returnId = itemEditor.id;
+  closeItemEditor();
+  if(returnId) expandedItemKey = entryKey(type, returnId);
+  renderInventoryItemsTab(type);
+  scrollAdminToTop();
+}
 
-    <div class="block-label" style="margin-top:32px;">Products</div>
-    ${products.filter(isLowStock).length ? `<p class="caption" style="color:var(--warn-ink);">${products.filter(isLowStock).length} product${products.filter(isLowStock).length===1?'':'s'} need reordering</p>` : ''}
-    <div id="admin-product-list">
-      ${products.length ? products.map(p => `
+function itemMetaLine(type, item){
+  const parts = [];
+  if(isStockTracked(item)) parts.push(`${unitText(item, item.quantity)} in stock`);
+  else parts.push('Stock not tracked');
+  if(type === 'products'){
+    const n = (item.ingredients || []).length;
+    parts.push(n ? `${n} ingredient${n === 1 ? '' : 's'}` : 'No ingredients');
+  }
+  return parts.join(' · ');
+}
+
+function renderItemList(content, type){
+  const T = INVENTORY_TYPES[type];
+  setAdminScreenHeader(T.many, 'Inventory', () => { adminTab = 'inventory'; inventoryView = 'home'; renderAdmin(); });
+  const items = [...loadInventoryList(type)].sort((a, b) => itemDisplayName(a).localeCompare(itemDisplayName(b), undefined, { sensitivity:'base' }));
+  const lowCount = items.filter(isLowStock).length;
+
+  const groupMap = new Map();
+  items.forEach(i => {
+    const g = type === 'products' ? (String(i.brand || '').trim() || 'No brand') : 'All supplies';
+    if(!groupMap.has(g)) groupMap.set(g, []);
+    groupMap.get(g).push(i);
+  });
+  const groupNames = [...groupMap.keys()].sort((a, b) => {
+    if(a === 'No brand') return 1;
+    if(b === 'No brand') return -1;
+    return a.localeCompare(b, undefined, { sensitivity:'base' });
+  });
+
+  const itemHtml = (i) => {
+    const key = entryKey(type, i.id);
+    const open = expandedItemKey === key;
+    const used = protocolsUsingItem(type, i);
+    return `
+      <div class="protocol-item ${open ? 'open' : ''}" data-key="${escapeHtml(key)}" data-id="${escapeHtml(i.id)}" data-search="${escapeHtml([i.name, i.brand].filter(Boolean).join(' ').toLowerCase())}">
         <div class="admin-supply-row product-row">
-          <button class="admin-product-toggle" data-id="${p.id}">
-            <span class="admin-user-name">${escapeHtml(p.name)}${p.brand ? ` <span class="admin-supply-empty">— ${escapeHtml(p.brand)}</span>` : ''}${isLowStock(p) ? ` <span class="reorder-badge">Reorder</span>` : ''}</span>
-            <span class="tap-hint">${p.quantity !== undefined && p.quantity !== null ? `In stock: ${p.quantity}` : ''}${p.quantity !== undefined && p.quantity !== null && p.ingredients && p.ingredients.length ? ' · ' : ''}${p.ingredients && p.ingredients.length ? 'Tap for ingredients' : (p.quantity !== undefined && p.quantity !== null ? '' : 'No ingredients listed')}</span>
+          <button class="admin-product-toggle" aria-expanded="${open}">
+            <span class="admin-user-name">${escapeHtml(i.name)}${isLowStock(i) ? ` <span class="reorder-badge">Reorder</span>` : ''}</span>
+            <span class="tap-hint">${escapeHtml(itemMetaLine(type, i))}</span>
           </button>
           <div class="admin-user-actions">
-            <button class="ghost-btn admin-edit-product-btn" data-id="${p.id}">Edit</button>
-            <button class="ghost-btn admin-remove-product-btn" data-id="${p.id}">Remove</button>
+            <button class="ghost-btn inv-edit-btn" data-id="${escapeHtml(i.id)}">Edit</button>
           </div>
         </div>
-        <div class="admin-ingredient-tags hidden" id="ingredients-${p.id}">
-          ${p.description ? `<p style="font-size:13px; line-height:1.5; color:var(--ink); margin:0 0 12px;">${escapeHtml(p.description)}</p>` : ''}
-          ${p.ingredients && p.ingredients.length
-            ? `<div class="ingredient-plain-list">${[...p.ingredients].sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(i => `<div class="ingredient-plain-item">${escapeHtml(i)}</div>`).join('')}</div>`
-            : ''}
+        <div class="protocol-panel ${open ? '' : 'hidden'}">
+          ${i.description ? `<p class="protocol-panel-caption">${escapeHtml(i.description)}</p>` : ''}
+          <p class="usage-line">${ico('bottle')}<span>${isStockTracked(i)
+            ? `<b>${escapeHtml(unitText(i, i.quantity))}</b> on hand · reorder at ${escapeHtml(String(i.reorderThreshold))} · ${i.lastCountedAt ? `counted ${escapeHtml(shortDate(i.lastCountedAt))}` : 'never counted'}`
+            : 'Stock not tracked'}</span></p>
+          <p class="usage-line">${ico('clipboard')}<span>${used.length ? `Used in <b>${used.length}</b> protocol${used.length === 1 ? '' : 's'}: ${escapeHtml(used.map(p => p.name).join(', '))}` : 'Not used in any protocol'}</span></p>
+          ${type === 'products' && (i.ingredients || []).length ? `
+            <details class="ingredients-details">
+              <summary>${i.ingredients.length} ingredient${i.ingredients.length === 1 ? '' : 's'}</summary>
+              <div class="ingredient-plain-list">${[...i.ingredients].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).map(x => `<div class="ingredient-plain-item">${escapeHtml(x)}</div>`).join('')}</div>
+            </details>
+          ` : ''}
+          <div class="protocol-panel-actions">
+            <button type="button" class="row-chip danger inv-remove-btn" data-id="${escapeHtml(i.id)}">${ico('x')}Remove</button>
+          </div>
         </div>
-      `).join('') : `<p class="caption">No products yet.</p>`}
+      </div>
+    `;
+  };
+
+  content.innerHTML = `
+    <button class="primary-btn protocol-add-btn" id="inv-add-btn" type="button">${ico('plus')} Add ${T.one}</button>
+    ${items.length ? `
+      <label class="search-field">
+        ${ico('search')}
+        <input type="search" id="inv-search" placeholder="Search ${items.length} ${T.many.toLowerCase()}" value="${escapeHtml(itemListSearch[type])}" autocomplete="off" aria-label="Search ${T.many.toLowerCase()}">
+      </label>
+    ` : ''}
+    ${lowCount ? `<p class="caption warn-caption">${ico('alert')}<span>${lowCount} ${lowCount === 1 ? T.one.toLowerCase() + ' needs' : T.many.toLowerCase() + ' need'} reordering</span></p>` : ''}
+    <div id="inv-list">
+      ${items.length ? groupNames.map(g => `
+        <div class="protocol-group">
+          ${type === 'products' ? `<div class="block-label protocol-group-label">${escapeHtml(g)}<span class="count">${groupMap.get(g).length}</span></div>` : ''}
+          ${groupMap.get(g).map(itemHtml).join('')}
+        </div>
+      `).join('') : `<p class="caption">No ${T.many.toLowerCase()} yet. Tap Add ${T.one} to create the first one.</p>`}
+      <p class="caption is-hidden" id="inv-search-empty">No ${T.many.toLowerCase()} match that search.</p>
     </div>
   `;
 
-  document.getElementById('admin-add-product-btn').addEventListener('click', ()=>{
-    const brand = document.getElementById('admin-new-product-brand').value.trim();
-    const name = document.getElementById('admin-new-product-name').value.trim();
-    const description = document.getElementById('admin-new-product-description').value.trim();
-    const ingredientsText = document.getElementById('admin-new-product-ingredients').value;
-    const quantityRaw = document.getElementById('admin-new-product-quantity').value;
-    const reorderRaw = document.getElementById('admin-new-product-reorder').value;
-    const quantity = quantityRaw === '' ? null : parseInt(quantityRaw, 10);
-    const reorderThreshold = reorderRaw === '' ? null : parseInt(reorderRaw, 10);
-    if(!name){ uiAlert('Enter a product name.'); return; }
-    const ingredients = parseIngredientsText(ingredientsText);
-    const list = loadProducts();
-    if(editingProductId){
-      const existing = list.find(p => p.id === editingProductId);
-      if(existing){
-        existing.brand = brand;
-        existing.name = name;
-        existing.description = description;
-        existing.ingredients = ingredients;
-        existing.quantity = quantity;
-        existing.reorderThreshold = reorderThreshold;
-        saveProducts(list);
-        logActivity(getAdminActingUsername(), `Edited product "${name}"`);
-      }
-      editingProductId = null;
-    } else {
-      list.push({ id: makeId(), brand, name, description, ingredients, quantity, reorderThreshold, createdAt: new Date().toISOString() });
-      saveProducts(list);
-      logActivity(getAdminActingUsername(), `Added product "${name}"`);
-    }
-    renderAdminProductsTab();
-  });
-  const cancelProductBtn = document.getElementById('admin-cancel-product-btn');
-  if(cancelProductBtn){
-    cancelProductBtn.addEventListener('click', ()=>{
-      editingProductId = null;
-      renderAdminProductsTab();
+  const search = document.getElementById('inv-search');
+  const applySearch = () => {
+    const q = itemListSearch[type].trim().toLowerCase();
+    let any = false;
+    content.querySelectorAll('.protocol-group').forEach(group => {
+      let groupAny = false;
+      group.querySelectorAll('.protocol-item').forEach(row => {
+        const show = !q || row.dataset.search.includes(q);
+        row.classList.toggle('hidden', !show);
+        if(show) groupAny = true;
+      });
+      group.classList.toggle('hidden', !groupAny);
+      if(groupAny) any = true;
     });
+    document.getElementById('inv-search-empty').classList.toggle('is-hidden', any || !items.length);
+  };
+  if(search){
+    search.addEventListener('input', () => { itemListSearch[type] = search.value; applySearch(); });
+    applySearch();
   }
-  content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const panel = document.getElementById(`ingredients-${btn.dataset.id}`);
-      if(panel) panel.classList.toggle('hidden');
+
+  document.getElementById('inv-add-btn').addEventListener('click', () => openItemEditor(type, null));
+  content.querySelectorAll('.protocol-item .admin-product-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.protocol-item');
+      const panel = row.querySelector('.protocol-panel');
+      const open = panel.classList.toggle('hidden') === false;
+      row.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', String(open));
+      expandedItemKey = open ? row.dataset.key : (expandedItemKey === row.dataset.key ? null : expandedItemKey);
     });
   });
-  content.querySelectorAll('.admin-edit-product-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      editingProductId = btn.dataset.id;
-      renderAdminProductsTab();
-      content.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
-  content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.dataset.id;
-      const product = loadProducts().find(p => p.id === id);
-      if(!(await uiConfirm(`Remove product "${product ? product.name : ''}"?`))) return;
-      const list = loadProducts().filter(p => p.id !== id);
-      saveProducts(list);
-      logActivity(getAdminActingUsername(), `Removed product "${product ? product.name : id}"`);
-      if(editingProductId === id) editingProductId = null;
-      renderAdminProductsTab();
+  content.querySelectorAll('.inv-edit-btn').forEach(btn => btn.addEventListener('click', () => openItemEditor(type, btn.dataset.id)));
+  content.querySelectorAll('.inv-remove-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = loadInventoryList(type).find(i => i.id === btn.dataset.id);
+      if(!item) return;
+      const used = protocolsUsingItem(type, item);
+      const noun = T.one.toLowerCase();
+      const msg = used.length
+        ? `Remove ${noun} "${item.name}"? It's used in ${used.length} protocol${used.length === 1 ? '' : 's'}: ${usageSummary(used)}. Those lines stay as written and are flagged the next time each protocol is edited.`
+        : `Remove ${noun} "${item.name}"? It isn't used in any protocol.`;
+      if(!(await uiConfirm(msg))) return;
+      const result = await commitInventoryChanges([{ type, op:'remove', id:item.id }]);
+      const key = entryKey(type, item.id);
+      if(countDraft && (countDraft.counts[key] !== undefined || countDraft.track[key])){
+        delete countDraft.counts[key];
+        delete countDraft.track[key];
+        persistCountDraft();
+      }
+      logActivity(getAdminActingUsername(), `Removed ${noun} "${item.name}"${used.length ? ` (was used in ${used.length} protocol${used.length === 1 ? '' : 's'})` : ''}`);
+      if(expandedItemKey === key) expandedItemKey = null;
+      renderInventoryItemsTab(type);
+      uiAlert(`Removed "${item.name}".`, { tone:'info' });
+      reportCommitProblems(result);
     });
   });
 }
 
-function renderAdminSuppliesTab(){
-  const content = document.getElementById('admin-tab-content');
-  const supplies = loadSupplies();
+function renderItemEditor(content, type){
+  const T = INVENTORY_TYPES[type];
+  const editing = !!itemEditor.id;
+  setAdminScreenHeader(`${editing ? 'Edit' : 'New'} ${T.one}`, `All ${T.many}`, leaveItemEditor);
+  const d = itemEditor.draft;
+  const existing = editing ? loadInventoryList(type).find(i => i.id === itemEditor.id) : null;
+  const used = existing ? protocolsUsingItem(type, existing) : [];
+  const ingredientCount = parseIngredientsText(d.ingredients || '').length;
 
   content.innerHTML = `
-    <div class="block-label">Add Supply</div>
-    <div class="field"><label>Supply Name</label><input type="text" id="admin-new-supply-name"></div>
-    <button class="primary-btn" id="admin-add-supply-btn">Add Supply</button>
+    <p class="editor-subtitle">${editing
+      ? `Editing <b>${escapeHtml(existing ? existing.name : d.name)}</b>${used.length ? ` · used in ${used.length} protocol${used.length === 1 ? '' : 's'}. Renaming it updates ${used.length === 1 ? 'that protocol' : 'them'}.` : ''}`
+      : 'Nothing is saved until you tap Save.'}</p>
+    <datalist id="unit-suggestions">${UNIT_SUGGESTIONS.map(u => `<option value="${u}">`).join('')}</datalist>
 
-    <div class="block-label" style="margin-top:32px;">Supplies</div>
-    ${supplies.filter(isLowStock).length ? `<p class="caption" style="color:var(--warn-ink);">${supplies.filter(isLowStock).length} suppl${supplies.filter(isLowStock).length===1?'y needs':'ies need'} reordering</p>` : ''}
-    <div id="admin-supply-list">
-      ${supplies.length ? supplies.map(s => `
-        <div class="admin-supply-row">
-          <div class="admin-supply-main">
-            <div class="admin-user-name">${escapeHtml(s.name)}${isLowStock(s) ? ` <span class="reorder-badge">Reorder</span>` : ''}</div>
-            <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-              <input type="number" min="0" step="1" class="supply-quantity-input" data-id="${s.id}" placeholder="In stock" value="${s.quantity !== undefined && s.quantity !== null ? s.quantity : ''}" style="width:90px; font-size:12px; padding:6px 8px;">
-              <input type="number" min="0" step="1" class="supply-reorder-input" data-id="${s.id}" placeholder="Reorder at" value="${s.reorderThreshold !== undefined && s.reorderThreshold !== null ? s.reorderThreshold : ''}" style="width:90px; font-size:12px; padding:6px 8px;">
-              <button class="ghost-btn supply-save-stock-btn" data-id="${s.id}" style="width:auto; padding:6px 12px; margin-top:0; font-size:11px;">Save</button>
-            </div>
-          </div>
-          <button class="ghost-btn admin-remove-supply-btn" data-id="${s.id}">Remove</button>
+    <section class="form-group">
+      <h3 class="form-group-title">Basics</h3>
+      ${type === 'products' ? `<div class="field"><label for="inv-item-brand">Brand <span class="opt">optional</span></label><input type="text" id="inv-item-brand" placeholder="e.g. Mirbeau" value="${escapeHtml(d.brand)}"></div>` : ''}
+      <div class="field"><label for="inv-item-name">${T.one} Name</label><input type="text" id="inv-item-name" value="${escapeHtml(d.name)}"></div>
+      ${type === 'products' ? `
+        <div class="field"><label for="inv-item-description">Description <span class="opt">optional</span></label>
+          <textarea id="inv-item-description" rows="3" placeholder="What it is, what it's for, how it's used">${escapeHtml(d.description)}</textarea></div>
+      ` : ''}
+    </section>
+
+    ${type === 'products' ? `
+    <section class="form-group">
+      <h3 class="form-group-title">Ingredients</h3>
+      <div class="field">
+        <label for="inv-item-ingredients">Paste ingredients <span class="opt" id="inv-ingredient-count">${ingredientCount} found</span></label>
+        <textarea id="inv-item-ingredients" rows="5" placeholder="Separated by commas, semicolons, or line breaks">${escapeHtml(d.ingredients)}</textarea>
+      </div>
+    </section>
+    ` : ''}
+
+    <section class="form-group">
+      <h3 class="form-group-title">Stock</h3>
+      <label class="check-row">
+        <input type="checkbox" id="inv-item-track" ${d.track ? 'checked' : ''}>
+        <span><b>Track stock</b><small>Include in counts, reorder alerts, and reports</small></span>
+      </label>
+      <div id="inv-stock-fields" class="${d.track ? '' : 'is-hidden'}">
+        <div class="field-pair">
+          <div class="field"><label for="inv-item-quantity">On hand</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="inv-item-quantity" value="${escapeHtml(d.quantity)}" placeholder="0"></div>
+          <div class="field"><label for="inv-item-threshold">Reorder at</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="inv-item-threshold" value="${escapeHtml(d.threshold)}" placeholder="e.g. 2"></div>
         </div>
-      `).join('') : `<p class="caption">No supplies yet.</p>`}
+        <div class="field"><label for="inv-item-unit">Unit <span class="opt">optional</span></label><input type="text" id="inv-item-unit" list="unit-suggestions" placeholder="bottles, cases, each…" value="${escapeHtml(d.unit)}"></div>
+        <p class="caption" style="margin:-6px 0 16px;">Changing the on-hand number here also updates its last-counted date.</p>
+      </div>
+    </section>
+
+    <div class="editor-actions">
+      <button type="button" class="ui-btn ui-btn-secondary" id="inv-cancel-btn">Cancel</button>
+      <button type="button" class="ui-btn ui-btn-primary" id="inv-save-btn">${editing ? 'Save Changes' : `Save ${T.one}`}</button>
     </div>
   `;
 
-  document.getElementById('admin-add-supply-btn').addEventListener('click', ()=>{
-    const name = document.getElementById('admin-new-supply-name').value.trim();
-    if(!name){ uiAlert('Enter a supply name.'); return; }
-    const list = loadSupplies();
-    list.push({ id: makeId(), name, createdAt: new Date().toISOString() });
-    saveSupplies(list);
-    logActivity(getAdminActingUsername(), `Added supply "${name}"`);
-    renderAdminSuppliesTab();
+  const track = document.getElementById('inv-item-track');
+  track.addEventListener('change', () => {
+    document.getElementById('inv-stock-fields').classList.toggle('is-hidden', !track.checked);
+    if(track.checked && !document.getElementById('inv-item-quantity').value) document.getElementById('inv-item-quantity').focus();
   });
-  content.querySelectorAll('.supply-save-stock-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id = btn.dataset.id;
-      const list = loadSupplies();
-      const supply = list.find(s => s.id === id);
-      if(!supply) return;
-      const qtyRaw = content.querySelector(`.supply-quantity-input[data-id="${id}"]`).value;
-      const reorderRaw = content.querySelector(`.supply-reorder-input[data-id="${id}"]`).value;
-      supply.quantity = qtyRaw === '' ? null : parseInt(qtyRaw, 10);
-      supply.reorderThreshold = reorderRaw === '' ? null : parseInt(reorderRaw, 10);
-      saveSupplies(list);
-      logActivity(getAdminActingUsername(), `Updated stock for "${supply.name}"`);
-      renderAdminSuppliesTab();
-    });
+  ['inv-item-quantity', 'inv-item-threshold'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => digitsOnly(el));
   });
-  content.querySelectorAll('.admin-remove-supply-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.dataset.id;
-      const supply = loadSupplies().find(s => s.id === id);
-      if(!(await uiConfirm(`Remove supply "${supply ? supply.name : ''}"?`))) return;
-      const list = loadSupplies().filter(s => s.id !== id);
-      saveSupplies(list);
-      logActivity(getAdminActingUsername(), `Removed supply "${supply ? supply.name : id}"`);
-      renderAdminSuppliesTab();
+  const ing = document.getElementById('inv-item-ingredients');
+  if(ing){
+    ing.addEventListener('input', () => {
+      document.getElementById('inv-ingredient-count').textContent = `${parseIngredientsText(ing.value).length} found`;
     });
+  }
+  document.getElementById('inv-cancel-btn').addEventListener('click', leaveItemEditor);
+  document.getElementById('inv-save-btn').addEventListener('click', () => saveItemFromEditor(type));
+}
+
+async function saveItemFromEditor(type){
+  const T = INVENTORY_TYPES[type];
+  captureItemDraft();
+  const d = itemEditor.draft;
+  const name = (d.name || '').trim();
+  const brand = (d.brand || '').trim();
+  if(!name){ uiAlert(`Enter a ${T.one.toLowerCase()} name.`); document.getElementById('inv-item-name').focus(); return; }
+
+  let quantity = null, threshold = null;
+  if(d.track){
+    quantity = wholeNumberOrNull(d.quantity);
+    threshold = wholeNumberOrNull(d.threshold);
+    if(quantity === null){ uiAlert('Enter how many are on hand, or turn off Track stock.'); document.getElementById('inv-item-quantity').focus(); return; }
+    if(threshold === null){ uiAlert('Enter the count to reorder at, or turn off Track stock.'); document.getElementById('inv-item-threshold').focus(); return; }
+  }
+
+  const list = loadInventoryList(type);
+  const clash = list.find(i => i.id !== itemEditor.id
+    && String(i.name || '').trim().toLowerCase() === name.toLowerCase()
+    && (type !== 'products' || String(i.brand || '').trim().toLowerCase() === brand.toLowerCase()));
+  if(clash && !(await uiConfirm(`Save with a duplicate name? ${type === 'products' && brand ? `${brand} ` : ''}"${clash.name}" already exists.`, { confirmText:'Save anyway' }))) return;
+
+  const fields = type === 'products'
+    ? { brand, name, description: (d.description || '').trim(), ingredients: parseIngredientsText(d.ingredients || '') }
+    : { name };
+
+  // Only touch stock if it was changed here, so counts made elsewhere survive.
+  const stockNow = JSON.stringify({ track: !!d.track, quantity: d.quantity || '', threshold: d.threshold || '', unit: d.unit || '' });
+  const start = JSON.parse(itemEditor.stockStart || '{}');
+  const stockStartNorm = JSON.stringify({ track: !!start.track, quantity: start.quantity || '', threshold: start.threshold || '', unit: start.unit || '' });
+  if(stockNow !== stockStartNorm){
+    if(d.track){
+      fields.quantity = quantity;
+      fields.reorderThreshold = threshold;
+      fields.unit = (d.unit || '').trim() || undefined;
+      if(String(quantity) !== String(start.quantity || '')) fields.lastCountedAt = new Date().toISOString();
+    } else {
+      fields.quantity = null;
+      fields.reorderThreshold = null;
+    }
+  }
+
+  const btn = document.getElementById('inv-save-btn');
+
+  let savedId, result;
+  let textUpdate = null;
+  if(itemEditor.id){
+    const before = list.find(i => i.id === itemEditor.id);
+    if(before && itemDisplayName(before).trim() !== name){
+      const { textOnly } = splitItemUsage(type, before);
+      if(textOnly.length){
+        const perms = getEffectiveAdminPermissions();
+        const listNames = usageSummary(textOnly);
+        if(perms.protocols){
+          const one = textOnly.length === 1;
+          if(await uiConfirm(`Update ${textOnly.length} protocol${one ? '' : 's'} too? ${listNames} still ${one ? 'lists' : 'list'} "${before.name}" as plain text. Update ${one ? 'it' : 'them'} to the new name, or just rename the ${T.one.toLowerCase()}.`, { confirmText:'Update', cancelText:'Just rename', danger:false })){
+            textUpdate = { before: { ...before }, ids: textOnly.map(p => p.id) };
+          }
+        } else {
+          const one = textOnly.length === 1;
+          uiAlert(`${listNames} still ${one ? 'lists' : 'list'} "${before.name}" as plain text and will keep that wording. Someone with Protocols access can update ${one ? 'it' : 'them'}.`, { tone:'warn', dialog:true });
+        }
+      }
+    }
+  }
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  if(itemEditor.id){
+    const existing = list.find(i => i.id === itemEditor.id);
+    savedId = itemEditor.id;
+    result = await commitInventoryChanges([{
+      type, op:'patch', id: savedId, fields, label: name,
+      fallback: existing ? { ...existing } : { id: savedId, createdAt: new Date().toISOString() }
+    }]);
+    logActivity(getAdminActingUsername(), `Edited ${T.one.toLowerCase()} "${name}"${'quantity' in fields ? ' (stock updated)' : ''}`);
+    if(textUpdate){
+      await updatePlainTextProtocolLines(type, textUpdate.before, name, textUpdate.ids);
+      logActivity(getAdminActingUsername(), `Updated ${textUpdate.ids.length} protocol${textUpdate.ids.length === 1 ? '' : 's'} for renamed ${T.one.toLowerCase()} "${textUpdate.before.name}" → "${name}"`);
+    }
+  } else {
+    savedId = makeId();
+    const item = { id: savedId, createdAt: new Date().toISOString() };
+    Object.entries(fields).forEach(([k, v]) => { if(v !== undefined) item[k] = v; });
+    result = await commitInventoryChanges([{ type, op:'add', item }]);
+    logActivity(getAdminActingUsername(), `Added ${T.one.toLowerCase()} "${name}"`);
+  }
+
+  closeItemEditor();
+  expandedItemKey = entryKey(type, savedId);
+  itemListSearch[type] = '';
+  renderInventoryItemsTab(type);
+  uiAlert(`Saved "${name}".`, { tone:'success' });
+  reportCommitProblems(result);
+  requestAnimationFrame(() => {
+    const row = document.querySelector(`.protocol-item[data-key="${CSS.escape(entryKey(type, savedId))}"]`);
+    if(row){
+      row.scrollIntoView({ behavior:'smooth', block:'center' });
+      row.classList.add('just-saved');
+      setTimeout(() => row.classList.remove('just-saved'), 1600);
+    }
   });
 }
 
