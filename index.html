@@ -2276,6 +2276,132 @@
   .usage-line b{ color:var(--ink); font-weight:600; }
   /* 16px text stops iPhones zooming the page when a box is tapped */
   .form-group .field input, .form-group .field textarea, .form-group .field select, .search-field input{ font-size:16px; }
+  /* ============ v1.38.0 — Allergies ============ */
+  .tap-hint.warn{ color:var(--warn-ink); }
+  .notice-card{
+    display:flex; align-items:center; gap:12px;
+    background:var(--card);
+    border:1px solid var(--gold-soft);
+    border-radius:14px;
+    padding:12px 14px;
+    margin:0 0 12px;
+  }
+  .notice-card .nc-text{ flex:1; min-width:0; }
+  .notice-card .nc-text b{ display:block; font-size:14px; font-weight:600; }
+  .notice-card .nc-text small{ display:block; margin-top:2px; font-size:12.5px; line-height:1.4; color:var(--ink-soft); }
+  .notice-card .nc-actions{ display:flex; flex-direction:column; gap:6px; align-items:stretch; }
+  .notice-card .row-chip{ flex:none; justify-content:center; }
+
+  .allergen-list, .safety-list{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .allergen-row, .safety-row{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    width:100%;
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+  }
+  .allergen-row:last-child, .safety-row:last-child{ border-bottom:none; }
+  .allergen-row:active, .safety-row:active{ background:var(--stone-deep); }
+  .allergen-row > .ico, .safety-row > .ico{ flex:none; width:16px; height:16px; color:var(--ink-soft); }
+  .al-main, .sr-main{ flex:1; min-width:0; }
+  .al-main b, .sr-main b{ display:block; font-family:'Fraunces',serif; font-weight:500; font-size:15.5px; line-height:1.3; }
+  .al-main small, .sr-main small{ display:block; margin-top:2px; font-size:12px; line-height:1.45; color:var(--ink-soft); overflow-wrap:anywhere; }
+  .allergen-row.picked{ opacity:.6; cursor:default; }
+  .al-picked .ico{ width:20px; height:20px; color:var(--sage-text); }
+  .allergen-letter-group{ margin-bottom:6px; }
+  .letter-chip{ cursor:pointer; padding:0; }
+
+  .safety-row.avoid{ background:var(--avoid-bg); }
+  .safety-row.avoid b{ color:var(--warn-ink); }
+  .safety-row.avoid small{ color:var(--warn-ink-soft); }
+  .safety-row.check b{ color:var(--ink); }
+  .safety-row.check small{ color:var(--gold); }
+  .caution-label{ color:var(--gold); }
+  .block-label.caution-label .ico{ color:var(--gold); }
+  .summary-pill.warn b{ color:var(--warn-ink); }
+  .summary-pill.caution b{ color:var(--gold); }
+
+  .allergy-chips{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 16px; }
+  .allergy-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:var(--sage);
+    color:#fff;
+    font-size:13.5px;
+    font-weight:500;
+  }
+  .allergy-chip-x{
+    all:unset; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%;
+    background:rgba(255,255,255,0.22);
+  }
+  .allergy-chip-x .ico{ width:11px; height:11px; stroke-width:2.6; }
+  .allergy-note{
+    display:flex; align-items:flex-start; gap:8px;
+    margin:0 0 6px;
+    font-size:12.5px; line-height:1.45;
+    color:var(--ink-soft);
+  }
+  .allergy-note .ico{ flex:none; width:15px; height:15px; margin-top:1px; color:var(--gold); }
+  .tray li .prep-choice-line .note.linked-note{ display:block; margin:2px 0 0; font-size:12.5px; line-height:1.5; font-style:normal; }
+  /* Long plain prep lines stay beside their bullet */
+  .tray li .prep-text{ flex:1 1 0; min-width:0; overflow-wrap:anywhere; }
+
+  .kept-note{ margin:8px 0 0; font-size:12px; color:var(--ink-soft); font-style:italic; }
+  .link-row{ padding:12px 0; border-bottom:1px solid var(--line); }
+  .link-row:last-child{ border-bottom:none; padding-bottom:16px; }
+  .link-text{ margin:0 0 8px; font-size:14px; line-height:1.4; }
+  .link-row select.link-select{
+    all:unset; box-sizing:border-box; display:block; width:100%;
+    padding:12px 14px; border-radius:12px;
+    background:var(--stone); border:1px solid var(--line);
+    font-family:'Inter',sans-serif; font-size:16px; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .link-row.linked select.link-select{ border-color:var(--sage); }
+
+  details.tidy-item{ border-bottom:1px solid var(--line); }
+  details.tidy-item:last-child{ border-bottom:none; }
+  details.tidy-item > summary{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px;
+  }
+  details.tidy-item > summary::-webkit-details-marker{ display:none; }
+  details.tidy-item > summary > .ico{ width:16px; height:16px; color:var(--ink-soft); transition:transform .2s ease; }
+  details.tidy-item[open] > summary > .ico{ transform:rotate(180deg); }
+  .tidy-diff{ padding:0 14px 12px; font-size:12.5px; line-height:1.5; }
+  .tidy-line{ color:var(--ink-soft); overflow-wrap:anywhere; }
+  .tidy-line.out{ color:var(--warn-ink); text-decoration:line-through; }
+  .tidy-line.in{ color:var(--sage-text); }
+
+  .ingredient-report{ margin-top:8px; font-size:12.5px; line-height:1.45; color:var(--ink-soft); }
+  .ingredient-report:empty{ display:none; }
+  .ingredient-report p{ margin:0 0 6px; }
+  .ir-cleaned, .ir-facts{ display:flex; align-items:center; gap:6px; }
+  .ir-cleaned{ color:var(--sage-text); }
+  .ingredient-report .ico{ width:14px; height:14px; flex:none; }
+  .ir-new-label{ color:var(--ink); font-weight:600; }
+  .ir-new{ display:flex; flex-direction:column; gap:6px; }
+  .ir-new-item{
+    display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px;
+    padding:7px 10px;
+    border-radius:10px;
+    background:var(--stone);
+    color:var(--ink);
+  }
+  .ir-new-item .row-chip{ white-space:normal; text-align:left; text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif; font-size:12.5px; }
 </style>
 </head>
 <body>
@@ -2379,7 +2505,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.37.0</div>
+    <div class="app-version">v1.38.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -3354,11 +3480,193 @@ function saveAnnouncement(data){
   syncPost('stop-announcement', data);
 }
 
+/* ---------- Ingredient text cleanup (v1.38.0) ----------
+ * Pasted labels are cleaned before saving: "Ingredients:" labels and
+ * footnotes are dropped, commas inside brackets don't split an ingredient,
+ * "X (and) Y" becomes two ingredients, stray asterisks and periods are removed, and anything
+ * that matches an ingredient already on file reuses that spelling.
+ */
+
+const INGREDIENT_LABEL_RE = /^\s*(?:full\s+|key\s+|active\s+|other\s+|inactive\s+)?(?:ingredients?|ingr[ée]dients|contains|composition|inci(?:\s+list)?|may\s+contain(?:\s*\(\s*\+\s*\/\s*-\s*\))?)\s*(?:\([^)]*\))?\s*[:：\-–—]\s*/i;
+const INGREDIENT_FOOTNOTE_WORDS = /\b(organic|organically|natural|origin|essential\s+oils?|fair\s*trade|wildcrafted|farming|agriculture|certified|derived|sustainabl[ey]|ecocert|cosmos|vegan|cruelty)\b/i;
+const INGREDIENT_FOOTNOTE_RE = /^(?:=\s*)?(?:certified\s+organic(?:\s+ingredients?)?|organic(?:ally\s+grown)?(?:\s+ingredients?)?|(?:ingredients?\s+)?from\s+organic\s+(?:farming|agriculture)|naturally\s+(?:derived|occurring)(?:\s+ingredients?)?|(?:of\s+)?natural\s+origin|components?\s+of\s+(?:natural\s+)?essential\s+oils?|essential\s+oil\s+components?|\d+(?:[.,]\d+)?\s*%\s+.*)$/i;
+const CANON_NOISE_WORDS = new Set(['organic', 'certified', 'bio', 'the']);
+const WATER_WORDS = new Set(['aqua', 'water', 'eau', 'purified', 'deionized', 'demineralized', 'distilled']);
+
+// Splits on , ; • · | outside ( ) [ ]. A line whose brackets never close
+// falls back to a plain split so one typo can't swallow the whole list.
+function splitIngredientLine(line){
+  const parts = [];
+  let depth = 0, cur = '';
+  for(const ch of line){
+    if(ch === '(' || ch === '[') depth++;
+    else if((ch === ')' || ch === ']') && depth > 0) depth--;
+    if(depth === 0 && /[,;•·|]/.test(ch)){ parts.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  parts.push(cur);
+  if(depth > 0) return line.split(/[,;•·|]/);
+  return parts;
+}
+
+function titleCaseIngredient(text){
+  return text.toLowerCase().replace(/[a-z0-9][a-z0-9'-]*/g, (w) => /\d/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1));
+}
+
+function cleanIngredientItem(raw){
+  let t = String(raw == null ? '' : raw).replace(/\s+/g, ' ').trim();
+  t = t.replace(INGREDIENT_LABEL_RE, '');
+  t = t.replace(/^(?:[-–—•·]+\s*|\d{1,2}[.)]\s+)/, '');
+  t = t.replace(/[*†‡]+/g, ' ').replace(/\s+/g, ' ').trim();
+  t = t.replace(/^[.;:,\s]+|[.;:,\s]+$/g, '');
+  // Balance brackets left over from older, badly split lists.
+  while(/^\)/.test(t)) t = t.slice(1).trim();
+  const opens = (t.match(/\(/g) || []).length;
+  let closes = (t.match(/\)/g) || []).length;
+  if(closes > opens){
+    let extra = closes - opens;
+    t = t.replace(/\)/g, (m) => (extra-- > 0 ? '' : m)).replace(/\s+/g, ' ').trim();
+    closes = opens;
+  }
+  if(opens > closes) t += ')'.repeat(opens - closes);
+  t = t.replace(/\(\s*\)/g, '').replace(/\s+\)/g, ')').replace(/\(\s+/g, '(').replace(/\s+/g, ' ').trim();
+  if(/[a-z]/i.test(t) && (t === t.toUpperCase() || t === t.toLowerCase())) t = titleCaseIngredient(t);
+  return t;
+}
+
+function isIngredientFootnote(cleaned, hadMarker){
+  if(INGREDIENT_FOOTNOTE_RE.test(cleaned)) return true;
+  if(hadMarker && INGREDIENT_FOOTNOTE_WORDS.test(cleaned) && cleaned.split(/\s+/).length <= 8) return true;
+  return false;
+}
+
+// Same ingredient regardless of capitals, punctuation, word order,
+// an "Organic" prefix, or Aqua/Water wording.
+function ingredientCanonicalKey(text){
+  const words = String(text || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter(w => w && !CANON_NOISE_WORDS.has(w));
+  const unique = [...new Set(words)];
+  if(unique.length && unique.every(w => WATER_WORDS.has(w)) && unique.some(w => w === 'aqua' || w === 'water')) return 'aqua water';
+  return unique.sort().join(' ');
+}
+
+function editDistance(a, b, cap){
+  if(Math.abs(a.length - b.length) > cap) return cap + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for(let i = 1; i <= a.length; i++){
+    const cur = [i];
+    let rowMin = i;
+    for(let j = 1; j <= b.length; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if(cur[j] < rowMin) rowMin = cur[j];
+    }
+    if(rowMin > cap) return cap + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// key -> preferred spelling, from every product's ingredient list.
+function buildIngredientIndex(){
+  const tallies = new Map();
+  loadProducts().forEach(p => (p.ingredients || []).forEach(raw => {
+    processIngredientText(String(raw), null).items.forEach(item => {
+      const key = ingredientCanonicalKey(item);
+      if(!key) return;
+      if(!tallies.has(key)) tallies.set(key, new Map());
+      const m = tallies.get(key);
+      m.set(item, (m.get(item) || 0) + 1);
+    });
+  }));
+  const index = new Map();
+  tallies.forEach((m, key) => {
+    const best = [...m.entries()].sort((a, b) =>
+      (b[1] - a[1])
+      || ((/\(/.test(b[0]) ? 1 : 0) - (/\(/.test(a[0]) ? 1 : 0))
+      || (a[0].length - b[0].length)
+      || a[0].localeCompare(b[0])
+    )[0][0];
+    index.set(key, best);
+  });
+  return index;
+}
+
+function suggestSimilarIngredient(key, index){
+  if(key.length < 8) return null;
+  const cap = key.length >= 20 ? 3 : 2;
+  let best = null, bestD = cap + 1;
+  index.forEach((spelling, k) => {
+    if(k === key) return;
+    const d = editDistance(key, k, cap);
+    if(d < bestD){ bestD = d; best = spelling; }
+  });
+  return bestD <= cap ? best : null;
+}
+
+// Full cleanup. With an index, known ingredients reuse the spelling on file
+// and unknown ones are reported as new (with a "did you mean" if close).
+function processIngredientText(text, index){
+  const result = { items: [], duplicates: [], skipped: [], splitCount: 0, respelled: 0, fresh: [], suggestions: new Map() };
+  const seen = new Set();
+  String(text == null ? '' : text).replace(/\r/g, '').split('\n').forEach(line => {
+    splitIngredientLine(line).forEach(piece => {
+      piece.split(/\.\s+(?=[*†‡])/).forEach(segment => {
+        const hadMarker = /^\s*[*†‡=]/.test(segment);
+        const cleaned = cleanIngredientItem(segment);
+        if(!cleaned) return;
+        if(isIngredientFootnote(cleaned, hadMarker)){ result.skipped.push(cleaned); return; }
+        const parts = cleaned.split(/\s*\(\s*and\s*\)\s*/i).map(cleanIngredientItem).filter(Boolean);
+        if(parts.length > 1) result.splitCount++;
+        parts.forEach(part => {
+          const key = ingredientCanonicalKey(part);
+          if(!key) return;
+          if(seen.has(key)){ result.duplicates.push(part); return; }
+          seen.add(key);
+          let spelling = part;
+          if(index){
+            if(index.has(key)){
+              spelling = index.get(key);
+              if(spelling !== part) result.respelled++;
+            } else {
+              result.fresh.push(part);
+              const s = suggestSimilarIngredient(key, index);
+              if(s) result.suggestions.set(part, s);
+            }
+          }
+          result.items.push(spelling);
+        });
+      });
+    });
+  });
+  return result;
+}
+
 function parseIngredientsText(text){
-  return text
-    .split(/[\n,;]+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
+  return processIngredientText(text, null).items;
+}
+
+// Older lists were split at commas inside brackets ("…(Orange" + "Sweet) Peel Oil").
+// Rejoin those pieces when the bracket closes within the next few items.
+function rejoinBrokenIngredients(list){
+  const bal = (s) => (String(s).match(/\(/g) || []).length - (String(s).match(/\)/g) || []).length;
+  const out = [];
+  for(let i = 0; i < list.length; i++){
+    let item = String(list[i]);
+    if(bal(item) > 0){
+      let j = i + 1, joined = item, depth = bal(item);
+      while(j < list.length && j <= i + 4 && depth > 0 && !/\(/.test(list[j])){
+        joined += ', ' + list[j];
+        depth += bal(list[j]);
+        j++;
+      }
+      if(depth <= 0){ out.push(joined); i = j - 1; continue; }
+    }
+    out.push(item);
+  }
+  return out;
 }
 
 function makeId(){
@@ -4376,6 +4684,7 @@ function renderAdmin(){
   const inner = document.getElementById('admin-inner');
   captureProtocolDraft();
   captureItemDraft();
+  captureAllergenDraft();
 
   if(!adminUnlocked){
     inner.innerHTML = `
@@ -4458,6 +4767,8 @@ function renderAdmin(){
       btn.addEventListener('click', ()=>{
         adminTab = btn.dataset.adminTab;
         if(adminTab === 'inventory'){ inventoryView = 'home'; countStep = 'counting'; }
+        if(adminTab === 'allergens' && allergenAdminView !== 'edit'){ allergenAdminView = 'list'; }
+        if(adminTab === 'protocols'){ protocolLinkOpen = false; }
         renderAdmin();
       });
     });
@@ -4692,6 +5003,11 @@ function isCouplesProtocol(p){
   return /couples/i.test(p.name) || p.name === 'The Art of Living';
 }
 
+// Identifies a prep row's product(s) and amount, to tell whether a line
+// linked from plain text is unchanged (and keeps its original wording).
+function prepRowKey(isChoice, ids, productId, amount){
+  return isChoice ? `c|${[...(ids || [])].sort().join(',')}|${amount || ''}` : `p|${productId || ''}|${amount || ''}`;
+}
 function blankPrepRow(){ return { productId:'', amount:'', originalText:'', isChoice:false, choiceProductIds:[], missing:false, missingIds:[] }; }
 function blankTableMakeupRow(){ return { supplyId:'', qty:'', originalText:'', missing:false, kept:null }; }
 
@@ -4765,6 +5081,7 @@ function resolveTableMakeupLines(p){
 
 // Current display text for each prep item — follows product renames.
 function resolvePrepLabel(item, products){
+  if(item.linkedText && item.t) return item.t;
   if(item.productIds && item.productIds.length){
     const names = item.productIds.map(id => products.find(p => p.id === id)).filter(Boolean).map(p => p.name);
     if(names.length) return `${item.amount ? item.amount + ' — ' : ''}${joinWithOr(names)} (guest's choice)`;
@@ -4791,7 +5108,8 @@ function resetProtocolFormRows(source){
           choiceProductIds: [...item.productIds],
           // Only needed if every choice is gone from Inventory.
           originalText: missingIds.length === item.productIds.length ? (item.t || '') : '',
-          missingIds
+          missingIds,
+          kept: item.linkedText ? { text: item.t, key: prepRowKey(true, item.productIds, '', item.amount) } : null
         };
       }
       if(item.productId){
@@ -4801,7 +5119,8 @@ function resetProtocolFormRows(source){
           productId: item.productId,
           amount: item.amount || '',
           originalText: exists ? '' : (item.t || ''),
-          missing: !exists
+          missing: !exists,
+          kept: item.linkedText ? { text: item.t, key: prepRowKey(false, [], item.productId, item.amount) } : null
         };
       }
       return { ...blankPrepRow(), originalText: item.note ? `${item.t} (${item.note})` : item.t };
@@ -4913,6 +5232,9 @@ function buildProtocolFromForm(){
         // Every choice was removed from Inventory — keep the line as written.
         return row.originalText ? { t: row.originalText, productIds: ids, amount: row.amount || '' } : null;
       }
+      if(row.kept && row.kept.key === prepRowKey(true, ids, '', row.amount)){
+        return { t: row.kept.text, productIds: ids, amount: row.amount || '', linkedText: true };
+      }
       const label = joinWithOr(names);
       const t = row.amount ? `${row.amount} — ${label} (guest's choice)` : `${label} (guest's choice)`;
       return { t, productIds: ids, amount: row.amount || '' };
@@ -4922,6 +5244,9 @@ function buildProtocolFromForm(){
       if(!product){
         // Product was removed from Inventory — keep the line as written.
         return row.originalText ? { t: row.originalText, productId: row.productId, amount: row.amount || '' } : null;
+      }
+      if(row.kept && row.kept.key === prepRowKey(false, [], row.productId, row.amount)){
+        return { t: row.kept.text, productId: row.productId, amount: row.amount || '', linkedText: true };
       }
       const t = row.amount ? `${row.amount} ${product.name}` : product.name;
       return { t, productId: row.productId, amount: row.amount || '' };
@@ -5082,6 +5407,7 @@ function prepRowHtml(row, idx, products, total){
           ${rowMoveButtons(idx, total, 'prep')}
         </div>
         ${missingIds.length ? `<p class="row-warning">${ico('alert')}<span>${missingIds.length === 1 ? 'One choice was' : 'Some choices were'} removed from Inventory. Untick to drop ${missingIds.length === 1 ? 'it' : 'them'}.</span></p>` : ''}
+        ${row.kept ? `<p class="kept-note">Shown on the card as “${escapeHtml(row.kept.text)}”</p>` : ''}
       </div>
     `;
   }
@@ -5101,6 +5427,7 @@ function prepRowHtml(row, idx, products, total){
         ${rowMoveButtons(idx, total, 'prep')}
       </div>
       ${missing ? `<p class="row-warning">${ico('alert')}<span>This product was removed from Inventory. It stays as written unless you pick a replacement.</span></p>` : ''}
+      ${row.kept && !missing ? `<p class="kept-note">Shown on the card as “${escapeHtml(row.kept.text)}”</p>` : ''}
     </div>
   `;
 }
@@ -5208,6 +5535,221 @@ function renderSubProtocolsSubTab(){
   });
 }
 
+/* ---------- Link plain-text prep to products (v1.38.0) ---------- */
+
+let protocolLinkOpen = false;
+let prepLinkChoices = {};   // "protocolId|index" -> '' | 'p:<id>' | 'c:<id>,<id>'
+
+const PREP_GENERIC_TOKENS = new Set(['oil','oils','massage','lotion','cream','body','whip','scrub','gel','spray','balm','butter','serum','mask','the','and','or','of','in','a','an','for','with','hot','warm','cabi','pump','pumps','oz','small','large','bottle','bottles','drizzle','flex','bowl','finishing','signature','guest','choice','s','mirbeau']);
+
+function prepTokens(text, keepParens){
+  let t = String(text || '').toLowerCase();
+  if(!keepParens) t = t.replace(/\([^)]*\)/g, ' ');
+  return t.replace(/[^a-z0-9]+/g, ' ').split(' ').filter(w => w && !/^\d+$/.test(w));
+}
+
+const PRODUCT_TYPE_TOKENS = new Set(['oil','oils','lotion','cream','scrub','whip','gel','spray','balm','butter','serum','mask','wash','polish','elixir','mist','salt','salts','soak','milk']);
+
+function scoreProductMatch(text, product){
+  const textTokens = new Set(prepTokens(text, true));
+  const nameTokens = new Set(prepTokens(product.name, true));
+  const brandTokens = prepTokens(product.brand || '', true);
+  let distinctive = 0, generic = 0, brand = 0, missing = 0;
+  nameTokens.forEach(w => {
+    const generic_ = PREP_GENERIC_TOKENS.has(w);
+    if(textTokens.has(w)){ if(generic_) generic++; else distinctive++; }
+    else if(!generic_) missing++;
+  });
+  brandTokens.forEach(w => { if(textTokens.has(w) && !nameTokens.has(w)) brand++; });
+  if(!distinctive) return 0;
+  return distinctive * 3 + generic + brand * 0.5 - missing * 0.5;
+}
+
+function rankProductsForPrep(text, products){
+  return rankProductScores(text, products).map(x => x.p);
+}
+function rankProductScores(text, products){
+  return products
+    .map(p => ({ p, s: scoreProductMatch(text, p) }))
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s || a.p.name.localeCompare(b.p.name));
+}
+// Confident = every distinctive word of the product's name is in the line,
+// and it clearly beats the next-best product.
+function isConfidentMatch(text, ranked){
+  if(!ranked.length) return false;
+  const textTokens = new Set(prepTokens(text, true));
+  const best = ranked[0];
+  const nameTokens = prepTokens(best.p.name, true);
+  const nameWords = nameTokens.filter(w => !PREP_GENERIC_TOKENS.has(w));
+  if(nameWords.some(w => !textTokens.has(w))) return false;
+  // If the line names a product type (wash, cream…), the product must be that type.
+  const norm = (w) => w.replace(/s$/, '');
+  const textTypes = new Set([...textTokens].filter(w => PRODUCT_TYPE_TOKENS.has(w)).map(norm));
+  const nameTypes = new Set(nameTokens.filter(w => PRODUCT_TYPE_TOKENS.has(w)).map(norm));
+  if(textTypes.size && nameTypes.size && ![...textTypes].some(w => nameTypes.has(w))) return false;
+  return !ranked[1] || ranked[1].s <= best.s - 1;
+}
+
+// Best guess for a prep line: one product, or a guest's choice when the
+// line reads "A or B" and each side matches a different product.
+function suggestProductsForPrep(text, products){
+  const parts = String(text || '').split(/\s+or\s+/i);
+  if(parts.length > 1){
+    const scored = parts.map(part => rankProductScores(part, products));
+    const picks = scored.map(r => r[0] && r[0].p);
+    if(picks.every(Boolean) && new Set(picks.map(p => p.id)).size === picks.length){
+      const confident = scored.every((r, i) => isConfidentMatch(parts[i], r));
+      return { kind: 'choice', ids: picks.map(p => p.id), ranked: picks, confident };
+    }
+  }
+  const scored = rankProductScores(text, products);
+  return scored.length ? { kind: 'single', id: scored[0].p.id, ranked: scored.slice(0, 3).map(x => x.p), confident: isConfidentMatch(text, scored) } : null;
+}
+
+function amountFromPrepText(text){
+  const m = String(text || '').match(/^\s*(\d+\s*[¼½¾]|\d+|[¼½¾])\s*oz\b/i);
+  if(!m) return '';
+  const guess = `${m[1].replace(/\s+/g, '')} oz`;
+  return OUNCE_OPTIONS.includes(guess) ? guess : '';
+}
+
+function prepLinkRows(){
+  const rows = [];
+  loadCustomProtocols().forEach(p => (p.prep || []).forEach((item, index) => {
+    if(item.productId || (item.productIds || []).length) return;
+    if(!isProductLikePrepText(item.t)) return;
+    rows.push({ protocol: p, index, text: String(item.t || ''), key: `${p.id}|${index}` });
+  }));
+  return rows.sort((a, b) => a.protocol.name.localeCompare(b.protocol.name) || a.index - b.index);
+}
+
+function openPrepLinkScreen(){
+  protocolLinkOpen = true;
+  prepLinkChoices = {};
+  renderAdminProtocolsTab();
+  scrollAdminToTop();
+}
+function closePrepLinkScreen(){
+  protocolLinkOpen = false;
+  prepLinkChoices = {};
+  renderAdminProtocolsTab();
+  scrollAdminToTop();
+}
+
+function renderPrepLinkScreen(content){
+  setProtocolAdminHeader('Link Prep', 'All Protocols', closePrepLinkScreen);
+  const products = [...loadProducts()].sort((a, b) => a.name.localeCompare(b.name));
+  const rows = prepLinkRows();
+  const byProtocol = new Map();
+  rows.forEach(r => {
+    if(!byProtocol.has(r.protocol.id)) byProtocol.set(r.protocol.id, { protocol: r.protocol, rows: [] });
+    byProtocol.get(r.protocol.id).rows.push(r);
+  });
+
+  const optionLabel = (p) => productOptionLabel(p);
+  const rowHtml = (r) => {
+    const s = suggestProductsForPrep(r.text, products);
+    // Only confident matches are pre-picked; a wrong link could hide an allergen.
+    const suggestedValue = s && s.confident ? (s.kind === 'choice' ? `c:${s.ids.join(',')}` : `p:${s.id}`) : '';
+    if(prepLinkChoices[r.key] === undefined) prepLinkChoices[r.key] = suggestedValue;
+    const value = prepLinkChoices[r.key];
+    const suggestedIds = s ? s.ranked.map(p => p.id) : [];
+    const others = products.filter(p => !suggestedIds.includes(p.id));
+    return `
+      <div class="link-row ${value ? 'linked' : ''}" data-key="${escapeHtml(r.key)}">
+        <p class="link-text">“${escapeHtml(r.text)}”</p>
+        <select class="link-select" data-key="${escapeHtml(r.key)}" aria-label="Product for ${escapeHtml(r.text)}">
+          <option value="" ${value === '' ? 'selected' : ''}>Leave as text</option>
+          ${s && s.kind === 'choice' ? `<option value="c:${escapeHtml(s.ids.join(','))}" ${value === `c:${s.ids.join(',')}` ? 'selected' : ''}>★ Guest's choice: ${escapeHtml(s.ranked.map(p => p.name).join(' or '))}</option>` : ''}
+          ${s && s.kind === 'single' ? s.ranked.map(p => `<option value="p:${escapeHtml(p.id)}" ${value === `p:${p.id}` ? 'selected' : ''}>★ ${escapeHtml(optionLabel(p))}</option>`).join('') : ''}
+          ${s && s.kind === 'choice' ? s.ranked.map(p => `<option value="p:${escapeHtml(p.id)}" ${value === `p:${p.id}` ? 'selected' : ''}>${escapeHtml(optionLabel(p))} only</option>`).join('') : ''}
+          <optgroup label="All products">
+            ${others.map(p => `<option value="p:${escapeHtml(p.id)}" ${value === `p:${p.id}` ? 'selected' : ''}>${escapeHtml(optionLabel(p))}</option>`).join('')}
+          </optgroup>
+        </select>
+        ${!s ? `<p class="caption" style="margin:6px 0 0;">No likely match in Products — add the product first, or leave as text.</p>`
+          : !s.confident ? `<p class="caption" style="margin:6px 0 0;">Not sure which product this is — check the ★ suggestions.</p>` : ''}
+      </div>
+    `;
+  };
+
+  content.innerHTML = `
+    <p class="caption" style="margin-top:6px;">These prep lines are plain text, so Allergy Lookup can't tell which products they use. Pick the product for each line (★ = best guess). The wording on the treatment card stays the same.</p>
+    ${rows.length ? `
+      ${[...byProtocol.values()].map(g => `
+        <section class="form-group">
+          <h3 class="form-group-title">${escapeHtml(g.protocol.name)}</h3>
+          ${g.rows.map(rowHtml).join('')}
+        </section>
+      `).join('')}
+      <div class="editor-actions">
+        <button type="button" class="ui-btn ui-btn-secondary" id="link-cancel-btn">Cancel</button>
+        <button type="button" class="ui-btn ui-btn-primary" id="link-save-btn">Save links</button>
+      </div>
+    ` : `<p class="all-good">${ico('checkCircle')}<span>Every product in your prep lists is linked.</span></p>`}
+  `;
+
+  const updateCount = () => {
+    const n = Object.values(prepLinkChoices).filter(Boolean).length;
+    const btn = document.getElementById('link-save-btn');
+    if(btn) btn.textContent = n ? `Save ${n} link${n === 1 ? '' : 's'}` : 'Save links';
+  };
+  content.querySelectorAll('.link-select').forEach(sel => sel.addEventListener('change', () => {
+    prepLinkChoices[sel.dataset.key] = sel.value;
+    sel.closest('.link-row').classList.toggle('linked', !!sel.value);
+    updateCount();
+  }));
+  updateCount();
+
+  const cancel = document.getElementById('link-cancel-btn');
+  if(cancel) cancel.addEventListener('click', closePrepLinkScreen);
+  const save = document.getElementById('link-save-btn');
+  if(save) save.addEventListener('click', async () => {
+    const picks = rows.map(r => ({ r, value: prepLinkChoices[r.key] })).filter(x => x.value);
+    if(!picks.length){ uiAlert('Pick a product for at least one line, or tap Cancel.'); return; }
+    save.disabled = true;
+    save.textContent = 'Saving…';
+    await refreshCustomProtocolsFromServer();
+    const productIds = new Set(loadProducts().map(p => p.id));
+    let linked = 0, skipped = 0;
+    const touched = new Set();
+    const list = loadCustomProtocols().map(p => {
+      const mine = picks.filter(x => x.r.protocol.id === p.id);
+      if(!mine.length) return p;
+      const copy = JSON.parse(JSON.stringify(p));
+      mine.forEach(({ r, value }) => {
+        const item = (copy.prep || [])[r.index];
+        // Only link if the line is still what was shown (not edited elsewhere).
+        if(!item || item.t !== r.text || item.productId || (item.productIds || []).length){ skipped++; return; }
+        if(value.startsWith('c:')){
+          const ids = value.slice(2).split(',').filter(id => productIds.has(id));
+          if(ids.length < 2){ skipped++; return; }
+          item.productIds = ids;
+          item.amount = item.amount || '';
+        } else {
+          const id = value.slice(2);
+          if(!productIds.has(id)){ skipped++; return; }
+          item.productId = id;
+          item.amount = item.amount || amountFromPrepText(item.t);
+        }
+        item.linkedText = true;
+        linked++;
+        touched.add(copy.name);
+      });
+      return copy;
+    });
+    saveCustomProtocols(list);
+    logActivity(getAdminActingUsername(), `Linked ${linked} prep line${linked === 1 ? '' : 's'} to products in ${touched.size} protocol${touched.size === 1 ? '' : 's'}`);
+    protocolLinkOpen = false;
+    prepLinkChoices = {};
+    renderAdminProtocolsTab();
+    scrollAdminToTop();
+    uiAlert(`Linked ${linked} prep line${linked === 1 ? '' : 's'}.`, { tone: 'success' });
+    if(skipped) uiAlert(`${skipped} line${skipped === 1 ? ' was' : 's were'} changed on another device and left as text.`, { tone: 'warn' });
+  });
+}
+
 /* ---------- Tab entry point ---------- */
 
 function renderAdminProtocolsTab(){
@@ -5216,6 +5758,8 @@ function renderAdminProtocolsTab(){
   captureProtocolDraft();
   if(protocolEditorOpen){
     renderProtocolEditor(content);
+  } else if(protocolLinkOpen){
+    renderPrepLinkScreen(content);
   } else {
     renderProtocolList(content);
   }
@@ -5266,10 +5810,12 @@ function renderProtocolList(content){
 
   const itemHtml = (p) => {
     const steps = (p.steps || []).length;
+    const unlinked = unlinkedPrepLines(p).length;
     const meta = [
       p.kind === 'enhancement' ? 'Enhancement' : 'Full treatment',
       isCouplesProtocol(p) ? 'Couples' : '',
-      `${steps} step${steps === 1 ? '' : 's'}`
+      `${steps} step${steps === 1 ? '' : 's'}`,
+      unlinked ? `${unlinked} prep unlinked` : ''
     ].filter(Boolean).join(' · ');
     const searchText = [p.name, p.caption].filter(Boolean).join(' ').toLowerCase();
     const open = expandedProtocolId === p.id;
@@ -5280,7 +5826,7 @@ function renderProtocolList(content){
         <div class="admin-supply-row product-row">
           <button class="admin-product-toggle" data-id="${escapeHtml(p.id)}" aria-expanded="${open}">
             <span class="admin-user-name">${escapeHtml(p.name)}</span>
-            <span class="tap-hint">${escapeHtml(meta)}</span>
+            <span class="tap-hint ${unlinked ? 'warn' : ''}">${escapeHtml(meta)}</span>
           </button>
           <div class="admin-user-actions">
             <button class="ghost-btn admin-edit-protocol-btn" data-id="${escapeHtml(p.id)}">Edit</button>
@@ -5316,6 +5862,16 @@ function renderProtocolList(content){
 
   content.innerHTML = subNav + `
     <button class="primary-btn protocol-add-btn" id="admin-open-new-protocol-btn" type="button">${ico('plus')} Add Protocol</button>
+    ${(() => {
+      const rows = prepLinkRows();
+      if(!rows.length) return '';
+      const count = new Set(rows.map(r => r.protocol.id)).size;
+      return `
+        <div class="notice-card">
+          <div class="nc-text"><b>${rows.length} prep line${rows.length === 1 ? '' : 's'} not linked to products</b><small>In ${count} protocol${count === 1 ? '' : 's'}. Allergy Lookup can't fully check ${count === 1 ? 'it' : 'them'} until they're linked.</small></div>
+          <button type="button" class="row-chip primary" id="admin-open-link-btn">Link${ico('chevronRight')}</button>
+        </div>`;
+    })()}
     ${protocols.length ? `
       <label class="search-field">
         ${ico('search')}
@@ -5352,6 +5908,8 @@ function renderProtocolList(content){
   }
 
   document.getElementById('admin-open-new-protocol-btn').addEventListener('click', ()=> openProtocolEditor(null));
+  const linkBtn = document.getElementById('admin-open-link-btn');
+  if(linkBtn) linkBtn.addEventListener('click', openPrepLinkScreen);
 
   content.querySelectorAll('.admin-product-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -5513,6 +6071,8 @@ function renderProtocolEditor(content){
       const row = protocolPrepRows[parseInt(sel.dataset.idx,10)];
       const wasMissing = !!row.productId && !products.some(p => p.id === row.productId);
       row.productId = sel.value;
+      const keptNote = sel.closest('.dynamic-row').querySelector('.kept-note');
+      if(keptNote) keptNote.remove();
       if(wasMissing){
         // A replacement was picked: drop the old text. Blank: keep it as written.
         if(sel.value) row.originalText = '';
@@ -5521,7 +6081,11 @@ function renderProtocolEditor(content){
     });
   });
   content.querySelectorAll('.prep-amount-select').forEach(sel=>{
-    sel.addEventListener('change', ()=>{ protocolPrepRows[parseInt(sel.dataset.idx,10)].amount = sel.value; });
+    sel.addEventListener('change', ()=>{
+      protocolPrepRows[parseInt(sel.dataset.idx,10)].amount = sel.value;
+      const note = sel.closest('.dynamic-row').querySelector('.kept-note');
+      if(note) note.remove();
+    });
   });
   content.querySelectorAll('.prep-make-choice-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -5548,6 +6112,8 @@ function renderProtocolEditor(content){
       const id = cb.dataset.productId;
       row.choiceProductIds = (row.choiceProductIds || []).filter(x => x !== id);
       if(cb.checked) row.choiceProductIds.push(id);
+      const keptNote = cb.closest('.dynamic-row').querySelector('.kept-note');
+      if(keptNote) keptNote.style.display = (row.kept && row.kept.key === prepRowKey(true, row.choiceProductIds, '', row.amount)) ? '' : 'none';
     });
   });
   content.querySelectorAll('.tmu-supply-select').forEach(sel=>{
@@ -5624,100 +6190,424 @@ function renderProtocolEditor(content){
   document.getElementById('admin-cancel-edit-btn').addEventListener('click', leaveProtocolEditor);
 }
 
-let editingAllergenId = null;
+/* ============ Admin → Allergies (rebuilt in v1.38.0) ============ */
 
-let prefillAllergenFullName = null;
+let allergenAdminView = 'list';      // 'list' | 'edit' | 'tidy'
+let allergenAdminFilter = 'all';     // 'all' | 'unnamed' | 'custom'
+let allergenAdminSearch = '';
+let expandedAllergenKey = null;
+const allergenEditor = { key: null, manualId: null, draft: null, baseline: null };
+const SUGGEST_DISMISS_KEY = 'ledgerAllergenSuggestDismissed_v1';
+const GROUP_SUGGEST_SKIP = new Set(['vitamin','acid','extract','butter','sodium','potassium','calcium','magnesium','alcohol','glycol','powder','juice','protein','fruit','flower','seed','leaf','root','bark','peel','kernel','sweet','blue','green','black','white','red','yellow','wild','oil','oils','water','hydrolyzed','sulfate','chloride','ester','esters','gum','wax','sugar','salt','sea']);
+
+// Allergen saves: pull the latest list, apply the change, save, report problems.
+async function commitAllergenChange(mutate){
+  await refreshAllergensFromServer();
+  const list = mutate([...loadAllergens()]);
+  allergensCache = list;
+  try{ localStorage.setItem(ALLERGENS_KEY, JSON.stringify(list)); }catch(e){}
+  if(!isSyncConfigured()) return { ok: true };
+  const res = await syncPostChecked('stop-allergens', list);
+  return res.ok ? { ok: true } : { ok: false, error: res.error || "Couldn't reach the shared database." };
+}
+
+function loadDismissedSuggestions(){
+  try{ return new Set(JSON.parse(localStorage.getItem(SUGGEST_DISMISS_KEY)) || []); }catch(e){ return new Set(); }
+}
+function dismissSuggestion(word){
+  const s = loadDismissedSuggestions();
+  s.add(word);
+  try{ localStorage.setItem(SUGGEST_DISMISS_KEY, JSON.stringify([...s])); }catch(e){}
+}
+
+// Entries whose common names share a distinctive word (e.g. "Chamomile" and
+// "Blue Chamomile") are offered as possible groups.
+function allergenGroupSuggestions(entries){
+  const dismissed = loadDismissedSuggestions();
+  const byWord = new Map();
+  entries.forEach(e => {
+    const words = new Set(String(e.commonName || '').toLowerCase().split(/[^a-z]+/).filter(w => w.length >= 4 && !GROUP_SUGGEST_SKIP.has(w)));
+    words.forEach(w => {
+      if(!byWord.has(w)) byWord.set(w, []);
+      byWord.get(w).push(e);
+    });
+  });
+  return [...byWord.entries()]
+    .filter(([w, list]) => list.length >= 2 && !dismissed.has(w))
+    .map(([word, list]) => ({ word, entries: list.sort((a, b) => a.title.length - b.title.length) }))
+    .sort((a, b) => a.word.localeCompare(b.word));
+}
+
+// What a tidy-up would change in each product's ingredient list.
+function buildIngredientTidyPlan(){
+  const index = buildIngredientIndex();
+  return loadProducts().map(p => {
+    const before = (p.ingredients || []).map(String);
+    const rejoined = rejoinBrokenIngredients(before);
+    const res = processIngredientText(rejoined.join('\n'), index);
+    const after = res.items;
+    const unchanged = before.length === after.length && before.every((x, i) => x === after[i]);
+    if(unchanged) return null;
+    const afterSet = new Set(after), beforeSet = new Set(before);
+    return {
+      product: p,
+      before, after,
+      removed: before.filter(x => !afterSet.has(x)),
+      added: after.filter(x => !beforeSet.has(x)),
+      skipped: res.skipped,
+      duplicates: res.duplicates.length,
+      split: res.splitCount,
+      rejoined: before.length - rejoined.length
+    };
+  }).filter(Boolean);
+}
 
 function renderAdminAllergensTab(){
   const content = document.getElementById('admin-tab-content');
-  const manualList = loadAllergens();
-  const merged = getMergedAllergenList().sort((a, b) => allergenSortKey(a).localeCompare(allergenSortKey(b)));
-  const editing = editingAllergenId ? manualList.find(a => a.id === editingAllergenId) : null;
-  const prefillFull = !editing && prefillAllergenFullName ? prefillAllergenFullName : '';
+  if(!content) return;
+  captureAllergenDraft();
+  if(allergenAdminView === 'edit' && allergenEditor.draft) renderAllergenEditor(content);
+  else if(allergenAdminView === 'tidy') renderIngredientTidy(content);
+  else { allergenAdminView = 'list'; renderAllergenAdminList(content); }
+}
 
-  content.innerHTML = `
-    <div class="block-label">${editing ? `Editing Entry` : 'Add Allergen'}</div>
-    <p class="caption">Use this to give a known allergen a common name (e.g. Common Name "Coconut Oil" for Full Name "Cocos Nucifera Oil"), or to add an allergen that isn't yet in any product's ingredient list.</p>
-    <div class="field"><label>Common Name (optional)</label><input type="text" id="admin-new-allergen-common" placeholder="e.g. Coconut Oil" value="${editing ? (editing.commonName || '') : ''}"></div>
-    <div class="field"><label>Full / INCI Name (optional)</label><input type="text" id="admin-new-allergen-full" placeholder="e.g. Cocos Nucifera Oil" value="${editing ? (editing.fullName || '') : prefillFull}"></div>
-    <button class="primary-btn" id="admin-add-allergen-btn">${editing ? 'Save Changes' : 'Add Allergen'}</button>
-    ${editing ? `<button class="ghost-btn" id="admin-cancel-allergen-btn">Cancel Edit</button>` : ''}
+function renderAllergenAdminList(content){
+  setAdminScreenHeader('Allergies', 'Menu', () => { adminTab = null; renderAdmin(); });
+  const entries = getMergedAllergenList();
+  const productsById = new Map(loadProducts().map(p => [p.id, p]));
+  const unnamed = entries.filter(e => e.needsCommonName).length;
+  const custom = entries.filter(e => e.manual).length;
+  const plan = buildIngredientTidyPlan();
+  const suggestions = allergenGroupSuggestions(entries);
+  const shown = entries.filter(e => allergenAdminFilter === 'unnamed' ? e.needsCommonName : allergenAdminFilter === 'custom' ? !!e.manual : true);
 
-    <div class="block-label" style="margin-top:32px;">All Ingredients</div>
-    <div id="admin-allergen-list">
-      ${merged.length ? merged.map(a => `
-        <div class="admin-user-row">
-          <div class="admin-user-name">${escapeHtml(allergenDisplayName(a))}</div>
+  const rowHtml = (e) => {
+    const open = expandedAllergenKey === e.key;
+    const n = e.productIds.length;
+    const meta = [n ? `${n} product${n === 1 ? '' : 's'}` : 'Not in any product', e.manual ? 'Custom' : '', e.needsCommonName ? 'Needs a common name' : ''].filter(Boolean).join(' · ');
+    const productNames = e.productIds.map(id => productsById.get(id)).filter(Boolean).map(p => p.name).sort();
+    return `
+      <div class="protocol-item ${open ? 'open' : ''}" data-key="${escapeHtml(e.key)}" data-search="${escapeHtml(e.searchText)}">
+        <div class="admin-supply-row product-row">
+          <button class="admin-product-toggle" aria-expanded="${open}">
+            <span class="admin-user-name">${escapeHtml(e.title)}</span>
+            <span class="tap-hint">${escapeHtml(meta)}</span>
+          </button>
           <div class="admin-user-actions">
-            <button class="ghost-btn admin-edit-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : escapeHtml(a.fullName)}">Edit</button>
-            <button class="ghost-btn admin-remove-allergen-btn" data-id="${a.id || ''}" data-fullname="${a.id ? '' : escapeHtml(a.fullName)}">Remove</button>
+            <button class="ghost-btn allergen-edit-btn" data-key="${escapeHtml(e.key)}">${e.manual ? 'Edit' : 'Name'}</button>
           </div>
         </div>
-      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients first, or add an allergen manually above.</p>`}
+        <div class="protocol-panel ${open ? '' : 'hidden'}">
+          ${e.subtitleNames.length ? `<p class="usage-line">${ico('info')}<span>${escapeHtml(e.subtitleNames.join(' · '))}</span></p>` : ''}
+          ${e.aliases.length ? `<p class="usage-line">${ico('copy')}<span>Also known as: ${escapeHtml(e.aliases.join(', '))}</span></p>` : ''}
+          <p class="usage-line">${ico('bottle')}<span>${productNames.length ? `In ${escapeHtml(productNames.join(', '))}` : 'Not in any product'}</span></p>
+          ${e.variants.length > 1 ? `
+            <details class="ingredients-details">
+              <summary>${e.variants.length} spellings on file</summary>
+              <div class="ingredient-plain-list">${e.variants.map(v => `<div class="ingredient-plain-item">${escapeHtml(v)}</div>`).join('')}</div>
+            </details>
+          ` : ''}
+          ${e.manual ? `
+            <div class="protocol-panel-actions">
+              <button type="button" class="row-chip danger allergen-remove-btn" data-key="${escapeHtml(e.key)}">${ico('x')}${n ? 'Remove custom name' : 'Remove'}</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
+  const perms = getEffectiveAdminPermissions();
+  content.innerHTML = `
+    <button class="primary-btn protocol-add-btn" id="allergen-add-btn" type="button">${ico('plus')} Add Allergen</button>
+
+    ${plan.length ? `
+      <div class="notice-card">
+        <div class="nc-text"><b>Ingredient lists can be tidied</b><small>${plan.length} product${plan.length === 1 ? ' has' : 's have'} duplicates, labels, or combined lines that clutter this list.</small></div>
+        <button type="button" class="row-chip primary" id="allergen-tidy-btn">Review${ico('chevronRight')}</button>
+      </div>
+    ` : ''}
+
+    ${suggestions.slice(0, 3).map(s => `
+      <div class="notice-card suggestion" data-word="${escapeHtml(s.word)}">
+        <div class="nc-text"><b>Same allergy?</b><small>${escapeHtml(s.entries.map(e => e.title).join(' · '))}</small></div>
+        <div class="nc-actions">
+          <button type="button" class="row-chip suggestion-dismiss">Not the same</button>
+          <button type="button" class="row-chip primary suggestion-group">Group</button>
+        </div>
+      </div>
+    `).join('')}
+
+    <label class="search-field">
+      ${ico('search')}
+      <input type="search" id="allergen-admin-search" placeholder="Search ${entries.length} ingredients" value="${escapeHtml(allergenAdminSearch)}" autocomplete="off" aria-label="Search ingredients">
+    </label>
+    <div class="perm-chip-row">
+      <button class="perm-chip ${allergenAdminFilter === 'all' ? 'active' : ''}" data-filter="all">All ${entries.length}</button>
+      <button class="perm-chip ${allergenAdminFilter === 'unnamed' ? 'active' : ''}" data-filter="unnamed">Needs a name ${unnamed}</button>
+      <button class="perm-chip ${allergenAdminFilter === 'custom' ? 'active' : ''}" data-filter="custom">Custom ${custom}</button>
     </div>
+    <div id="allergen-admin-list" class="protocol-group">
+      ${shown.map(rowHtml).join('')}
+    </div>
+    <p class="caption ${shown.length ? 'is-hidden' : ''}" id="allergen-admin-empty">${entries.length ? 'Nothing matches.' : 'No ingredients yet — add products with ingredients, or add an allergen.'}</p>
   `;
 
-  document.getElementById('admin-add-allergen-btn').addEventListener('click', ()=>{
-    const commonName = document.getElementById('admin-new-allergen-common').value.trim();
-    const fullName = document.getElementById('admin-new-allergen-full').value.trim();
-    if(!commonName && !fullName){ uiAlert('Enter at least a common name or a full name.'); return; }
+  const search = document.getElementById('allergen-admin-search');
+  const applySearch = () => {
+    const q = allergenAdminSearch.trim().toLowerCase();
+    let any = false;
+    content.querySelectorAll('#allergen-admin-list .protocol-item').forEach(row => {
+      const show = !q || row.dataset.search.includes(q);
+      row.classList.toggle('hidden', !show);
+      if(show) any = true;
+    });
+    document.getElementById('allergen-admin-empty').classList.toggle('is-hidden', any);
+  };
+  search.addEventListener('input', () => { allergenAdminSearch = search.value; applySearch(); });
+  applySearch();
 
-    const list = loadAllergens();
-    if(editingAllergenId){
-      const existing = list.find(a => a.id === editingAllergenId);
-      if(existing){
-        existing.commonName = commonName;
-        existing.fullName = fullName;
-        saveAllergens(list);
-        logActivity(getAdminActingUsername(), `Edited allergen entry "${commonName || fullName}"`);
-      }
-      editingAllergenId = null;
-    } else {
-      list.push({ id: makeId(), commonName, fullName, createdAt: new Date().toISOString() });
-      saveAllergens(list);
-      logActivity(getAdminActingUsername(), `Added allergen entry "${commonName || fullName}"`);
-    }
-    prefillAllergenFullName = null;
+  content.querySelectorAll('[data-filter]').forEach(btn => btn.addEventListener('click', () => {
+    allergenAdminFilter = btn.dataset.filter;
     renderAdminAllergensTab();
+  }));
+  document.getElementById('allergen-add-btn').addEventListener('click', () => openAllergenEditor(null));
+  const tidyBtn = document.getElementById('allergen-tidy-btn');
+  if(tidyBtn) tidyBtn.addEventListener('click', () => {
+    if(!perms.inventory){
+      uiAlert('Tidying ingredient lists changes Products, which needs Inventory access. Ask a manager with Inventory access to run it.', { tone: 'warn', dialog: true });
+      return;
+    }
+    allergenAdminView = 'tidy';
+    renderAdminAllergensTab();
+    scrollAdminToTop();
   });
 
-  const cancelBtn = document.getElementById('admin-cancel-allergen-btn');
-  if(cancelBtn){
-    cancelBtn.addEventListener('click', ()=>{
-      editingAllergenId = null;
-      prefillAllergenFullName = null;
+  content.querySelectorAll('.notice-card.suggestion').forEach(card => {
+    const s = suggestions.find(x => x.word === card.dataset.word);
+    card.querySelector('.suggestion-dismiss').addEventListener('click', () => {
+      dismissSuggestion(card.dataset.word);
       renderAdminAllergensTab();
     });
-  }
-  content.querySelectorAll('.admin-edit-allergen-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(btn.dataset.id){
-        editingAllergenId = btn.dataset.id;
-        prefillAllergenFullName = null;
-      } else {
-        editingAllergenId = null;
-        prefillAllergenFullName = btn.dataset.fullname;
-      }
+    card.querySelector('.suggestion-group').addEventListener('click', async () => {
+      if(!s) return;
+      const base = s.entries[0];
+      const others = s.entries.slice(1);
+      const aliases = others.flatMap(e => [e.title, ...e.latinNames]);
+      const result = await commitAllergenChange(list => {
+        const existing = base.manual ? list.find(a => a.id === base.manual.id) : null;
+        if(existing){
+          existing.aliases = [...new Set([...(existing.aliases || []), ...aliases])];
+        } else {
+          list.push({ id: makeId(), commonName: base.title, fullName: base.fullName, aliases: [...new Set(aliases)], createdAt: new Date().toISOString() });
+        }
+        return list;
+      });
+      logActivity(getAdminActingUsername(), `Grouped allergens under "${base.title}": ${others.map(e => e.title).join(', ')}`);
       renderAdminAllergensTab();
-      content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      uiAlert(`Grouped under "${base.title}".`, { tone: 'success' });
+      if(!result.ok) uiAlert(`Saved on this device, but the shared database didn't take it: ${result.error}`, { tone: 'error', dialog: true });
     });
   });
-  content.querySelectorAll('.admin-remove-allergen-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.dataset.id;
-      if(!id){
-        uiAlert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Menu → Inventory → Products.`);
-        return;
-      }
-      const allergen = loadAllergens().find(a => a.id === id);
-      const label = allergen ? (allergen.commonName || allergen.fullName) : '';
-      if(!(await uiConfirm(`Remove allergen entry "${label}"?`))) return;
-      const list = loadAllergens().filter(a => a.id !== id);
-      saveAllergens(list);
-      logActivity(getAdminActingUsername(), `Removed allergen entry "${label}"`);
-      if(editingAllergenId === id) editingAllergenId = null;
-      renderAdminAllergensTab();
-    });
+
+  content.querySelectorAll('#allergen-admin-list .admin-product-toggle').forEach(btn => btn.addEventListener('click', () => {
+    const row = btn.closest('.protocol-item');
+    const panel = row.querySelector('.protocol-panel');
+    const open = panel.classList.toggle('hidden') === false;
+    row.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    expandedAllergenKey = open ? row.dataset.key : (expandedAllergenKey === row.dataset.key ? null : expandedAllergenKey);
+  }));
+  content.querySelectorAll('.allergen-edit-btn').forEach(btn => btn.addEventListener('click', () => openAllergenEditor(btn.dataset.key)));
+  content.querySelectorAll('.allergen-remove-btn').forEach(btn => btn.addEventListener('click', async () => {
+    const e = entries.find(x => x.key === btn.dataset.key);
+    if(!e || !e.manual) return;
+    const msg = e.productIds.length
+      ? `Remove the custom name for "${e.title}"? The ingredient stays in the list because products contain it — only your common name and "also known as" names are removed.`
+      : `Remove allergen "${e.title}"? It isn't in any product, so it will disappear from the lookup.`;
+    if(!(await uiConfirm(msg))) return;
+    const ids = new Set([e.manual.id, ...e.extraManualIds]);
+    const result = await commitAllergenChange(list => list.filter(a => !ids.has(a.id)));
+    logActivity(getAdminActingUsername(), `Removed allergen entry "${e.title}"`);
+    if(expandedAllergenKey === e.key) expandedAllergenKey = null;
+    renderAdminAllergensTab();
+    uiAlert(`Removed "${e.title}".`, { tone: 'info' });
+    if(!result.ok) uiAlert(`Saved on this device, but the shared database didn't take it: ${result.error}`, { tone: 'error', dialog: true });
+  }));
+}
+
+/* ---------- Editor ---------- */
+
+function captureAllergenDraft(){
+  if(allergenAdminView !== 'edit' || !allergenEditor.draft) return;
+  const c = document.getElementById('allergen-common');
+  if(!c) return;
+  allergenEditor.draft.common = c.value;
+  allergenEditor.draft.full = document.getElementById('allergen-full').value;
+  allergenEditor.draft.aliases = document.getElementById('allergen-aliases').value;
+}
+function allergenEditorSnapshot(){ captureAllergenDraft(); return JSON.stringify(allergenEditor.draft); }
+
+function openAllergenEditor(key){
+  const entry = key ? getMergedAllergenList().find(e => e.key === key) : null;
+  allergenEditor.key = key;
+  allergenEditor.manualId = entry && entry.manual ? entry.manual.id : null;
+  allergenEditor.draft = {
+    common: entry ? entry.commonName : '',
+    full: entry ? entry.fullName : '',
+    aliases: entry ? entry.aliases.join('\n') : ''
+  };
+  allergenAdminView = 'edit';
+  renderAdminAllergensTab();
+  allergenEditor.baseline = allergenEditorSnapshot();
+  scrollAdminToTop();
+}
+function closeAllergenEditor(){
+  Object.assign(allergenEditor, { key: null, manualId: null, draft: null, baseline: null });
+  allergenAdminView = 'list';
+}
+async function leaveAllergenEditor(){
+  if(allergenEditor.baseline && allergenEditorSnapshot() !== allergenEditor.baseline){
+    if(!(await uiConfirm("Discard unsaved changes? Your edits haven't been saved."))) return;
+  }
+  const key = allergenEditor.key;
+  closeAllergenEditor();
+  if(key) expandedAllergenKey = key;
+  renderAdminAllergensTab();
+  scrollAdminToTop();
+}
+
+function renderAllergenEditor(content){
+  const d = allergenEditor.draft;
+  const entry = allergenEditor.key ? getMergedAllergenList().find(e => e.key === allergenEditor.key) : null;
+  const isNew = !entry;
+  setAdminScreenHeader(isNew ? 'New Allergen' : (entry.manual ? 'Edit Allergen' : 'Name Allergen'), 'Allergies', leaveAllergenEditor);
+  const productNames = entry ? entry.productIds.map(id => loadProducts().find(p => p.id === id)).filter(Boolean).map(p => p.name).sort() : [];
+
+  content.innerHTML = `
+    <p class="editor-subtitle">${isNew
+      ? 'Add an allergy that isn\u2019t in any product yet, or a name guests use for one.'
+      : `${productNames.length ? `In ${productNames.length} product${productNames.length === 1 ? '' : 's'}: ${escapeHtml(productNames.slice(0, 4).join(', '))}${productNames.length > 4 ? '…' : ''}` : 'Not in any product.'}`}</p>
+
+    <section class="form-group">
+      <h3 class="form-group-title">Names</h3>
+      <div class="field"><label for="allergen-common">Common name</label><input type="text" id="allergen-common" placeholder="e.g. Coconut" value="${escapeHtml(d.common)}"></div>
+      <div class="field"><label for="allergen-full">Full / INCI name <span class="opt">optional</span></label><input type="text" id="allergen-full" placeholder="e.g. Cocos Nucifera (Coconut) Oil" value="${escapeHtml(d.full)}"></div>
+      <div class="field">
+        <label for="allergen-aliases">Also known as <span class="opt">one per line</span></label>
+        <textarea id="allergen-aliases" rows="4" placeholder="Other names that mean the same allergy, e.g.&#10;Matricaria&#10;Blue Chamomile">${escapeHtml(d.aliases)}</textarea>
+      </div>
+      <p class="caption" style="margin:-6px 0 16px;">Any ingredient whose name matches one of these is grouped here, so checking this allergy covers all of them.</p>
+    </section>
+
+    <div class="editor-actions">
+      <button type="button" class="ui-btn ui-btn-secondary" id="allergen-cancel-btn">Cancel</button>
+      <button type="button" class="ui-btn ui-btn-primary" id="allergen-save-btn">Save</button>
+    </div>
+  `;
+  document.getElementById('allergen-cancel-btn').addEventListener('click', leaveAllergenEditor);
+  document.getElementById('allergen-save-btn').addEventListener('click', saveAllergenFromEditor);
+}
+
+async function saveAllergenFromEditor(){
+  captureAllergenDraft();
+  const d = allergenEditor.draft;
+  const commonName = d.common.trim();
+  const fullName = d.full.trim();
+  const aliases = [...new Set(d.aliases.split('\n').map(s => s.trim()).filter(Boolean))];
+  if(!commonName && !fullName){ uiAlert('Enter a common name or a full name.'); document.getElementById('allergen-common').focus(); return; }
+
+  const existingEntries = getMergedAllergenList();
+  const clash = commonName && existingEntries.find(e => e.key !== allergenEditor.key && e.commonName.toLowerCase() === commonName.toLowerCase());
+  if(clash && !(await uiConfirm(`Group with the existing "${clash.title}"? An entry already uses that common name, so the two will show as one allergy.`, { confirmText: 'Save anyway', danger: false }))) return;
+
+  const manualId = allergenEditor.manualId;
+  const result = await commitAllergenChange(list => {
+    const existing = manualId ? list.find(a => a.id === manualId) : null;
+    if(existing){
+      existing.commonName = commonName;
+      existing.fullName = fullName;
+      existing.aliases = aliases;
+    } else {
+      list.push({ id: makeId(), commonName, fullName, aliases, createdAt: new Date().toISOString() });
+    }
+    return list;
+  });
+  logActivity(getAdminActingUsername(), `${manualId ? 'Edited' : 'Added'} allergen entry "${commonName || fullName}"${aliases.length ? ` (also known as ${aliases.join(', ')})` : ''}`);
+  closeAllergenEditor();
+  allergenAdminSearch = '';
+  const saved = getMergedAllergenList().find(e => (e.commonName || e.fullName).toLowerCase() === (commonName || fullName).toLowerCase());
+  expandedAllergenKey = saved ? saved.key : null;
+  renderAdminAllergensTab();
+  uiAlert(`Saved "${commonName || fullName}".`, { tone: 'success' });
+  if(!result.ok) uiAlert(`Saved on this device, but the shared database didn't take it: ${result.error}`, { tone: 'error', dialog: true });
+  requestAnimationFrame(() => {
+    const row = saved && document.querySelector(`#allergen-admin-list .protocol-item[data-key="${CSS.escape(saved.key)}"]`);
+    if(row){ row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.add('just-saved'); setTimeout(() => row.classList.remove('just-saved'), 1600); }
+  });
+}
+
+/* ---------- Ingredient tidy-up ---------- */
+
+function renderIngredientTidy(content){
+  setAdminScreenHeader('Tidy Ingredients', 'Allergies', () => { allergenAdminView = 'list'; renderAdminAllergensTab(); scrollAdminToTop(); });
+  const plan = buildIngredientTidyPlan();
+  const totals = plan.reduce((t, c) => ({
+    dupes: t.dupes + c.duplicates,
+    notes: t.notes + c.skipped.length,
+    split: t.split + c.split,
+    fixed: t.fixed + c.rejoined
+  }), { dupes: 0, notes: 0, split: 0, fixed: 0 });
+
+  content.innerHTML = `
+    <p class="caption" style="margin-top:6px;">Cleans every product's ingredient list the same way new pastes are cleaned: removes labels, footnotes, and duplicates, splits "(and)" lines, repairs lines broken at commas, and uses one spelling per ingredient.</p>
+    ${plan.length ? `
+      <div class="summary-pills">
+        <div class="summary-pill"><b>${plan.length}</b><span>Products</span></div>
+        <div class="summary-pill"><b>${totals.dupes}</b><span>Duplicates</span></div>
+        <div class="summary-pill"><b>${totals.split + totals.fixed}</b><span>Lines fixed</span></div>
+      </div>
+      <div class="safety-list">
+        ${plan.map(c => `
+          <details class="tidy-item">
+            <summary>
+              <span class="sr-main"><b>${escapeHtml(c.product.name)}</b><small>${escapeHtml([
+                c.duplicates ? `${c.duplicates} duplicate${c.duplicates === 1 ? '' : 's'}` : '',
+                c.skipped.length ? `${c.skipped.length} note${c.skipped.length === 1 ? '' : 's'} removed` : '',
+                c.split ? `${c.split} combined line${c.split === 1 ? '' : 's'} split` : '',
+                c.rejoined ? `${c.rejoined} broken line${c.rejoined === 1 ? '' : 's'} repaired` : '',
+                (c.added.length && !c.split && !c.rejoined) ? `${c.added.length} spelling${c.added.length === 1 ? '' : 's'} matched` : ''
+              ].filter(Boolean).join(' · ') || `${c.before.length} → ${c.after.length} ingredients`)}</small></span>
+              ${ico('chevronDown')}
+            </summary>
+            <div class="tidy-diff">
+              ${c.removed.map(x => `<div class="tidy-line out">− ${escapeHtml(x)}</div>`).join('')}
+              ${c.added.map(x => `<div class="tidy-line in">+ ${escapeHtml(x)}</div>`).join('')}
+              ${!c.removed.length && !c.added.length ? `<div class="tidy-line">Duplicate entries removed / order kept</div>` : ''}
+            </div>
+          </details>
+        `).join('')}
+      </div>
+      <div class="editor-actions">
+        <button type="button" class="ui-btn ui-btn-secondary" id="tidy-cancel-btn">Cancel</button>
+        <button type="button" class="ui-btn ui-btn-primary" id="tidy-apply-btn">Tidy ${plan.length} product${plan.length === 1 ? '' : 's'}</button>
+      </div>
+    ` : `<p class="all-good">${ico('checkCircle')}<span>Every ingredient list is already tidy.</span></p>`}
+  `;
+
+  const cancel = document.getElementById('tidy-cancel-btn');
+  if(cancel) cancel.addEventListener('click', () => { allergenAdminView = 'list'; renderAdminAllergensTab(); scrollAdminToTop(); });
+  const apply = document.getElementById('tidy-apply-btn');
+  if(apply) apply.addEventListener('click', async () => {
+    apply.disabled = true;
+    apply.textContent = 'Saving…';
+    const result = await commitInventoryChanges(plan.map(c => ({ type: 'products', op: 'patch', id: c.product.id, fields: { ingredients: c.after }, label: c.product.name })));
+    logActivity(getAdminActingUsername(), `Tidied ingredient lists for ${plan.length} product${plan.length === 1 ? '' : 's'} (${totals.dupes} duplicates removed, ${totals.split + totals.fixed} lines fixed)`);
+    allergenAdminView = 'list';
+    renderAdminAllergensTab();
+    scrollAdminToTop();
+    uiAlert(`Tidied ${plan.length} product${plan.length === 1 ? '' : 's'}.`, { tone: 'success' });
+    reportCommitProblems(result);
   });
 }
 
@@ -7403,7 +8293,8 @@ function renderItemEditor(content, type){
       <h3 class="form-group-title">Ingredients</h3>
       <div class="field">
         <label for="inv-item-ingredients">Paste ingredients <span class="opt" id="inv-ingredient-count">${ingredientCount} found</span></label>
-        <textarea id="inv-item-ingredients" rows="5" placeholder="Separated by commas, semicolons, or line breaks">${escapeHtml(d.ingredients)}</textarea>
+        <textarea id="inv-item-ingredients" rows="5" placeholder="Paste the label as-is — labels, footnotes, and duplicates are cleaned up">${escapeHtml(d.ingredients)}</textarea>
+        <div id="inv-ingredient-report" class="ingredient-report"></div>
       </div>
     </section>
     ` : ''}
@@ -7441,9 +8332,54 @@ function renderItemEditor(content, type){
   });
   const ing = document.getElementById('inv-item-ingredients');
   if(ing){
-    ing.addEventListener('input', () => {
-      document.getElementById('inv-ingredient-count').textContent = `${parseIngredientsText(ing.value).length} found`;
-    });
+    const index = buildIngredientIndex();
+    let cleanedNote = '';
+    const report = () => {
+      const res = processIngredientText(ing.value, index);
+      document.getElementById('inv-ingredient-count').textContent = `${res.items.length} found`;
+      const box = document.getElementById('inv-ingredient-report');
+      if(!ing.value.trim()){ box.innerHTML = ''; return; }
+      const facts = [
+        res.duplicates.length ? `${res.duplicates.length} duplicate${res.duplicates.length === 1 ? '' : 's'} removed` : '',
+        res.skipped.length ? `${res.skipped.length} note${res.skipped.length === 1 ? '' : 's'} skipped` : '',
+        res.splitCount ? `${res.splitCount} combined line${res.splitCount === 1 ? '' : 's'} split` : '',
+        res.respelled ? `${res.respelled} matched to existing spelling${res.respelled === 1 ? '' : 's'}` : ''
+      ].filter(Boolean);
+      box.innerHTML = `
+        ${cleanedNote ? `<p class="ir-cleaned">${ico('checkCircle')}<span>${escapeHtml(cleanedNote)}</span></p>` : ''}
+        ${facts.length ? `<p class="ir-facts">${escapeHtml(facts.join(' · '))}</p>` : ''}
+        ${res.fresh.length ? `
+          <p class="ir-new-label">${res.fresh.length} new to your ingredient list — check for typos:</p>
+          <div class="ir-new">
+            ${res.fresh.map(f => {
+              const s = res.suggestions.get(f);
+              return `<div class="ir-new-item"><span>${escapeHtml(f)}</span>${s ? `<button type="button" class="row-chip ir-use" data-from="${escapeHtml(f)}" data-to="${escapeHtml(s)}">Use “${escapeHtml(s)}”</button>` : ''}</div>`;
+            }).join('')}
+          </div>
+        ` : `<p class="ir-facts">${ico('checkCircle')} All ${res.items.length} are already on file.</p>`}
+      `;
+      box.querySelectorAll('.ir-use').forEach(btn => btn.addEventListener('click', () => {
+        const items = processIngredientText(ing.value, index).items.map(x => x === btn.dataset.from ? btn.dataset.to : x);
+        ing.value = items.join(', ');
+        cleanedNote = '';
+        report();
+      }));
+    };
+    ing.addEventListener('input', () => { cleanedNote = ''; report(); });
+    ing.addEventListener('paste', () => setTimeout(() => {
+      const res = processIngredientText(ing.value, index);
+      const cleaned = res.items.join(', ');
+      if(cleaned !== ing.value){
+        const bits = [
+          res.skipped.length ? `${res.skipped.length} label/footnote${res.skipped.length === 1 ? '' : 's'}` : '',
+          res.duplicates.length ? `${res.duplicates.length} duplicate${res.duplicates.length === 1 ? '' : 's'}` : ''
+        ].filter(Boolean);
+        ing.value = cleaned;
+        cleanedNote = `Paste cleaned up${bits.length ? ` — removed ${bits.join(' and ')}` : ''}.`;
+      }
+      report();
+    }, 0));
+    report();
   }
   document.getElementById('inv-cancel-btn').addEventListener('click', leaveItemEditor);
   document.getElementById('inv-save-btn').addEventListener('click', () => saveItemFromEditor(type));
@@ -7472,7 +8408,7 @@ async function saveItemFromEditor(type){
   if(clash && !(await uiConfirm(`Save with a duplicate name? ${type === 'products' && brand ? `${brand} ` : ''}"${clash.name}" already exists.`, { confirmText:'Save anyway' }))) return;
 
   const fields = type === 'products'
-    ? { brand, name, description: (d.description || '').trim(), ingredients: parseIngredientsText(d.ingredients || '') }
+    ? { brand, name, description: (d.description || '').trim(), ingredients: processIngredientText(d.ingredients || '', buildIngredientIndex()).items }
     : { name };
 
   // Only touch stock if it was changed here, so counts made elsewhere survive.
@@ -8537,145 +9473,257 @@ function renderProtocolGrids(){
 
 renderProtocolGrids();
 
-/* ---------- Allergy Lookup ---------- */
+/* ---------- Allergy Lookup (rebuilt in v1.38.0) ---------- */
 
-function extractBotanicalKey(text){
-  const idx = text.indexOf('(');
-  if(idx === -1) return text.trim().toLowerCase();
-  return text.slice(0, idx).trim().toLowerCase();
+const ALLERGEN_GENERIC_TERMS = new Set(['oil','oils','extract','butter','seed','leaf','flower','fruit','peel','root','juice','powder','water','wax','bark','kernel','stem','herb','plant','acid','gum','sweet','organic','and','the','with']);
+
+function botanicalKeyOf(text){
+  let t = String(text || '').toLowerCase();
+  const i = t.indexOf('(');
+  if(i >= 0) t = t.slice(0, i);
+  return t.replace(/\b(certified\s+)?organic\b/g, ' ').replace(/[^a-z0-9/ -]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function botanicalPartOf(text){
+  const s = String(text || '');
+  const i = s.indexOf('(');
+  return (i >= 0 ? s.slice(0, i) : s).replace(/^\s*organic\s+/i, '').trim();
+}
+function commonNameOf(text){
+  const m = String(text || '').match(/\(([^()]+)\)/);
+  if(!m) return '';
+  const c = m[1].trim();
+  if(!c || /^and$/i.test(c) || /^\d/.test(c)) return '';
+  return c;
+}
+function escapeRegExpText(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function mentionsTerm(text, term){
+  return new RegExp(`(^|[^a-z0-9])${escapeRegExpText(term)}(s|es)?(?=$|[^a-z0-9])`, 'i').test(String(text || ''));
 }
 
-function extractCommonNameFromText(text){
-  const m = text.match(/\(([^)]+)\)/);
-  return m ? m[1].trim() : '';
-}
-
+// Every ingredient from Products plus custom entries, grouped so that
+// Latin/common variants, swapped wording (Aqua/Water), shared common
+// names, and admin "also known as" names all land in one entry.
 function getMergedAllergenList(){
   const products = loadProducts();
-  const manual = loadAllergens();
-
-  // Step 1: group every raw ingredient variant by its botanical (Latin) key —
-  // e.g. "Lavandula Angustifolia (Lavender) Oil" and "...Flower Extract"
-  // and the plain "...(Lavender)" all share the botanical key
-  // "lavandula angustifolia", so they group together automatically.
-  const groups = new Map(); // botanicalKey -> { variants:Set<string>, commonName:string, manualId:string|null }
-
-  products.forEach(p => (p.ingredients || []).forEach(ing => {
-    const text = ing.trim();
-    if(!text) return;
-    const key = extractBotanicalKey(text);
-    if(!groups.has(key)){
-      groups.set(key, { variants: new Set(), commonName: extractCommonNameFromText(text), manualId: null });
+  const manual = [...loadAllergens()].sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  const groups = [];
+  const byKey = new Map();
+  const groupFor = (bkey) => {
+    if(!byKey.has(bkey)){
+      const g = { idx: groups.length, bkeys: new Set([bkey]), variants: new Map(), commons: new Map(), productIds: new Set(), manuals: [] };
+      byKey.set(bkey, g);
+      groups.push(g);
     }
-    groups.get(key).variants.add(text.toLowerCase());
-  }));
+    return byKey.get(bkey);
+  };
 
-  // Step 2: apply manual common-name assignments. An admin only needs to
-  // alias ONE variant (or just the plain botanical name) and it now applies
-  // to every variant sharing that botanical key.
-  manual.forEach(a => {
-    if(!a.fullName) return;
-    const key = extractBotanicalKey(a.fullName.trim());
-    if(groups.has(key)){
-      const g = groups.get(key);
-      g.commonName = a.commonName || g.commonName;
-      g.manualId = a.id;
-    } else {
-      // Pure manual addition not tied to any product ingredient yet
-      groups.set(key, { variants: new Set([a.fullName.trim().toLowerCase()]), commonName: a.commonName || '', manualId: a.id });
-    }
-  });
-
-  // Step 3: fallback merge — if two different botanical keys ended up with
-  // the same common name (e.g. a synonym Latin name for the same plant),
-  // fold them into one entry.
-  const byCommonName = new Map(); // lowercase common name -> merged group
-  const noCommonName = [];
-
-  groups.forEach((g, botanicalKey) => {
-    const commonKey = (g.commonName || '').trim().toLowerCase();
-    if(!commonKey){
-      noCommonName.push({ botanicalKey, ...g });
-      return;
-    }
-    if(byCommonName.has(commonKey)){
-      const existing = byCommonName.get(commonKey);
-      g.variants.forEach(v => existing.variants.add(v));
-      if(g.manualId) existing.manualId = g.manualId;
-    } else {
-      byCommonName.set(commonKey, { botanicalKey, ...g });
-    }
-  });
-
-  const finalGroups = [...byCommonName.values(), ...noCommonName];
-
-  return finalGroups.map(g => {
-    const variantList = Array.from(g.variants);
-    // Prefer the shortest variant as the representative full name — usually
-    // the plain "Latin (Common)" form without an extra Oil/Extract suffix.
-    const representative = variantList.sort((a, b) => a.length - b.length)[0] || g.botanicalKey;
-    return {
-      id: g.manualId,
-      commonName: g.commonName || '',
-      fullName: representative,
-      matchKeys: variantList
-    };
-  });
-}
-
-function allergenDisplayName(entry){
-  if(entry.commonName && entry.fullName && entry.commonName.toLowerCase() !== entry.fullName.toLowerCase()){
-    return `${entry.commonName} (${entry.fullName})`;
-  }
-  return entry.commonName || entry.fullName;
-}
-
-function allergenSortKey(entry){
-  return (entry.commonName || entry.fullName || '').toLowerCase();
-}
-
-function getMatchingProducts(entry){
-  const products = loadProducts();
-  const searchTerms = new Set((entry.matchKeys || [entry.fullName]).map(s => s.trim().toLowerCase()));
-  return products
-    .filter(p => (p.ingredients || []).some(ing => searchTerms.has(ing.trim().toLowerCase())))
-    .sort((a,b) => a.name.localeCompare(b.name));
-}
-
-function getProtocolSafety(entry){
-  const products = loadProducts();
-  const searchTerms = new Set((entry.matchKeys || [entry.fullName]).map(s => s.trim().toLowerCase()));
-
-  const matchingProducts = products
-    .filter(p => (p.ingredients || []).some(ing => searchTerms.has(ing.trim().toLowerCase())));
-  const matchingIds = new Set(matchingProducts.map(p => p.id));
-  const matchingProductNames = matchingProducts.map(p => p.name.toLowerCase());
-
-  const safe = [];
-  const unsafe = [];
-  ALL.forEach(protocol => {
-    // Linked products are matched by id, so a renamed product is still caught.
-    // Saved text is still checked for older, unlinked prep lines.
-    const isUnsafe = (protocol.prep || []).some(item => {
-      if(item.productId && matchingIds.has(item.productId)) return true;
-      if(item.productIds && item.productIds.some(id => matchingIds.has(id))) return true;
-      const t = String(item.t || '').toLowerCase();
-      return matchingProductNames.some(name => t.includes(name));
+  products.forEach(p => {
+    rejoinBrokenIngredients(p.ingredients || []).forEach(raw => {
+      processIngredientText(raw, null).items.forEach(item => {
+        const bkey = botanicalKeyOf(item);
+        if(!bkey) return;
+        const g = groupFor(bkey);
+        const low = item.toLowerCase();
+        if(!g.variants.has(low)) g.variants.set(low, item);
+        const c = commonNameOf(item);
+        if(c){
+          const cl = c.toLowerCase();
+          g.commons.set(cl, { text: c, count: (g.commons.get(cl) || { count: 0 }).count + 1 });
+        }
+        g.productIds.add(p.id);
+      });
     });
-    if(isUnsafe) unsafe.push(protocol); else safe.push(protocol);
   });
-  return { safe, unsafe };
+
+  manual.forEach(a => {
+    const full = String(a.fullName || '').trim();
+    const bkey = full ? botanicalKeyOf(full) : `manual:${a.id}`;
+    const g = byKey.get(bkey) || groupFor(bkey || `manual:${a.id}`);
+    if(full && !g.variants.has(full.toLowerCase()) && !g.productIds.size) g.variants.set(full.toLowerCase(), full);
+    g.manuals.push(a);
+  });
+
+  // Union-find over groups
+  const parent = groups.map((_, i) => i);
+  const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const union = (a, b) => { const ra = find(a), rb = find(b); if(ra !== rb) parent[Math.max(ra, rb)] = Math.min(ra, rb); };
+
+  const nameIndex = new Map(); // lowercase name -> [group idx]
+  const addName = (name, idx) => {
+    const k = String(name || '').trim().toLowerCase();
+    if(!k) return;
+    if(!nameIndex.has(k)) nameIndex.set(k, []);
+    nameIndex.get(k).push(idx);
+  };
+  groups.forEach(g => {
+    g.bkeys.forEach(k => addName(k, g.idx));
+    g.commons.forEach((_, c) => addName(c, g.idx));
+    g.variants.forEach((_, v) => addName(v, g.idx));
+    g.manuals.forEach(m => { if(m.commonName) addName(m.commonName, g.idx); });
+  });
+  // Shared common names, and a common name that is another group's main name (Aqua/Water)
+  groups.forEach(g => {
+    const names = [...g.commons.keys(), ...g.manuals.map(m => String(m.commonName || '').toLowerCase()).filter(Boolean)];
+    names.forEach(n => (nameIndex.get(n) || []).forEach(other => union(g.idx, other)));
+  });
+  // "Also known as" names
+  groups.forEach(g => g.manuals.forEach(m => (m.aliases || []).forEach(alias => {
+    const a = String(alias || '').trim().toLowerCase();
+    if(!a) return;
+    const hits = new Set([...(nameIndex.get(a) || []), ...(nameIndex.get(botanicalKeyOf(a)) || [])]);
+    hits.forEach(other => union(g.idx, other));
+  })));
+
+  const merged = new Map();
+  groups.forEach(g => {
+    const root = find(g.idx);
+    if(!merged.has(root)) merged.set(root, []);
+    merged.get(root).push(g);
+  });
+
+  const entries = [];
+  merged.forEach(members => {
+    const manuals = members.flatMap(m => m.manuals).sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    const primary = manuals[0] || null;
+    const variants = new Map();
+    const commons = new Map();
+    const productIds = new Set();
+    const bkeys = [];
+    members.forEach(m => {
+      m.variants.forEach((v, k) => variants.set(k, v));
+      m.commons.forEach((v, k) => commons.set(k, { text: v.text, count: (commons.get(k) || { count: 0 }).count + v.count }));
+      m.productIds.forEach(id => productIds.add(id));
+      m.bkeys.forEach(k => bkeys.push(k));
+    });
+    const variantList = [...variants.values()].sort((a, b) => a.length - b.length || a.localeCompare(b));
+    const commonList = [...commons.values()].sort((a, b) => b.count - a.count || a.text.length - b.text.length).map(c => c.text);
+    const commonName = (primary && primary.commonName) ? primary.commonName.trim() : (commonList[0] || '');
+    const fullName = (primary && primary.fullName) ? primary.fullName.trim() : (variantList[0] || '');
+    const latin = [...new Set(variantList.map(botanicalPartOf).filter(Boolean))];
+    const aliases = [...new Set(manuals.flatMap(m => m.aliases || []).map(s => String(s).trim()).filter(Boolean))];
+    const otherCommons = commonList.filter(c => c.toLowerCase() !== commonName.toLowerCase());
+    const title = commonName || fullName || '(unnamed)';
+    const subtitleNames = latin.filter(n => n.toLowerCase() !== title.toLowerCase());
+    const key = primary ? `m:${primary.id}` : `k:${[...bkeys].sort()[0]}`;
+    entries.push({
+      key,
+      id: primary ? primary.id : null,
+      manual: primary,
+      extraManualIds: manuals.slice(1).map(m => m.id),
+      commonName,
+      fullName,
+      title,
+      latinNames: latin,
+      subtitleNames,
+      otherCommons,
+      aliases,
+      variants: variantList,
+      matchKeys: variantList.map(v => v.toLowerCase()),
+      productIds: [...productIds],
+      needsCommonName: !commonName,
+      searchText: [title, fullName, ...latin, ...commonList, ...aliases, ...variantList].join(' | ').toLowerCase()
+    });
+  });
+  return entries.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+}
+
+function allergenDisplayName(entry){ return entry.title; }
+function allergenSortKey(entry){ return entry.title.toLowerCase(); }
+
+function allergenTerms(entry){
+  const raw = [entry.commonName, ...entry.otherCommons, ...entry.aliases, ...entry.latinNames];
+  const terms = new Set();
+  raw.forEach(r => {
+    const t = String(r || '').trim().toLowerCase();
+    if(t.length < 3 || ALLERGEN_GENERIC_TERMS.has(t)) return;
+    terms.add(t);
+  });
+  return [...terms];
+}
+
+const PRODUCT_WORDS_RE = /\b(oils?|lotions?|creams?|scrubs?|whips?|gels?|balms?|serums?|masks?|masques?|butters?|sprays?|elixirs?|mists?|salts?|clays?|muds?|wash|cleansers?|toners?|tonics?|exfoliants?|polish|essences?|concentrates?|soaks?|milks?|rubs?|ointments?|shampoos?|conditioners?|cbd|arnica|aromatherapy|fragrance)\b/i;
+const NON_PRODUCT_WORDS_RE = /\b(towels?|washcloths?|sheets?|blankets?|bath\s*mats?|bathmats?|mats?|robes?|slippers?|pillows?|bolsters?|covers?|skirts?|stones?|bowls?|brush(?:es)?|mitts?|gloves?|cotton|rounds|spatulas?|tongs|basins?|headbands?|foil|film|linens?|cloths?|sponges?|cups?|rollers?|bottles?)\b/i;
+
+// Does a plain-text prep line look like it names a product (so it
+// should be checked), rather than towels, stones, and other supplies?
+function isProductLikePrepText(text){
+  const t = String(text || '').trim();
+  if(!t) return false;
+  if(/^(?:\d+\s+)?(?:warm|hot|cold|chilled)?\s*water$/i.test(t)) return false;
+  // Notes in brackets only count when they name an actual product
+  // ("towel (apply 1 pump Restore oil)"), not in passing ("before oil application").
+  const main = t.replace(/\([^)]*\)/g, ' ');
+  const notes = (t.match(/\(([^)]*)\)/g) || []).join(' ');
+  if(PRODUCT_WORDS_RE.test(main)) return true;
+  if(NON_PRODUCT_WORDS_RE.test(main)){
+    return !!notes && rankProductsForPrep(notes, loadProducts()).length > 0;
+  }
+  if(tableMakeupRowFromSaved(t, null, loadSupplies()).supplyId) return false;
+  return true;
+}
+function unlinkedPrepLines(protocol){
+  return (protocol.prep || []).filter(x => !x.productId && !(x.productIds || []).length && isProductLikePrepText(x.t));
+}
+
+// For each treatment: 'avoid' (a linked product or a mention matches),
+// 'check' (something the app can't verify), or 'clear'.
+function evaluateAllergySafety(entries){
+  const productById = new Map(loadProducts().map(p => [p.id, p]));
+  const checks = entries.map(e => ({
+    entry: e,
+    ids: new Set(e.productIds),
+    productNames: e.productIds.map(id => productById.get(id)).filter(Boolean).map(p => p.name).filter(n => n.trim().length >= 3),
+    terms: allergenTerms(e)
+  }));
+  return ALL.map(protocol => {
+    const avoid = [], check = [];
+    const addAvoid = (entry, why) => { if(!avoid.some(a => a.why === why && a.allergen === entry.title)) avoid.push({ allergen: entry.title, why }); };
+    const addCheck = (why) => { if(!check.some(c => c.why === why)) check.push({ why }); };
+
+    (protocol.prep || []).forEach(item => {
+      const text = String(item.t || '').trim();
+      const linked = item.productId ? [item.productId] : (item.productIds || []);
+      if(linked.length){
+        const present = linked.filter(id => productById.has(id));
+        checks.forEach(c => present.filter(id => c.ids.has(id)).forEach(id => addAvoid(c.entry, `${productById.get(id).name} (prep)`)));
+        if(present.length < linked.length) addCheck(`"${text}" uses a product that's no longer in Products`);
+        return;
+      }
+      let hit = false;
+      checks.forEach(c => {
+        const byName = c.productNames.find(n => text.toLowerCase().includes(n.toLowerCase()));
+        const byTerm = !byName && c.terms.find(term => mentionsTerm(text, term));
+        if(byName || byTerm){ hit = true; addAvoid(c.entry, `"${text}" (prep)`); }
+      });
+      if(!hit && isProductLikePrepText(text)) addCheck(`"${text}" isn't linked to a product`);
+    });
+
+    const texts = [
+      ...(protocol.callouts || []).map(t => ({ kind: 'Warning', t })),
+      ...(protocol.menuDescription ? [{ kind: 'Description', t: protocol.menuDescription }] : [])
+    ];
+    texts.forEach(({ kind, t }) => checks.forEach(c => {
+      const found = c.terms.find(term => mentionsTerm(t, term)) || c.productNames.find(n => String(t).toLowerCase().includes(n.toLowerCase()));
+      if(found) addAvoid(c.entry, `${kind} mentions "${found}"`);
+    }));
+
+    if(!(protocol.prep || []).length) addCheck('No prep listed');
+    const status = avoid.length ? 'avoid' : (check.length ? 'check' : 'clear');
+    return { protocol, status, avoid, check };
+  });
 }
 
 const allergyOverlay = document.getElementById('allergy-overlay');
 const allergyInner = document.getElementById('allergy-inner');
-let allergyStep = 'list'; // 'list' | 'detail'
-let allergySelectedKey = null;
+let allergyStep = 'list';       // 'list' | 'detail'
+let allergySelectedKeys = [];
+let allergyAddMode = false;
 let allergySearchTerm = '';
 
 function openAllergyLookup(){
   allergyStep = 'list';
-  allergySelectedKey = null;
+  allergySelectedKeys = [];
+  allergyAddMode = false;
   allergySearchTerm = '';
   renderAllergyLookup();
   allergyOverlay.classList.add('open');
@@ -8684,146 +9732,216 @@ function openAllergyLookup(){
 function closeAllergyLookup(){
   allergyOverlay.classList.remove('open');
 }
-
 function renderAllergyLookup(){
-  if(allergyStep === 'detail' && allergySelectedKey){
-    renderAllergyDetail();
-  } else {
-    renderAllergyList();
-  }
+  if(allergyStep === 'detail' && allergySelectedKeys.length) renderAllergyDetail();
+  else renderAllergyList();
 }
 
 function renderAllergyList(){
   const all = getMergedAllergenList();
-  const filtered = allergySearchTerm
-    ? all.filter(e => allergenDisplayName(e).toLowerCase().includes(allergySearchTerm.toLowerCase()))
-    : all;
-
-  filtered.sort((a, b) => allergenSortKey(a).localeCompare(allergenSortKey(b)));
-
-  const groups = {};
-  filtered.forEach(entry => {
-    const letter = (allergenSortKey(entry)[0] || '#').toUpperCase();
-    if(!groups[letter]) groups[letter] = [];
-    groups[letter].push(entry);
+  const products = loadProducts();
+  const groups = new Map();
+  all.forEach(entry => {
+    const first = entry.title.charAt(0).toUpperCase();
+    const letter = /[A-Z]/.test(first) ? first : '#';
+    if(!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter).push(entry);
   });
-  const letters = Object.keys(groups).sort();
+  const letters = [...groups.keys()].sort((a, b) => (a === '#') - (b === '#') || a.localeCompare(b));
+  const selectedTitles = allergySelectedKeys.map(k => (all.find(e => e.key === k) || {}).title).filter(Boolean);
 
   allergyInner.innerHTML = `
-    <button class="back-btn" id="allergy-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
+    <button class="back-btn" id="allergy-back"><span class="chev">${ico('chevronLeft')}</span> ${allergyAddMode ? 'Results' : 'Home'}</button>
     <div class="agenda-step">
-      <h2>Allergy Lookup</h2>
-      <p class="caption">Find an ingredient to see which treatments are safe to recommend.</p>
-      <div class="field"><input type="text" id="allergy-search" placeholder="Search ingredients…" value="${escapeHtml(allergySearchTerm)}"></div>
-      ${letters.length ? `
-        <div class="letter-jump">
-          ${letters.map(l => `<a href="#allergy-letter-${l}" class="letter-chip">${l}</a>`).join('')}
-        </div>
-      ` : ''}
-      ${letters.length ? letters.map(letter => `
-        <div class="section-label" id="allergy-letter-${letter}">${letter}</div>
-        <div class="grid">
-          ${groups[letter].map(entry => `
-            <button class="card-btn allergen-btn" data-key="${allergenSortKey(entry)}">
-              <span><span class="name">${escapeHtml(allergenDisplayName(entry))}</span></span>
-              ${iconArrow()}
-            </button>
-          `).join('')}
-        </div>
-      `).join('') : `<p class="caption">No ingredients yet — add products with ingredients, or add allergens manually in Menu → Allergies.</p>`}
+      <h2>${allergyAddMode ? 'Add an Allergy' : 'Allergy Lookup'}</h2>
+      <p class="caption">${allergyAddMode
+        ? `Checking for ${escapeHtml(selectedTitles.join(', '))}. Pick another allergy to include.`
+        : 'Pick the guest\u2019s allergy to see which treatments to avoid. You can add more than one.'}</p>
+      <label class="search-field">
+        ${ico('search')}
+        <input type="search" id="allergy-search" placeholder="Common or Latin name" value="${escapeHtml(allergySearchTerm)}" autocomplete="off" aria-label="Search ingredients">
+      </label>
+      ${letters.length > 1 ? `<div class="letter-jump">${letters.map(l => `<button type="button" class="letter-chip" data-letter="${l}">${l}</button>`).join('')}</div>` : ''}
+      <div id="allergy-list">
+        ${letters.map(letter => `
+          <div class="allergen-letter-group" data-letter="${letter}">
+            <div class="section-label" id="allergy-letter-${letter}">${letter}</div>
+            <div class="allergen-list">
+              ${groups.get(letter).map(entry => {
+                const picked = allergySelectedKeys.includes(entry.key);
+                const n = entry.productIds.length;
+                const sub = [entry.subtitleNames.slice(0, 2).join(' · '), n ? `in ${n} product${n === 1 ? '' : 's'}` : 'added manually'].filter(Boolean).join(' — ');
+                return `
+                  <button type="button" class="allergen-row ${picked ? 'picked' : ''}" data-key="${escapeHtml(entry.key)}" data-search="${escapeHtml(entry.searchText)}" ${picked ? 'disabled' : ''}>
+                    <span class="al-main"><b>${escapeHtml(entry.title)}</b><small>${escapeHtml(sub)}</small></span>
+                    ${picked ? `<span class="al-picked">${ico('checkCircle')}</span>` : ico('chevronRight')}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+        <p class="caption ${all.length ? 'is-hidden' : ''}" id="allergy-empty">${all.length ? 'No ingredients match that search.' : 'No ingredients yet — add products with ingredients, or add allergens in Menu → Allergies.'}</p>
+      </div>
     </div>
   `;
 
-  document.getElementById('allergy-back').addEventListener('click', closeAllergyLookup);
-  const searchInput = document.getElementById('allergy-search');
-  searchInput.addEventListener('input', ()=>{
-    allergySearchTerm = searchInput.value;
-    renderAllergyList();
-    document.getElementById('allergy-search').focus();
-    const val = document.getElementById('allergy-search').value;
-    document.getElementById('allergy-search').setSelectionRange(val.length, val.length);
+  document.getElementById('allergy-back').addEventListener('click', () => {
+    if(allergyAddMode){ allergyAddMode = false; allergyStep = 'detail'; renderAllergyLookup(); allergyOverlay.scrollTop = 0; }
+    else closeAllergyLookup();
   });
-  allergyInner.querySelectorAll('.allergen-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      allergySelectedKey = btn.dataset.key;
-      allergyStep = 'detail';
-      renderAllergyLookup();
+
+  const search = document.getElementById('allergy-search');
+  const applySearch = () => {
+    const q = allergySearchTerm.trim().toLowerCase();
+    let any = false;
+    allergyInner.querySelectorAll('.allergen-letter-group').forEach(group => {
+      let groupAny = false;
+      group.querySelectorAll('.allergen-row').forEach(row => {
+        const show = !q || row.dataset.search.includes(q);
+        row.classList.toggle('is-hidden', !show);
+        if(show) groupAny = true;
+      });
+      group.classList.toggle('is-hidden', !groupAny);
+      const chip = allergyInner.querySelector(`.letter-chip[data-letter="${group.dataset.letter}"]`);
+      if(chip) chip.classList.toggle('is-hidden', !groupAny);
+      if(groupAny) any = true;
     });
-  });
+    const empty = document.getElementById('allergy-empty');
+    if(all.length) empty.classList.toggle('is-hidden', any);
+  };
+  search.addEventListener('input', () => { allergySearchTerm = search.value; applySearch(); });
+  applySearch();
+
+  allergyInner.querySelectorAll('.letter-chip').forEach(chip => chip.addEventListener('click', () => {
+    const target = document.getElementById(`allergy-letter-${chip.dataset.letter}`);
+    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  allergyInner.querySelectorAll('.allergen-row').forEach(row => row.addEventListener('click', () => {
+    if(allergyAddMode){
+      if(!allergySelectedKeys.includes(row.dataset.key)) allergySelectedKeys.push(row.dataset.key);
+    } else {
+      allergySelectedKeys = [row.dataset.key];
+    }
+    allergyAddMode = false;
+    allergySearchTerm = '';
+    allergyStep = 'detail';
+    renderAllergyLookup();
+    allergyOverlay.scrollTop = 0;
+  }));
 }
 
 function renderAllergyDetail(){
   const all = getMergedAllergenList();
-  const entry = all.find(e => allergenSortKey(e) === allergySelectedKey);
-  if(!entry){
-    allergyStep = 'list';
-    renderAllergyList();
-    return;
-  }
-  const { safe, unsafe } = getProtocolSafety(entry);
-  const matchingProducts = getMatchingProducts(entry);
+  const entries = allergySelectedKeys.map(k => all.find(e => e.key === k)).filter(Boolean);
+  allergySelectedKeys = entries.map(e => e.key);
+  if(!entries.length){ allergyStep = 'list'; renderAllergyList(); return; }
+
+  const results = evaluateAllergySafety(entries);
+  const avoid = results.filter(r => r.status === 'avoid');
+  const check = results.filter(r => r.status === 'check');
+  const clear = results.filter(r => r.status === 'clear');
+  const byName = (a, b) => a.protocol.name.localeCompare(b.protocol.name);
+  [avoid, check, clear].forEach(list => list.sort(byName));
+
+  const productsById = new Map(loadProducts().map(p => [p.id, p]));
+  const productHits = new Map(); // productId -> [allergen titles]
+  entries.forEach(e => e.productIds.forEach(id => {
+    if(!productsById.has(id)) return;
+    if(!productHits.has(id)) productHits.set(id, []);
+    productHits.get(id).push(e.title);
+  }));
+  const productList = [...productHits.entries()].map(([id, titles]) => ({ p: productsById.get(id), titles }))
+    .sort((a, b) => a.p.name.localeCompare(b.p.name));
+  const single = entries.length === 1 ? entries[0] : null;
+  const multi = entries.length > 1;
+
+  const resultRow = (r, kind) => {
+    const reasons = kind === 'avoid' ? r.avoid.map(a => multi ? `${a.allergen}: ${a.why}` : a.why) : r.check.map(c => c.why);
+    return `
+      <button type="button" class="safety-row ${kind}" data-id="${escapeHtml(r.protocol.id)}">
+        <span class="sr-main">
+          <b>${escapeHtml(r.protocol.name)}</b>
+          ${reasons.length ? `<small>${reasons.slice(0, 3).map(escapeHtml).join('<br>')}${reasons.length > 3 ? `<br>+${reasons.length - 3} more` : ''}</small>` : (r.protocol.caption ? `<small>${escapeHtml(r.protocol.caption)}</small>` : '')}
+        </span>
+        ${ico('chevronRight')}
+      </button>
+    `;
+  };
 
   allergyInner.innerHTML = `
     <button class="back-btn" id="allergy-back"><span class="chev">${ico('chevronLeft')}</span> Allergy Lookup</button>
     <div class="agenda-step">
-      <h2>${escapeHtml(allergenDisplayName(entry))}</h2>
-      <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
+      <h2>${single ? escapeHtml(single.title) : `${entries.length} Allergies`}</h2>
+      ${single && (single.subtitleNames.length || single.aliases.length || single.otherCommons.length) ? `
+        <p class="caption" style="margin-top:0;">${escapeHtml([...single.subtitleNames, ...single.otherCommons, ...single.aliases].filter((v, i, a) => a.findIndex(x => x.toLowerCase() === v.toLowerCase()) === i).slice(0, 6).join(' · '))}</p>
+      ` : ''}
+      <div class="allergy-chips">
+        ${entries.map(e => `<span class="allergy-chip">${escapeHtml(e.title)}${multi ? `<button type="button" class="allergy-chip-x" data-key="${escapeHtml(e.key)}" aria-label="Remove ${escapeHtml(e.title)}">${ico('x')}</button>` : ''}</span>`).join('')}
+        <button type="button" class="row-chip" id="allergy-add-btn">${ico('plus')}Add allergy</button>
+      </div>
 
-      <div class="block-label">Products That Contain It</div>
-      ${matchingProducts.length ? `
-        <div class="grid">
-          ${matchingProducts.map(p => `
-            <button class="card-btn allergy-product-btn" data-id="${p.id}">
-              <span><span class="name">${escapeHtml(p.name)}</span>${p.brand ? `<span class="meta">${escapeHtml(p.brand)}</span>` : ''}</span>
-              ${iconArrow()}
+      <div class="summary-pills">
+        <div class="summary-pill warn"><b>${avoid.length}</b><span>Avoid</span></div>
+        <div class="summary-pill caution"><b>${check.length}</b><span>Check</span></div>
+        <div class="summary-pill"><b>${clear.length}</b><span>No match</span></div>
+      </div>
+      <p class="allergy-note">${ico('info')}<span>Results are only as complete as each product's ingredient list and each treatment's prep. Always confirm with the guest.</span></p>
+
+      <div class="block-label avoid-label" style="margin-top:22px;">${ico('alert')}Avoid</div>
+      ${avoid.length ? `<div class="safety-list">${avoid.map(r => resultRow(r, 'avoid')).join('')}</div>`
+        : `<p class="caption">No treatment is known to use ${multi ? 'these ingredients' : 'this ingredient'}.</p>`}
+
+      <div class="block-label caution-label" style="margin-top:22px;">${ico('info')}Check before booking</div>
+      ${check.length ? `
+        <p class="caption" style="margin-top:0;">These use products the app can't match to an ingredient list — confirm what's in them first.</p>
+        <div class="safety-list">${check.map(r => resultRow(r, 'check')).join('')}</div>
+      ` : `<p class="caption">Nothing to double-check.</p>`}
+
+      <div class="block-label" style="margin-top:22px;">${ico('checkCircle')}No match found</div>
+      ${clear.length ? `<div class="safety-list">${clear.map(r => resultRow(r, 'clear')).join('')}</div>`
+        : `<p class="caption">None.</p>`}
+
+      <div class="block-label" style="margin-top:28px;">Products that contain ${multi ? 'them' : 'it'}</div>
+      ${productList.length ? `
+        <div class="safety-list">
+          ${productList.map(({ p, titles }) => `
+            <button type="button" class="safety-row product allergy-product-btn" data-id="${escapeHtml(p.id)}">
+              <span class="sr-main"><b>${escapeHtml(p.name)}</b><small>${escapeHtml([p.brand, multi ? `contains ${titles.join(', ')}` : ''].filter(Boolean).join(' · '))}</small></span>
+              ${ico('chevronRight')}
             </button>
           `).join('')}
         </div>
-      ` : `<p class="caption">No products in your list contain this ingredient.</p>`}
-
-      <div class="block-label avoid-label" style="margin-top:28px;">${ico('alert')}Treatments That Use It — Avoid</div>
-      ${unsafe.length ? `
-        <div class="grid">
-          ${unsafe.map(p => `
-            <button class="card-btn allergy-result-btn avoid" data-id="${p.id}">
-              <span><span class="name">${escapeHtml(p.name)}</span><span class="meta">${escapeHtml(p.caption || '')}</span></span>
-              ${iconArrow()}
-            </button>
-          `).join('')}
-        </div>
-      ` : `<p class="caption">No protocols use this ingredient.</p>`}
-
-      <div class="block-label" style="margin-top:28px;">${ico('checkCircle')}Recommended Treatments</div>
-      ${safe.length ? `
-        <div class="grid">
-          ${safe.map(p => `
-            <button class="card-btn allergy-result-btn" data-id="${p.id}">
-              <span><span class="name">${escapeHtml(p.name)}</span><span class="meta">${escapeHtml(p.caption || '')}</span></span>
-              ${iconArrow()}
-            </button>
-          `).join('')}
-        </div>
-      ` : `<p class="caption">No protocols found without this ingredient.</p>`}
+      ` : `<p class="caption">No products in your list contain ${multi ? 'these ingredients' : 'this ingredient'}.</p>`}
     </div>
   `;
 
-  document.getElementById('allergy-back').addEventListener('click', ()=>{
+  document.getElementById('allergy-back').addEventListener('click', () => {
+    allergyStep = 'list';
+    allergySelectedKeys = [];
+    renderAllergyLookup();
+    allergyOverlay.scrollTop = 0;
+  });
+  document.getElementById('allergy-add-btn').addEventListener('click', () => {
+    allergyAddMode = true;
+    allergySearchTerm = '';
     allergyStep = 'list';
     renderAllergyLookup();
+    allergyOverlay.scrollTop = 0;
   });
-  allergyInner.querySelectorAll('.allergy-result-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      closeAllergyLookup();
-      openProtocols();
-      openDetail(btn.dataset.id);
-    });
-  });
-  allergyInner.querySelectorAll('.allergy-product-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      closeAllergyLookup();
-      openProductDetailDirect(btn.dataset.id);
-    });
-  });
+  allergyInner.querySelectorAll('.allergy-chip-x').forEach(btn => btn.addEventListener('click', () => {
+    allergySelectedKeys = allergySelectedKeys.filter(k => k !== btn.dataset.key);
+    renderAllergyLookup();
+  }));
+  allergyInner.querySelectorAll('.safety-row:not(.product)').forEach(btn => btn.addEventListener('click', () => {
+    closeAllergyLookup();
+    openProtocols();
+    openDetail(btn.dataset.id);
+  }));
+  allergyInner.querySelectorAll('.allergy-product-btn').forEach(btn => btn.addEventListener('click', () => {
+    closeAllergyLookup();
+    openProductDetailDirect(btn.dataset.id);
+  }));
 }
 
 document.getElementById('open-allergy-lookup').addEventListener('click', openAllergyLookup);
@@ -9069,6 +10187,14 @@ function openDetail(idOrItem, opts){
   if(item.prep){
     html += `<div class="block-label">Prep</div><ul class="tray">`;
     html += item.prep.map(p => {
+      if(p.linkedText){
+        const ids = p.productId ? [p.productId] : (p.productIds || []);
+        const links = ids.map(id => loadProducts().find(pr => pr.id === id)).filter(Boolean)
+          .map(pr => `<button class="prep-product-link" data-id="${pr.id}">${escapeHtml(pr.name)}</button>`);
+        if(links.length){
+          return `<li><span class="prep-choice-line">${escapeHtml(p.t)}<span class="note linked-note">${links.length > 1 ? 'Products' : 'Product'}: ${links.join(' or ')}</span></span></li>`;
+        }
+      }
       if(p.productId){
         const product = loadProducts().find(pr => pr.id === p.productId);
         if(product){
@@ -9087,7 +10213,7 @@ function openDetail(idOrItem, opts){
           return `<li><span class="prep-choice-line">${p.amount ? escapeHtml(p.amount) + ' — ' : ''}${joined} <span class="note">(guest's choice)</span></span></li>`;
         }
       }
-      return `<li>${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</li>`;
+      return `<li><span class="prep-text">${escapeHtml(p.t)}${p.note ? `<span class="note">${escapeHtml(p.note)}</span>` : ''}</span></li>`;
     }).join('');
     html += `</ul>`;
   }
