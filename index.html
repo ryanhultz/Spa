@@ -2081,14 +2081,9 @@
   .insert-sub-line .row-chip{ padding:13px 14px; }
 
   .editor-actions{
-    position:sticky;
-    bottom:calc(64px + env(safe-area-inset-bottom));
-    z-index:5;
     display:flex;
     gap:10px;
-    margin-top:18px;
-    padding:14px 0 10px;
-    background:linear-gradient(to bottom, rgba(0,0,0,0), var(--stone) 26%);
+    margin-top:22px;
   }
   .editor-actions .ui-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; }
   .editor-actions .ui-btn .ico{ width:16px; height:16px; }
@@ -2112,9 +2107,6 @@
   #admin-tab-content > .summary-pills,
   #admin-tab-content > .resume-card{ margin-top:16px; }
   #admin-tab-content > .caption:first-child{ margin-top:6px; }
-  /* The sticky bar's faded top edge shouldn't block taps on what's beneath it */
-  .editor-actions{ pointer-events:none; }
-  .editor-actions > *{ pointer-events:auto; }
   .row-chip.primary{ background:var(--sage); border-color:var(--sage-deep); color:#fff; }
   .row-chip.primary .ico{ width:13px; height:13px; }
   .protocol-group-label .count.warn{ background:var(--warn-bg); color:var(--warn-ink); }
@@ -2387,7 +2379,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.36.0</div>
+    <div class="app-version">v1.37.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -3931,18 +3923,10 @@ function renderMenuScreen(){
           `).join('')}
         </div>
       ` : ''}
-      <div class="block-label" style="margin-top:${visibleSections.length ? '28px' : '0'};">Appearance</div>
-      <div class="theme-switch" role="radiogroup" aria-label="Appearance">
-        ${[['system','device','Match phone'],['light','sun','Light'],['dark','moon','Dark']].map(([val, icon, label]) => `
-          <button type="button" class="theme-opt" role="radio" data-theme-pref="${val}" aria-checked="${getThemePref() === val}">
-            ${ico(icon)}<span>${label}</span>
-          </button>
-        `).join('')}
-      </div>
-      <div class="block-label" style="margin-top:28px;">Account</div>
+      <div class="block-label" style="margin-top:${visibleSections.length ? '28px' : '0'};">Account</div>
       <div class="grid">
         <button class="card-btn" id="menu-my-account-btn">
-          <span><span class="name">My Account</span><span class="meta">Change password, security question</span></span>
+          <span><span class="name">My Account</span><span class="meta">Appearance, name, password, security question</span></span>
           ${iconArrow()}
         </button>
         <button class="card-btn" id="menu-logout-btn">
@@ -3961,12 +3945,6 @@ function renderMenuScreen(){
     btn.addEventListener('click', ()=>{
       closeMenuScreen();
       openAdmin(btn.dataset.tab);
-    });
-  });
-  inner.querySelectorAll('.theme-opt').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      setThemePref(btn.dataset.themePref);
-      inner.querySelectorAll('.theme-opt').forEach(b => b.setAttribute('aria-checked', String(b === btn)));
     });
   });
   document.getElementById('menu-my-account-btn').addEventListener('click', ()=>{
@@ -9276,7 +9254,17 @@ function renderMyAccount(){
       ${errorHtml}
       ${successHtml}
 
-      <div class="block-label">Name</div>
+      <div class="block-label">Appearance</div>
+      <p class="caption">Saved on this device only.</p>
+      <div class="theme-switch" role="radiogroup" aria-label="Appearance">
+        ${[['system','device','Match phone'],['light','sun','Light'],['dark','moon','Dark']].map(([val, icon, label]) => `
+          <button type="button" class="theme-opt" role="radio" data-theme-pref="${val}" aria-checked="${getThemePref() === val}">
+            ${ico(icon)}<span>${label}</span>
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="block-label" style="margin-top:32px;">Name</div>
       <p class="caption">Shown in Messages and your Home greeting, instead of your username. Re-enter your current password to update it.</p>
       <div class="field"><label>First Name</label><input type="text" id="my-account-firstname" value="${escapeHtml(user.firstName || '')}"></div>
       <div class="field"><label>Last Name</label><input type="text" id="my-account-lastname" value="${escapeHtml(user.lastName || '')}"></div>
@@ -9298,6 +9286,12 @@ function renderMyAccount(){
   `;
 
   document.getElementById('my-account-back').addEventListener('click', closeMyAccount);
+  myAccountInner.querySelectorAll('.theme-opt').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setThemePref(btn.dataset.themePref);
+      myAccountInner.querySelectorAll('.theme-opt').forEach(b => b.setAttribute('aria-checked', String(b === btn)));
+    });
+  });
 
   document.getElementById('my-account-save-name-btn').addEventListener('click', async ()=>{
     const currentPassword = document.getElementById('my-account-name-current-pw').value;
