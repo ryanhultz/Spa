@@ -15,6 +15,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Ledger">
 <meta name="theme-color" content="#727F63">
+<script>
+  /* Apply the saved Appearance choice before first paint so there is no light flash in dark mode. */
+  (function(){ try{ var t = localStorage.getItem('ledgerTheme_v1'); if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); }catch(e){} })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -34,6 +38,21 @@
     --line: rgba(43,42,36,0.14);
     --shadow: 0 10px 30px -14px rgba(43,42,36,0.35);
     --radius: 18px;
+    /* Added in v1.34.0 so every surface can switch with the theme */
+    --sage-text:#565F49;
+    --brand-pressed:#354E38;
+    --warn-bg:#F4E3D3;
+    --warn-border:#D9B48F;
+    --warn-ink:#8C4A2A;
+    --warn-ink-soft:#6B4A2A;
+    --avoid-bg:#FBF2E8;
+    --danger:#8C4A2A;
+    --chip-bg:#FFFFFF;
+    --scrim: rgba(43,42,36,0.42);
+    --toast-bg:#2B2A24;
+    --toast-ink:#ECE5D6;
+    --hero-overlay: linear-gradient(180deg, rgba(31,61,48,0.15) 0%, rgba(31,61,48,0.55) 100%);
+    color-scheme: light;
   }
   *{box-sizing:border-box;}
   html{ accent-color: var(--sage); }
@@ -76,7 +95,7 @@
     font-size:11px;
     letter-spacing:.16em;
     text-transform:uppercase;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     display:flex;
     align-items:center;
     gap:8px;
@@ -103,13 +122,13 @@
   h1.title em{
     font-style:italic;
     font-weight:500;
-    color:var(--sage-deep);
+    color:var(--sage-text);
   }
   .home-tagline{
     font-family:'Fraunces',serif;
     font-style:italic;
     font-size:14px;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     margin:2px 0 0;
   }
   .home-greeting{
@@ -168,15 +187,15 @@
   }
   .letter-chip:active{ background:var(--sage-deep); }
   .card-btn.allergy-result-btn.avoid{
-    border-color:#D9B48F;
-    background:#FBF2E8;
+    border-color:var(--warn-border);
+    background:var(--avoid-bg);
   }
-  .card-btn.allergy-result-btn.avoid .name{ color:#8C4A2A; }
-  .card-btn.allergy-result-btn.avoid .meta{ color:#8C4A2A; opacity:0.75; }
+  .card-btn.allergy-result-btn.avoid .name{ color:var(--warn-ink); }
+  .card-btn.allergy-result-btn.avoid .meta{ color:var(--warn-ink); opacity:0.75; }
   .card-btn.allergy-result-btn.avoid .arrow{
     background:rgba(140,74,42,0.12);
     border:1px solid rgba(140,74,42,0.25);
-    color:#8C4A2A;
+    color:var(--warn-ink);
   }
   .grid{
     display:flex;
@@ -198,7 +217,7 @@
     gap:14px;
     transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
-  .card-btn:active{ transform:scale(0.985); background:#354E38; }
+  .card-btn:active{ transform:scale(0.985); background:var(--brand-pressed); }
   .card-btn:hover{ border-color:var(--gold-soft); box-shadow:var(--shadow); }
   .card-btn > span:first-child{
     flex:1;
@@ -274,7 +293,7 @@
     font-size:11px;
     letter-spacing:.16em;
     text-transform:uppercase;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     margin-bottom:6px;
   }
   .auth-inner h2{
@@ -291,9 +310,9 @@
     margin-bottom:28px;
   }
   .auth-error{
-    background:#F4E3D3;
-    border:1px solid #D9B48F;
-    color:#8C4A2A;
+    background:var(--warn-bg);
+    border:1px solid var(--warn-border);
+    color:var(--warn-ink);
     border-radius:12px;
     padding:12px 14px;
     font-size:12.5px;
@@ -310,7 +329,7 @@
     all:unset;
     box-sizing:border-box;
     cursor:pointer;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     text-decoration:underline;
     text-decoration-style:dashed;
     font-weight:600;
@@ -379,7 +398,7 @@
     padding:8px 4px;
     margin-bottom:14px;
   }
-  .back-btn:active{ color:var(--sage-deep); }
+  .back-btn:active{ color:var(--sage-text); }
   .back-btn .chev{
     width:26px;height:26px;border-radius:50%;
     background:var(--sage); border:1px solid var(--sage-deep);
@@ -499,7 +518,7 @@
     color:var(--ink);
     margin-bottom:10px;
   }
-  .callout b{ color:var(--sage-deep); }
+  .callout b{ color:var(--sage-text); }
   .scan-note{
     font-size:11.5px;
     color:var(--ink-soft);
@@ -558,7 +577,7 @@
   }
   .desc-toggle .car{
     transition:transform .2s ease;
-    font-size:9px;
+    display:inline-flex;
   }
   .desc-toggle.open .car{ transform:rotate(90deg); }
   .menu-desc{
@@ -567,7 +586,7 @@
     font-weight:400;
     font-size:15.5px;
     line-height:1.6;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     border-top:1px solid var(--line);
     border-bottom:1px solid var(--line);
     padding:16px 0;
@@ -580,7 +599,7 @@
     font-family:'JetBrains Mono',monospace;
     text-transform:uppercase;
     letter-spacing:0.04em;
-    color:#8C4A2A;
+    color:var(--warn-ink);
     background:rgba(140,74,42,0.12);
     border-radius:6px;
     padding:2px 6px;
@@ -592,7 +611,7 @@
     box-sizing:border-box;
     cursor:pointer;
     display:inline;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     text-decoration:underline;
     text-decoration-style:dashed;
     text-decoration-color:var(--gold);
@@ -603,7 +622,7 @@
     box-sizing:border-box;
     cursor:pointer;
     display:inline;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     text-decoration:underline;
     text-decoration-style:dashed;
     text-decoration-color:var(--gold);
@@ -666,7 +685,7 @@
     align-items:center;
     justify-content:space-between;
     gap:14px;
-    background:#3F5D42;
+    background:var(--brand);
     color:#fff;
     border-radius:16px;
     padding:20px 20px;
@@ -695,8 +714,8 @@
     width:52px;
     height:52px;
     border-radius:50%;
-    background:#fff;
-    color:#3F5D42;
+    background:var(--chip-bg);
+    color:var(--brand);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -747,7 +766,7 @@
     content:"";
     position:absolute;
     inset:0;
-    background:linear-gradient(180deg, rgba(31,61,48,0.15) 0%, rgba(31,61,48,0.55) 100%);
+    background:var(--hero-overlay);
   }
   .home-hero::after{
     content:"";
@@ -836,14 +855,15 @@
   .storage-warning{
     display:flex;
     align-items:flex-start;
+    align-items:flex-start;
     gap:10px;
-    background:#F4E3D3;
-    border:1px solid #D9B48F;
+    background:var(--warn-bg);
+    border:1px solid var(--warn-border);
     border-radius:12px;
     padding:12px 14px;
     font-size:12.5px;
     line-height:1.5;
-    color:#6B4A2A;
+    color:var(--warn-ink-soft);
     margin-bottom:22px;
   }
   .field{ margin-bottom:18px; }
@@ -973,7 +993,7 @@
     font-size:13px;
     flex:none;
   }
-  .remove-slot-btn:active{ background:#F4E3D3; color:#8C4A2A; border-color:#D9B48F; }
+  .remove-slot-btn:active{ background:var(--warn-bg); color:var(--warn-ink); border-color:var(--warn-border); }
   .add-time-row{
     display:flex;
     gap:10px;
@@ -1105,7 +1125,7 @@
   .ar-time{
     font-size:13px;
     font-weight:500;
-    color:#4A6B4F;
+    color:var(--brand-ink);
     width:72px;
     flex:none;
   }
@@ -1154,7 +1174,7 @@
     align-items:center;
     justify-content:center;
     font-size:13px;
-    color:var(--sage-deep);
+    color:var(--sage-text);
   }
 
   /* Admin */
@@ -1217,13 +1237,13 @@
     line-height:1;
   }
   .bottom-nav-btn.active{
-    color:var(--sage-deep);
+    color:var(--sage-text);
   }
   .nav-badge{
     position:absolute;
     top:4px;
     right:calc(50% - 22px);
-    background:#8C4A2A;
+    background:var(--danger);
     color:#fff;
     font-size:10px;
     line-height:1;
@@ -1364,7 +1384,7 @@
     display:inline-block;
     font-family:'JetBrains Mono',monospace;
     font-size:10.5px;
-    color:var(--sage-deep);
+    color:var(--sage-text);
     background:var(--stone);
     border:1px solid var(--line);
     border-radius:999px;
@@ -1554,7 +1574,7 @@
     justify-content:center;
     font-size:12px;
   }
-  .remove-row-btn:active{ background:#F4E3D3; color:#8C4A2A; border-color:#D9B48F; }
+  .remove-row-btn:active{ background:var(--warn-bg); color:var(--warn-ink); border-color:var(--warn-border); }
   .add-row-btn{
     width:auto;
     display:inline-block;
@@ -1562,6 +1582,306 @@
     font-size:11px;
     margin-top:2px;
     margin-bottom:14px;
+  }
+  /* ============ v1.34.0 — Icons ============ */
+  .ico{
+    width:1em; height:1em;
+    display:inline-block;
+    flex:none;
+    vertical-align:-0.14em;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .back-btn .chev .ico{ width:15px; height:15px; stroke-width:2.2; }
+  .agenda-entry .arrow{
+    width:30px; height:30px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.3);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card-btn .arrow .ico,
+  .agenda-entry .arrow .ico{ width:16px; height:16px; stroke-width:2.2; }
+  .agenda-entry .ae-icon .ico{ width:25px; height:25px; stroke-width:1.7; }
+  .bottom-nav-btn .nav-icon{ display:flex; align-items:center; justify-content:center; height:24px; }
+  .bottom-nav-btn .nav-icon .ico{ width:23px; height:23px; stroke-width:1.7; }
+  .bottom-nav-btn.active .nav-icon .ico{ stroke-width:2.1; }
+  .remove-row-btn .ico, .remove-slot-btn .ico{ width:14px; height:14px; stroke-width:2.2; }
+  .ar-chevron{ display:flex; align-items:center; }
+  .ar-chevron .ico{ width:18px; height:18px; stroke-width:2; }
+  .section-icon .ico{ width:15px; height:15px; }
+  .desc-toggle .car .ico{ width:12px; height:12px; stroke-width:2.4; }
+  .ghost-btn .ico{ width:14px; height:14px; stroke-width:2.2; vertical-align:-2px; margin-right:4px; }
+  .storage-warning > .ico{ width:18px; height:18px; color:var(--warn-ink); margin-top:1px; }
+  .block-label .ico{ width:14px; height:14px; margin-right:6px; vertical-align:-2px; stroke-width:2; }
+  .block-label.avoid-label{ color:var(--warn-ink); }
+  .delete-message-btn .ico{ width:13px; height:13px; stroke-width:2.2; vertical-align:-2px; }
+  .ico-warn{ color:var(--warn-ink); margin-right:4px; }
+  .ico-ok{ color:var(--sage-text); margin-right:4px; }
+  .callout .ico-warn{ width:16px; height:16px; vertical-align:-3px; }
+
+  /* ============ v1.34.0 — Toasts ============ */
+  #ui-toasts{
+    position:fixed;
+    left:0; right:0;
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    z-index:99995;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:0 16px;
+    pointer-events:none;
+  }
+  body.ui-dialog-open #ui-toasts{
+    bottom:auto;
+    top:calc(14px + env(safe-area-inset-top));
+    flex-direction:column-reverse;
+  }
+  .ui-toast{
+    pointer-events:auto;
+    cursor:pointer;
+    max-width:520px;
+    width:100%;
+    box-sizing:border-box;
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:13px 16px;
+    border-radius:14px;
+    background:var(--toast-bg);
+    color:var(--toast-ink);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    line-height:1.45;
+    box-shadow:0 12px 32px -12px rgba(0,0,0,0.45);
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .2s ease, transform .25s cubic-bezier(.22,.68,.2,1);
+  }
+  .ui-toast.show{ opacity:1; transform:none; }
+  .ui-toast .ico{ width:19px; height:19px; margin-top:1px; stroke-width:2; }
+  .ui-toast.tone-success .ico{ color:#A8C49A; }
+  .ui-toast.tone-error .ico{ color:#F0A987; }
+  .ui-toast.tone-warn .ico{ color:#E3BC82; }
+  .ui-toast.tone-info .ico{ color:var(--gold-soft); }
+
+  /* ============ v1.34.0 — Dialogs (replace alert/confirm/prompt) ============ */
+  .ui-dialog-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:99990;
+    background:var(--scrim);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .ui-dialog-backdrop.show{ opacity:1; }
+  .ui-dialog{
+    width:100%;
+    max-width:560px;
+    box-sizing:border-box;
+    background:var(--card);
+    color:var(--ink);
+    border-radius:22px 22px 0 0;
+    padding:26px 22px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:0 -12px 40px -16px rgba(0,0,0,0.35);
+    transform:translateY(24px);
+    transition:transform .28s cubic-bezier(.22,.68,.2,1);
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  .ui-dialog-backdrop.show .ui-dialog{ transform:none; }
+  @media (min-width:600px){
+    .ui-dialog-backdrop{ align-items:center; padding:24px; }
+    .ui-dialog{ max-width:400px; border-radius:22px; padding:28px 24px 22px; }
+  }
+  .ui-dialog-icon{
+    width:44px; height:44px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:14px;
+    background:var(--stone-deep);
+    color:var(--sage-text);
+  }
+  .ui-dialog-icon .ico{ width:22px; height:22px; stroke-width:1.9; }
+  .ui-dialog-icon.tone-danger,
+  .ui-dialog-icon.tone-error,
+  .ui-dialog-icon.tone-warn{ background:var(--warn-bg); color:var(--warn-ink); }
+  .ui-dialog-title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:21px;
+    line-height:1.25;
+    letter-spacing:-0.01em;
+    margin:0 0 6px;
+  }
+  .ui-dialog-msg{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    margin:0;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+  .ui-dialog-input{
+    all:unset;
+    box-sizing:border-box;
+    display:block;
+    width:100%;
+    margin-top:16px;
+    background:var(--stone);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    color:var(--ink);
+  }
+  .ui-dialog-actions{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+  }
+  .ui-btn{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    flex:1;
+    text-align:center;
+    border-radius:14px;
+    padding:15px 12px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+  }
+  .ui-btn:active{ transform:scale(0.98); }
+  .ui-btn-primary{ background:var(--brand); color:#fff; }
+  .ui-btn-primary:active{ background:var(--brand-pressed); }
+  .ui-btn-danger{ background:var(--danger); color:#fff; }
+  .ui-btn-secondary{ background:transparent; color:var(--ink); border:1px solid var(--line); }
+
+  /* Error screen (was inline styles) */
+  .stop-error-fallback{
+    position:fixed; inset:0; z-index:99999;
+    background:var(--stone, #ECE5D6);
+    color:var(--ink, #2B2A24);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    text-align:center;
+    font-family:'Inter',-apple-system,sans-serif;
+  }
+  .stop-error-fallback .err-icon{ color:var(--gold, #A9824F); margin-bottom:14px; }
+  .stop-error-fallback .err-icon .ico{ width:46px; height:46px; stroke-width:1.6; }
+  .stop-error-fallback .err-title{ font-family:'Fraunces',Georgia,serif; font-size:22px; margin-bottom:8px; }
+  .stop-error-fallback .err-msg{ font-size:14px; color:var(--ink-soft, #5B584C); margin:0 auto 22px; max-width:280px; line-height:1.5; }
+  .stop-error-fallback .ui-btn{ flex:none; display:inline-block; padding:14px 28px; }
+
+  /* ============ v1.34.0 — Appearance switch (Menu) ============ */
+  .theme-switch{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:4px;
+    padding:4px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+  }
+  .theme-opt{
+    all:unset;
+    box-sizing:border-box;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    padding:11px 6px 10px;
+    border-radius:12px;
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    text-align:center;
+    transition:background .15s ease, color .15s ease;
+  }
+  .theme-opt .ico{ width:20px; height:20px; }
+  .theme-opt[aria-checked="true"]{ background:var(--sage); color:#fff; }
+
+  /* ============ v1.34.0 — Dark mode ============ */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --stone:#1B1C18;
+      --stone-deep:#23251F;
+      --card:#2A2C25;
+      --ink:#ECE5D6;
+      --ink-soft:#ABA592;
+      --sage:#67745B;
+      --sage-deep:#4F5944;
+      --sage-text:#AFBE9E;
+      --brand:#3A5540;
+      --brand-ink:#A3BF97;
+      --brand-pressed:#2E4533;
+      --gold:#BF9761;
+      --gold-soft:#6E5D40;
+      --line: rgba(236,229,214,0.12);
+      --shadow: 0 10px 30px -14px rgba(0,0,0,0.7);
+      --warn-bg:#3A2A20;
+      --warn-border:#6E4E33;
+      --warn-ink:#E8AB86;
+      --warn-ink-soft:#DDBB98;
+      --avoid-bg:#32261E;
+      --danger:#A0553A;
+      --chip-bg:#ECE5D6;
+      --scrim: rgba(0,0,0,0.6);
+    --toast-bg:#3A3C34;
+    --toast-ink:#ECE5D6;
+      --hero-overlay: linear-gradient(180deg, rgba(12,18,14,0.35) 0%, rgba(12,18,14,0.78) 100%);
+      color-scheme: dark;
+    }
+    :root:not([data-theme="light"]) .nn-card:not(.next){ background:var(--brand); color:#fff; }
+    :root:not([data-theme="light"]) .home-hero{ filter:saturate(0.85); }
+  }
+  :root[data-theme="dark"]{
+    --stone:#1B1C18;
+    --stone-deep:#23251F;
+    --card:#2A2C25;
+    --ink:#ECE5D6;
+    --ink-soft:#ABA592;
+    --sage:#67745B;
+    --sage-deep:#4F5944;
+    --sage-text:#AFBE9E;
+    --brand:#3A5540;
+    --brand-ink:#A3BF97;
+    --brand-pressed:#2E4533;
+    --gold:#BF9761;
+    --gold-soft:#6E5D40;
+    --line: rgba(236,229,214,0.12);
+    --shadow: 0 10px 30px -14px rgba(0,0,0,0.7);
+    --warn-bg:#3A2A20;
+    --warn-border:#6E4E33;
+    --warn-ink:#E8AB86;
+    --warn-ink-soft:#DDBB98;
+    --avoid-bg:#32261E;
+    --danger:#A0553A;
+    --chip-bg:#ECE5D6;
+    --scrim: rgba(0,0,0,0.6);
+    --toast-bg:#3A3C34;
+    --toast-ink:#ECE5D6;
+    --hero-overlay: linear-gradient(180deg, rgba(12,18,14,0.35) 0%, rgba(12,18,14,0.78) 100%);
+    color-scheme: dark;
+  }
+  :root[data-theme="dark"] .nn-card:not(.next){ background:var(--brand); color:#fff; }
+  :root[data-theme="dark"] .home-hero{ filter:saturate(0.85); }
+
+  @media (prefers-reduced-motion: reduce){
+    .ui-toast, .ui-dialog, .ui-dialog-backdrop, .detail, .desc-toggle .car{ transition:none !important; }
+    .ui-dialog{ transform:none !important; }
   }
 </style>
 </head>
@@ -1621,52 +1941,52 @@
 
   <button class="agenda-entry" id="open-protocols">
     <span class="agenda-entry-text">
-      <span class="ae-icon">▦</span>
+      <span class="ae-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4.5H7.5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6.5a2 2 0 0 0-2-2H15"/><rect x="9" y="3" width="6" height="3.5" rx="1"/><path d="M9 11h6M9 14.5h6M9 18h3.5"/></svg></span>
       <span>
         <span class="ae-label">Treatment Protocols</span>
         <span class="ae-sub">Prep lists and steps for every service</span>
       </span>
     </span>
-    <span class="arrow">→</span>
+    <span class="arrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.5 6 6 6-6 6"/></svg></span>
   </button>
 
   <button class="agenda-entry" id="open-allergy-lookup">
     <span class="agenda-entry-text">
-      <span class="ae-icon">⛨</span>
+      <span class="ae-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span>
       <span>
         <span class="ae-label">Allergy Lookup</span>
         <span class="ae-sub">Find safe treatments by ingredient</span>
       </span>
     </span>
-    <span class="arrow">→</span>
+    <span class="arrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.5 6 6 6-6 6"/></svg></span>
   </button>
 
   <button class="agenda-entry" id="open-products-browse">
     <span class="agenda-entry-text">
-      <span class="ae-icon">⚗</span>
+      <span class="ae-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 2.5h5M13 2.5V6"/><path d="M10 6h6v2.5l1.6 1.5c.6.5.9 1.2.9 2V19.5a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V12c0-.8.3-1.5.9-2L10 8.5V6Z"/><path d="M7.5 14h11"/></svg></span>
       <span>
         <span class="ae-label">Products</span>
         <span class="ae-sub">Browse products and their ingredients</span>
       </span>
     </span>
-    <span class="arrow">→</span>
+    <span class="arrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.5 6 6 6-6 6"/></svg></span>
   </button>
 
   <button class="agenda-entry" id="open-soap-notes">
     <span class="agenda-entry-text">
-      <span class="ae-icon">✎</span>
+      <span class="ae-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L19.2 8.8a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4M13 20h7"/></svg></span>
       <span>
         <span class="ae-label">SOAP Notes</span>
         <span class="ae-sub">Write a session note and save it as a PDF</span>
       </span>
     </span>
-    <span class="arrow">→</span>
+    <span class="arrow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.5 6 6 6-6 6"/></svg></span>
   </button>
 
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.33.1</div>
+    <div class="app-version">v1.34.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -1701,7 +2021,7 @@
 
 <div class="detail" id="protocols-overlay">
   <div class="detail-inner" id="protocols-inner">
-    <button class="back-btn" id="protocols-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="protocols-back"><span class="chev"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14.5 6-6 6 6 6"/></svg></span> Home</button>
     <div class="agenda-step">
       <h2>Treatment Protocols</h2>
       <p class="caption">Tap a treatment to open its prep list and steps.</p>
@@ -1722,20 +2042,20 @@
 
 <div id="bottom-nav">
   <button class="bottom-nav-btn" id="nav-home-btn" data-nav="home">
-    <i class="nav-icon">⌂</i>
+    <i class="nav-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9v11a1 1 0 0 0 1 1h3.5v-6h4v6h3.5a1 1 0 0 0 1-1V9"/></svg></i>
     <span>Home</span>
   </button>
   <button class="bottom-nav-btn" id="nav-agenda-btn" data-nav="agenda">
-    <i class="nav-icon">▤</i>
+    <i class="nav-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5"/><path d="M3.5 9.5h17M8 2.5v4M16 2.5v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/></svg></i>
     <span>Agenda</span>
   </button>
   <button class="bottom-nav-btn" id="nav-messages-btn" data-nav="messages">
-    <i class="nav-icon">✉</i>
+    <i class="nav-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.5-4.6A8 8 0 1 1 20.5 11.5Z"/></svg></i>
     <span>Messages</span>
     <span class="nav-badge hidden" id="nav-messages-badge">0</span>
   </button>
   <button class="bottom-nav-btn" id="nav-menu-btn" data-nav="menu">
-    <i class="nav-icon">☰</i>
+    <i class="nav-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></i>
     <span>Menu</span>
   </button>
 </div>
@@ -1778,13 +2098,15 @@ function showErrorFallback(message){
   stopErrorFallbackShown = true;
   const overlay = document.createElement('div');
   overlay.id = 'stop-error-fallback';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#ECE5D6;display:flex;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,sans-serif;text-align:center;';
+  overlay.className = 'stop-error-fallback';
+  let warnIcon = '';
+  try{ warnIcon = ico('alert'); }catch(e){}
   overlay.innerHTML = `
     <div>
-      <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
-      <div style="font-family:Georgia,serif;font-size:20px;margin-bottom:8px;color:#2B2A24;">Something went wrong</div>
-      <div style="font-size:13px;color:#5B584C;margin-bottom:20px;max-width:280px;">The app hit an unexpected error. Reloading usually fixes it.</div>
-      <button id="stop-error-reload-btn" style="background:#727F63;color:#fff;border:none;border-radius:14px;padding:14px 28px;font-size:13px;cursor:pointer;">Reload App</button>
+      <div class="err-icon">${warnIcon}</div>
+      <div class="err-title">Something went wrong</div>
+      <div class="err-msg">The app hit an unexpected error. Reloading usually fixes it.</div>
+      <button id="stop-error-reload-btn" class="ui-btn ui-btn-primary">Reload app</button>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -1800,24 +2122,270 @@ window.addEventListener('unhandledrejection', function(event){
   showErrorFallback('A background task failed unexpectedly.');
 });
 
+/* ============ v1.34.0 — Icons, toasts, dialogs, appearance ============ */
+
+const ICONS = {
+  home:'<path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9v11a1 1 0 0 0 1 1h3.5v-6h4v6h3.5a1 1 0 0 0 1-1V9"/>',
+  calendar:'<rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5"/><path d="M3.5 9.5h17M8 2.5v4M16 2.5v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 17h2M11 17h2"/>',
+  message:'<path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.5-4.6A8 8 0 1 1 20.5 11.5Z"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  clipboard:'<path d="M9 4.5H7.5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6.5a2 2 0 0 0-2-2H15"/><rect x="9" y="3" width="6" height="3.5" rx="1"/><path d="M9 11h6M9 14.5h6M9 18h3.5"/>',
+  shield:'<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 10"/>',
+  bottle:'<path d="M11 2.5h5M13 2.5V6"/><path d="M10 6h6v2.5l1.6 1.5c.6.5.9 1.2.9 2V19.5a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V12c0-.8.3-1.5.9-2L10 8.5V6Z"/><path d="M7.5 14h11"/>',
+  pen:'<path d="M4 20h4L19.2 8.8a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4M13 20h7"/>',
+  chevronLeft:'<path d="m14.5 6-6 6 6 6"/>',
+  chevronRight:'<path d="m9.5 6 6 6-6 6"/>',
+  x:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  alert:'<path d="M10.3 4 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4.5M12 17.3h.01"/>',
+  checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m8.5 12.3 2.4 2.3 4.6-4.8"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  moon:'<path d="M20 14.6A8.2 8.2 0 1 1 9.4 4 6.6 6.6 0 0 0 20 14.6Z"/>',
+  device:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/>'
+};
+
+function ico(name, cls){
+  const body = ICONS[name] || '';
+  return `<svg class="ico${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
+}
+function icoEl(name, cls){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = ico(name, cls);
+  return tpl.content.firstChild;
+}
+
+// Protocol text saved in the database may still contain ⚠️ / ✅ characters.
+// Swap them for the matching icons whenever content is rendered.
+const GLYPH_SPLIT_RE = /(\u26A0\uFE0F?|\u2705)/;
+function swapGlyphIcons(root){
+  if(!root) return;
+  const skip = 'textarea,input,select,option,script,style,svg,title,[contenteditable="true"]';
+  const textNodes = [];
+  if(root.nodeType === 3){
+    textNodes.push(root);
+  } else if(root.nodeType === 1){
+    if(root.closest && root.closest(skip)) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n){
+        if(!GLYPH_SPLIT_RE.test(n.nodeValue)) return NodeFilter.FILTER_SKIP;
+        const p = n.parentElement;
+        if(!p || p.closest(skip)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    while(walker.nextNode()) textNodes.push(walker.currentNode);
+  }
+  textNodes.forEach(n => {
+    if(!n.parentNode || !GLYPH_SPLIT_RE.test(n.nodeValue)) return;
+    const p = n.parentElement;
+    if(p && p.closest(skip)) return;
+    const frag = document.createDocumentFragment();
+    n.nodeValue.split(GLYPH_SPLIT_RE).forEach(part => {
+      if(!part) return;
+      if(part === '\u2705') frag.appendChild(icoEl('checkCircle', 'ico-ok'));
+      else if(part.charAt(0) === '\u26A0') frag.appendChild(icoEl('alert', 'ico-warn'));
+      else frag.appendChild(document.createTextNode(frag.childNodes.length ? part.replace(/^\s+/, '') : part));
+    });
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+function startGlyphObserver(){
+  swapGlyphIcons(document.body);
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(node => {
+      if(node.nodeType === 1 || node.nodeType === 3) swapGlyphIcons(node);
+    }));
+  }).observe(document.body, { childList:true, subtree:true });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startGlyphObserver);
+else startGlyphObserver();
+
+function escapeUiText(v){
+  return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function uiToneFor(message){
+  const m = String(message || '').trim().toLowerCase();
+  const failed = /(couldn't|could not|can't|failed|rejected|error)/.test(m);
+  const success = /^(password reset|backup restored|inventory count saved|imported)/.test(m);
+  if(success && failed) return 'warn';
+  if(success) return 'success';
+  if(failed) return 'error';
+  if(/^(enter |choose |end time|at least|that |paste |please )/.test(m)) return 'warn';
+  return 'info';
+}
+const TONE_ICON = { success:'checkCircle', error:'alert', warn:'alert', info:'info', danger:'alert' };
+
+// Replaces window.alert(). Short messages become a toast; long ones open a notice sheet.
+function uiAlert(message, opts){
+  opts = opts || {};
+  const text = String(message == null ? '' : message);
+  const tone = opts.tone || uiToneFor(text);
+  if(opts.dialog || text.length > 110){
+    return uiDialog({ kind:'notice', message:text, tone, confirmText:'OK' });
+  }
+  let host = document.getElementById('ui-toasts');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'ui-toasts';
+    document.body.appendChild(host);
+  }
+  while(host.children.length >= 3) host.firstChild.remove();
+  const toast = document.createElement('div');
+  toast.className = `ui-toast tone-${tone}`;
+  toast.setAttribute('role', tone === 'error' ? 'alert' : 'status');
+  toast.innerHTML = `${ico(TONE_ICON[tone] || 'info')}<span>${escapeUiText(text)}</span>`;
+  host.appendChild(toast);
+  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+  let gone = false;
+  const dismiss = () => {
+    if(gone) return;
+    gone = true;
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 260);
+  };
+  toast.addEventListener('click', dismiss);
+  setTimeout(dismiss, Math.min(9000, Math.max(3200, text.length * 60)));
+  return Promise.resolve();
+}
+
+// Shared sheet used by uiAlert (notice), uiConfirm and uiPrompt.
+function uiDialog(o){
+  return new Promise(resolve => {
+    const kind = o.kind || 'notice';
+    const tone = o.tone || 'info';
+    const prevFocus = document.activeElement;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'ui-dialog-backdrop';
+    const id = 'uid-' + Math.random().toString(36).slice(2, 8);
+    const showIcon = kind !== 'prompt';
+    backdrop.innerHTML = `
+      <div class="ui-dialog" role="${kind === 'prompt' ? 'dialog' : 'alertdialog'}" aria-modal="true"
+           ${o.title ? `aria-labelledby="${id}-t"` : ''} ${o.message ? `aria-describedby="${id}-m"` : ''}>
+        ${showIcon ? `<div class="ui-dialog-icon tone-${tone}">${ico(TONE_ICON[tone] || 'info')}</div>` : ''}
+        ${o.title ? `<h3 class="ui-dialog-title" id="${id}-t">${escapeUiText(o.title)}</h3>` : ''}
+        ${o.message ? `<p class="ui-dialog-msg" id="${id}-m">${escapeUiText(o.message)}</p>` : ''}
+        ${kind === 'prompt' ? `<input class="ui-dialog-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+            ${o.inputMode ? `inputmode="${o.inputMode}"` : ''} value="${escapeUiText(o.defaultValue)}" aria-label="${escapeUiText(o.title || 'Value')}">` : ''}
+        <div class="ui-dialog-actions">
+          ${kind === 'notice' ? '' : `<button type="button" class="ui-btn ui-btn-secondary" data-act="cancel">${escapeUiText(o.cancelText || 'Cancel')}</button>`}
+          <button type="button" class="ui-btn ${o.danger ? 'ui-btn-danger' : 'ui-btn-primary'}" data-act="ok">${escapeUiText(o.confirmText || 'OK')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    document.body.classList.add('ui-dialog-open');
+    const input = backdrop.querySelector('.ui-dialog-input');
+    const okBtn = backdrop.querySelector('[data-act="ok"]');
+
+    let done = false;
+    const finish = (ok) => {
+      if(done) return;
+      done = true;
+      document.removeEventListener('keydown', onKey, true);
+      backdrop.classList.remove('show');
+      setTimeout(() => {
+        backdrop.remove();
+        if(!document.querySelector('.ui-dialog-backdrop')) document.body.classList.remove('ui-dialog-open');
+      }, 220);
+      if(prevFocus && prevFocus.focus){ try{ prevFocus.focus({ preventScroll:true }); }catch(e){} }
+      if(kind === 'prompt') resolve(ok ? input.value : null);
+      else if(kind === 'confirm') resolve(!!ok);
+      else resolve();
+    };
+    const onKey = (e) => {
+      if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+      else if(e.key === 'Enter' && kind === 'prompt' && document.activeElement === input){ e.preventDefault(); finish(true); }
+    };
+    document.addEventListener('keydown', onKey, true);
+    backdrop.addEventListener('click', (e) => {
+      if(e.target === backdrop) finish(kind === 'notice');
+      const act = e.target.closest('[data-act]');
+      if(act) finish(act.dataset.act === 'ok');
+    });
+    requestAnimationFrame(() => {
+      backdrop.classList.add('show');
+      if(input){ input.focus(); input.select(); }
+      else okBtn.focus({ preventScroll:true });
+    });
+  });
+}
+
+// Replaces window.confirm(). The first question becomes the title; the verb becomes the button.
+function uiConfirm(message){
+  const text = String(message || '');
+  const split = text.match(/^([^?]*\?)\s*([\s\S]*)$/);
+  const title = split ? split[1] : text;
+  const body = split ? split[2] : '';
+  const verbMatch = title.match(/^(Log out|Remove|Delete|Clear|Restore)\b/i);
+  const verb = verbMatch ? verbMatch[1] : 'Confirm';
+  const danger = /^(remove|delete|clear|restore)$/i.test(verb);
+  return uiDialog({
+    kind:'confirm',
+    title,
+    message: body,
+    tone: danger ? 'danger' : 'info',
+    confirmText: verb.charAt(0).toUpperCase() + verb.slice(1).toLowerCase(),
+    danger
+  });
+}
+
+// Replaces window.prompt(). Resolves to the entered text, or null if cancelled.
+function uiPrompt(message, defaultValue, opts){
+  opts = opts || {};
+  const text = String(message || '');
+  const split = text.match(/^([^?]*\?)\s*\(?([\s\S]*?)\)?$/);
+  return uiDialog({
+    kind:'prompt',
+    title: split ? split[1] : text,
+    message: split ? split[2] : '',
+    defaultValue: defaultValue == null ? '' : defaultValue,
+    inputMode: opts.inputMode,
+    confirmText: opts.confirmText || 'Save'
+  });
+}
+
+/* ---------- Appearance (per device) ---------- */
+const THEME_KEY = 'ledgerTheme_v1';
+function getThemePref(){
+  try{
+    const t = localStorage.getItem(THEME_KEY);
+    return (t === 'light' || t === 'dark') ? t : 'system';
+  }catch(e){ return 'system'; }
+}
+function isDarkActive(){
+  const forced = document.documentElement.getAttribute('data-theme');
+  if(forced) return forced === 'dark';
+  return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+function syncThemeColorMeta(){
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', isDarkActive() ? '#1B1C18' : '#727F63');
+}
+function applyTheme(pref){
+  if(pref === 'light' || pref === 'dark') document.documentElement.setAttribute('data-theme', pref);
+  else document.documentElement.removeAttribute('data-theme');
+  syncThemeColorMeta();
+}
+function setThemePref(pref){
+  try{
+    if(pref === 'light' || pref === 'dark') localStorage.setItem(THEME_KEY, pref);
+    else localStorage.removeItem(THEME_KEY);
+  }catch(e){}
+  applyTheme(pref);
+}
+applyTheme(getThemePref());
+if(window.matchMedia){
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener) mq.addEventListener('change', syncThemeColorMeta);
+  else if(mq.addListener) mq.addListener(syncThemeColorMeta);
+}
+
 /* ---------- Login announcement (shown once right after a successful login) ---------- */
 
 function maybeShowAnnouncement(){
   const data = loadAnnouncement();
   if(!data || !data.enabled || !data.message) return;
-  const overlay = document.createElement('div');
-  overlay.id = 'stop-announcement-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(43,42,36,0.45);display:flex;align-items:center;justify-content:center;padding:24px;';
-  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  overlay.innerHTML = `
-    <div style="background:#F8F5EC;border-radius:18px;padding:28px 24px;max-width:340px;width:100%;text-align:center;font-family:-apple-system,sans-serif;">
-      <div style="font-family:Georgia,serif;font-size:19px;color:#2B2A24;margin-bottom:10px;">${esc(data.title) || 'Announcement'}</div>
-      <div style="font-size:14px;color:#5B584C;line-height:1.5;margin-bottom:22px;white-space:pre-wrap;">${esc(data.message)}</div>
-      <button id="stop-announcement-ok-btn" style="background:#727F63;color:#fff;border:none;border-radius:14px;padding:12px 32px;font-size:13px;cursor:pointer;">OK</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  document.getElementById('stop-announcement-ok-btn').addEventListener('click', function(){ overlay.remove(); });
+  uiDialog({ kind:'notice', title: data.title || 'Announcement', message: data.message, tone:'info', confirmText:'OK' });
 }
 
 /* ============ Service worker (faster loads + Android install prompt) ============ */
@@ -1901,10 +2469,10 @@ async function syncPostChecked(key, value){
 function syncStatusWarningHtml(){
   if(syncStatus === 'ok') return '';
   if(syncStatus === 'not-configured'){
-    return `<div class="storage-warning">⚠️ Sync isn't set up yet — running in local-only mode (this device only). See the README for how to connect the shared database.</div>`;
+    return `<div class="storage-warning">${ico('alert')}<span>Sync isn't set up yet — running in local-only mode (this device only). See the README for how to connect the shared database.</span></div>`;
   }
   if(syncStatus === 'offline'){
-    return `<div class="storage-warning">⚠️ Can't reach the shared database right now — showing the last synced data for this device. Changes will still save locally.</div>`;
+    return `<div class="storage-warning">${ico('alert')}<span>Can't reach the shared database right now — showing the last synced data for this device. Changes will still save locally.</span></div>`;
   }
   return '';
 }
@@ -2810,7 +3378,7 @@ async function submitPasswordRecovery(username, answer, newPassword){
   authError = '';
   authView = 'login';
   recoverStep = 'username';
-  alert('Password reset. You can log in with your new password now.');
+  uiAlert('Password reset. You can log in with your new password now.');
   renderAuthView();
 }
 
@@ -2918,7 +3486,6 @@ function setActiveNavTab(tab){
 // link inside a protocol), which can still stack normally.
 function closeAllOverlaysForNav(){
   stopMessageBurst();
-  clearComposeBar();
   document.querySelectorAll('.detail.open').forEach(el => el.classList.remove('open'));
 }
 
@@ -2938,7 +3505,7 @@ function renderMenuScreen(){
   const visibleSections = ADMIN_SECTIONS.filter(s => perms[s.key]);
 
   inner.innerHTML = `
-    <button class="back-btn" id="menu-back-btn"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="menu-back-btn"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Menu</h2>
       ${visibleSections.length ? `
@@ -2952,7 +3519,15 @@ function renderMenuScreen(){
           `).join('')}
         </div>
       ` : ''}
-      <div class="block-label" style="margin-top:${visibleSections.length ? '28px' : '0'};">Account</div>
+      <div class="block-label" style="margin-top:${visibleSections.length ? '28px' : '0'};">Appearance</div>
+      <div class="theme-switch" role="radiogroup" aria-label="Appearance">
+        ${[['system','device','Match phone'],['light','sun','Light'],['dark','moon','Dark']].map(([val, icon, label]) => `
+          <button type="button" class="theme-opt" role="radio" data-theme-pref="${val}" aria-checked="${getThemePref() === val}">
+            ${ico(icon)}<span>${label}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="block-label" style="margin-top:28px;">Account</div>
       <div class="grid">
         <button class="card-btn" id="menu-my-account-btn">
           <span><span class="name">My Account</span><span class="meta">Change password, security question</span></span>
@@ -2976,12 +3551,18 @@ function renderMenuScreen(){
       openAdmin(btn.dataset.tab);
     });
   });
+  inner.querySelectorAll('.theme-opt').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setThemePref(btn.dataset.themePref);
+      inner.querySelectorAll('.theme-opt').forEach(b => b.setAttribute('aria-checked', String(b === btn)));
+    });
+  });
   document.getElementById('menu-my-account-btn').addEventListener('click', ()=>{
     closeMenuScreen();
     openMyAccount();
   });
-  document.getElementById('menu-logout-btn').addEventListener('click', ()=>{
-    if(!confirm('Log out?')) return;
+  document.getElementById('menu-logout-btn').addEventListener('click', async ()=>{
+    if(!(await uiConfirm('Log out?'))) return;
     closeMenuScreen();
     logout();
   });
@@ -3001,7 +3582,6 @@ async function openMessages(){
   document.getElementById('messages-overlay').scrollTop = 0;
 }
 function closeMessagesScreen(){
-  clearComposeBar();
   document.getElementById('messages-overlay').classList.remove('open');
   setActiveNavTab('home');
 }
@@ -3020,7 +3600,7 @@ function renderMessagesScreen(){
   });
 
   inner.innerHTML = `
-    <button class="back-btn" id="messages-back-btn"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="messages-back-btn"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Messages</h2>
       <button class="primary-btn" id="new-message-btn">New Message</button>
@@ -3062,7 +3642,7 @@ function renderNewMessageScreen(){
   const others = loadUsers().filter(u => u.username.toLowerCase() !== (me || '').toLowerCase());
 
   inner.innerHTML = `
-    <button class="back-btn" id="new-message-back-btn"><span class="chev">←</span> Messages</button>
+    <button class="back-btn" id="new-message-back-btn"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
     <div class="agenda-step">
       <h2>New Message</h2>
       <p class="caption">${newMessageIsGroup ? 'Choose everyone to include, then name the group.' : 'Choose one person, or switch to a group.'}</p>
@@ -3106,11 +3686,11 @@ function renderNewMessageScreen(){
     });
   });
   document.getElementById('start-thread-btn').addEventListener('click', async ()=>{
-    if(!newMessageSelectedUsernames.length){ alert('Choose at least one person.'); return; }
+    if(!newMessageSelectedUsernames.length){ uiAlert('Choose at least one person.'); return; }
     const groupName = newMessageIsGroup ? document.getElementById('new-group-name').value.trim() : '';
-    if(newMessageIsGroup && !groupName){ alert('Enter a group name.'); return; }
+    if(newMessageIsGroup && !groupName){ uiAlert('Enter a group name.'); return; }
     const result = await createThread(newMessageIsGroup ? 'group' : 'dm', newMessageSelectedUsernames, groupName);
-    if(!result.ok){ alert(result.error || 'Could not start that conversation.'); return; }
+    if(!result.ok){ uiAlert(result.error || 'Could not start that conversation.'); return; }
     await refreshThreadsFromServer();
     messagesScreenStep = 'list';
     openThreadDetail(result.thread.id);
@@ -3121,7 +3701,7 @@ async function openThreadDetail(threadId){
   stopMessageBurst();
   const result = await fetchThreadDetail(threadId);
   if(!result.ok){
-    alert(result.error || 'Could not open that conversation.');
+    uiAlert(result.error || 'Could not open that conversation.');
     messagesScreenStep = 'list';
     renderMessagesScreen();
     return;
@@ -3135,7 +3715,6 @@ async function openThreadDetail(threadId){
 
 function closeThreadDetail(){
   stopMessageBurst();
-  clearComposeBar();
   currentThreadId = null;
   currentThreadInfo = null;
   currentThreadMessages = [];
@@ -3146,8 +3725,6 @@ function closeThreadDetail(){
 function stopMessageBurst(){
   if(messageBurstInterval){ clearInterval(messageBurstInterval); messageBurstInterval = null; }
   if(messageBurstTimeout){ clearTimeout(messageBurstTimeout); messageBurstTimeout = null; }
-}
-function clearComposeBar(){
   const composeBarContainer = document.getElementById('thread-compose-bar-container');
   if(composeBarContainer) composeBarContainer.innerHTML = '';
 }
@@ -3176,7 +3753,7 @@ function renderThreadDetail(){
   const isCreator = thread.creatorUsername.toLowerCase() === (getCurrentUser() || '').toLowerCase();
 
   inner.innerHTML = `
-    <button class="back-btn" id="thread-back-btn"><span class="chev">←</span> Messages</button>
+    <button class="back-btn" id="thread-back-btn"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
     <div class="agenda-step">
       <h2>${escapeHtml(threadDisplayName(thread))}</h2>
       ${thread.type === 'group' ? `<p class="caption">${escapeHtml(thread.participants.join(', '))}</p>` : ''}
@@ -3213,7 +3790,7 @@ function renderThreadDetail(){
     if(!text) return;
     composeInput.value = '';
     const result = await sendMessageToThread(currentThreadId, text);
-    if(!result.ok){ alert(result.error || 'Could not send that message.'); return; }
+    if(!result.ok){ uiAlert(result.error || 'Could not send that message.'); return; }
     currentThreadMessages.unshift(result.message);
     renderThreadMessagesList();
     startMessageBurst(currentThreadId);
@@ -3225,9 +3802,9 @@ function renderThreadDetail(){
   const deleteThreadBtn = document.getElementById('delete-thread-btn');
   if(deleteThreadBtn){
     deleteThreadBtn.addEventListener('click', async ()=>{
-      if(!confirm(`Delete this ${thread.type === 'group' ? 'group' : 'conversation'} for everyone? This cannot be undone.`)) return;
+      if(!(await uiConfirm(`Delete this ${thread.type === 'group' ? 'group' : 'conversation'} for everyone? This cannot be undone.`))) return;
       const result = await deleteThreadOnServer(currentThreadId);
-      if(!result.ok){ alert(result.error || 'Could not delete.'); return; }
+      if(!result.ok){ uiAlert(result.error || 'Could not delete.'); return; }
       closeThreadDetail();
       await refreshThreadsFromServer();
       renderMessagesScreen();
@@ -3255,7 +3832,7 @@ function renderThreadMessagesList(){
         ${currentThreadInfo.type === 'group' && !isMine ? `<span style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(getDisplayFullName(m.sender))}</span>` : ''}
         <div style="max-width:78%; background:${isMine ? 'var(--sage)' : 'var(--card)'}; color:${isMine ? '#fff' : 'var(--ink)'}; border-radius:14px; padding:9px 13px; font-size:14px; position:relative;">
           ${escapeHtml(m.text)}
-          ${isMine ? `<button class="delete-message-btn" data-id="${m.id}" style="all:unset; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.75;">✕</button>` : ''}
+          ${isMine ? `<button class="delete-message-btn" data-id="${m.id}" style="all:unset; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.75;" aria-label="Delete message">${ico('x')}</button>` : ''}
         </div>
         <span style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${new Date(m.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
       </div>
@@ -3263,9 +3840,9 @@ function renderThreadMessagesList(){
   }).join('');
   container.querySelectorAll('.delete-message-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
-      if(!confirm('Delete this message?')) return;
+      if(!(await uiConfirm('Delete this message?'))) return;
       const result = await deleteMessageFromThread(currentThreadId, btn.dataset.id);
-      if(!result.ok){ alert(result.error || 'Could not delete that message.'); return; }
+      if(!result.ok){ uiAlert(result.error || 'Could not delete that message.'); return; }
       currentThreadMessages = currentThreadMessages.filter(m => m.id !== btn.dataset.id);
       renderThreadMessagesList();
     });
@@ -3286,7 +3863,7 @@ function renderGroupManageScreen(){
   );
 
   inner.innerHTML = `
-    <button class="back-btn" id="manage-back-btn"><span class="chev">←</span> ${escapeHtml(threadDisplayName(thread))}</button>
+    <button class="back-btn" id="manage-back-btn"><span class="chev">${ico('chevronLeft')}</span> ${escapeHtml(threadDisplayName(thread))}</button>
     <div class="agenda-step">
       <h2>Manage Group</h2>
       <div class="block-label">Members</div>
@@ -3310,7 +3887,7 @@ function renderGroupManageScreen(){
   inner.querySelectorAll('.remove-member-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const result = await updateGroupMember(currentThreadId, 'remove', btn.dataset.username);
-      if(!result.ok){ alert(result.error || 'Could not remove that person.'); return; }
+      if(!result.ok){ uiAlert(result.error || 'Could not remove that person.'); return; }
       currentThreadInfo = result.thread;
       renderGroupManageScreen();
     });
@@ -3318,7 +3895,7 @@ function renderGroupManageScreen(){
   inner.querySelectorAll('.add-member-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const result = await updateGroupMember(currentThreadId, 'add', btn.dataset.username);
-      if(!result.ok){ alert(result.error || 'Could not add that person.'); return; }
+      if(!result.ok){ uiAlert(result.error || 'Could not add that person.'); return; }
       currentThreadInfo = result.thread;
       renderGroupManageScreen();
     });
@@ -3410,7 +3987,7 @@ function renderAdmin(){
 
   if(!adminUnlocked){
     inner.innerHTML = `
-      <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
+      <button class="back-btn" id="admin-back"><span class="chev">${ico('chevronLeft')}</span> Back</button>
       <div class="agenda-step">
         <h2>Menu</h2>
         <p class="caption">Enter the master password to continue.</p>
@@ -3463,7 +4040,7 @@ function renderAdmin(){
 
   if(!adminTab){
     inner.innerHTML = `
-      <button class="back-btn" id="admin-back"><span class="chev">←</span> Back</button>
+      <button class="back-btn" id="admin-back"><span class="chev">${ico('chevronLeft')}</span> Back</button>
       <div class="agenda-step">
         <h2>Menu</h2>
         <p class="caption">Choose a section to manage.</p>
@@ -3506,7 +4083,7 @@ function renderAdmin(){
 
   const sectionMeta = ADMIN_SECTIONS.find(s => s.key === adminTab);
   inner.innerHTML = `
-    <button class="back-btn" id="admin-back"><span class="chev">←</span> Menu</button>
+    <button class="back-btn" id="admin-back"><span class="chev">${ico('chevronLeft')}</span> Menu</button>
     <div class="agenda-step">
       <h2>${sectionMeta ? sectionMeta.name : 'Menu'}</h2>
       ${syncStatusWarningHtml()}
@@ -3565,12 +4142,12 @@ function renderAdminUsersList(){
   document.getElementById('admin-add-user-btn').addEventListener('click', async ()=>{
     const u = document.getElementById('admin-new-username').value.trim();
     const p = document.getElementById('admin-new-password').value;
-    if(!u || !p){ alert('Enter a username and password.'); return; }
+    if(!u || !p){ uiAlert('Enter a username and password.'); return; }
     await refreshUsersFromServer();
-    if(findUser(u)){ alert('That username already exists.'); return; }
+    if(findUser(u)){ uiAlert('That username already exists.'); return; }
     const result = await upsertUserOnServer(u, { password: p, permissions: blankPermissions() });
     if(!result.ok){
-      alert(`Couldn't add the user — the server rejected it (${result.error || 'error ' + result.status}).`);
+      uiAlert(`Couldn't add the user — the server rejected it (${result.error || 'error ' + result.status}).`);
     } else {
       logActivity(getAdminActingUsername(), `Added user "${u}"`);
     }
@@ -3595,7 +4172,7 @@ function renderAdminUserDetail(){
   }
 
   content.innerHTML = `
-    <button class="back-btn" id="admin-user-detail-back"><span class="chev">←</span> Users</button>
+    <button class="back-btn" id="admin-user-detail-back"><span class="chev">${ico('chevronLeft')}</span> Users</button>
     <div class="block-label">${user.username}</div>
     <p class="caption">${user.lastLogin ? `Last login: ${new Date(user.lastLogin).toLocaleString([], {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</p>
 
@@ -3627,7 +4204,7 @@ function renderAdminUserDetail(){
     const newVal = !user.isDemo;
     const result = await upsertUserOnServer(username, { isDemo: newVal });
     if(!result.ok){
-      alert(`Couldn't update this — the server rejected it (${result.error || 'error ' + result.status}).`);
+      uiAlert(`Couldn't update this — the server rejected it (${result.error || 'error ' + result.status}).`);
     } else {
       logActivity(getAdminActingUsername(), `${newVal ? 'Enabled' : 'Disabled'} demo mode for "${username}"`);
     }
@@ -3647,7 +4224,7 @@ function renderAdminUserDetail(){
       updatedPermissions[key] = newVal;
       const result = await upsertUserOnServer(username, { permissions: updatedPermissions });
       if(!result.ok){
-        alert(`Couldn't update permissions — the server rejected it (${result.error || 'error ' + result.status}).`);
+        uiAlert(`Couldn't update permissions — the server rejected it (${result.error || 'error ' + result.status}).`);
       } else {
         const sectionName = ADMIN_SECTIONS.find(s => s.key === key).name;
         logActivity(getAdminActingUsername(), `${newVal ? 'Granted' : 'Revoked'} "${sectionName}" access for "${username}"`);
@@ -3658,24 +4235,24 @@ function renderAdminUserDetail(){
   });
   content.querySelector('.admin-reset-btn').addEventListener('click', async ()=>{
     const username = user.username;
-    const newPw = prompt(`New password for ${username}:`);
+    const newPw = await uiPrompt(`New password for ${username}`, '', { confirmText:'Reset' });
     if(!newPw) return;
     const result = await upsertUserOnServer(username, { password: newPw });
     if(!result.ok){
-      alert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
+      uiAlert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
     } else {
       logActivity(getAdminActingUsername(), `Reset password for "${username}"`);
-      alert('Password reset.');
+      uiAlert('Password reset.');
     }
     await refreshUsersFromServer();
     renderAdminUsersTab();
   });
   content.querySelector('.admin-remove-btn').addEventListener('click', async ()=>{
     const username = user.username;
-    if(!confirm(`Remove user "${username}"?`)) return;
+    if(!(await uiConfirm(`Remove user "${username}"?`))) return;
     const result = await deleteUserOnServer(username);
     if(!result.ok){
-      alert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}).`);
+      uiAlert(`Couldn't remove the user — the server rejected it (${result.error || 'error ' + result.status}).`);
     } else {
       logActivity(getAdminActingUsername(), `Removed user "${username}"`);
       if(getCurrentUser() === username){ clearCurrentUser(); }
@@ -3750,7 +4327,7 @@ function prepRowHtml(row, idx, products){
           <option value="">No amount</option>
           ${OUNCE_OPTIONS.map(o => `<option value="${o}" ${row.amount===o?'selected':''}>${o}</option>`).join('')}
         </select>
-        <button class="remove-row-btn" data-idx="${idx}" data-kind="prep" title="Remove row">✕</button>
+        <button class="remove-row-btn" data-idx="${idx}" data-kind="prep" title="Remove row">${ico('x')}</button>
       </div>
     `;
   }
@@ -3765,7 +4342,7 @@ function prepRowHtml(row, idx, products){
         ${OUNCE_OPTIONS.map(o => `<option value="${o}" ${row.amount===o?'selected':''}>${o}</option>`).join('')}
       </select>
       <button class="ghost-btn prep-make-choice-btn" data-idx="${idx}" style="width:auto;padding:8px 12px;margin-top:0;font-size:10px;">Or…</button>
-      <button class="remove-row-btn" data-idx="${idx}" data-kind="prep" title="Remove row">✕</button>
+      <button class="remove-row-btn" data-idx="${idx}" data-kind="prep" title="Remove row">${ico('x')}</button>
     </div>
   `;
 }
@@ -3782,7 +4359,7 @@ function tableMakeupRowHtml(row, idx, supplies){
         <option value="">No count</option>
         ${QUANTITY_OPTIONS.map(q => `<option value="${q}" ${String(row.qty)===String(q)?'selected':''}>${q}</option>`).join('')}
       </select>
-      <button class="remove-row-btn" data-idx="${idx}" data-kind="tablemakeup" title="Remove row">✕</button>
+      <button class="remove-row-btn" data-idx="${idx}" data-kind="tablemakeup" title="Remove row">${ico('x')}</button>
     </div>
   `;
 }
@@ -3831,8 +4408,8 @@ function renderSubProtocolsSubTab(){
     const name = document.getElementById('subprotocol-name').value.trim();
     const stepsText = document.getElementById('subprotocol-steps').value;
     const steps = stepsText.split('\n').map(s => s.trim()).filter(Boolean);
-    if(!name){ alert('Enter a name.'); return; }
-    if(!steps.length){ alert('Enter at least one step.'); return; }
+    if(!name){ uiAlert('Enter a name.'); return; }
+    if(!steps.length){ uiAlert('Enter at least one step.'); return; }
     const list = loadSubProtocols();
     if(editingSubProtocolId){
       const existing = list.find(sp => sp.id === editingSubProtocolId);
@@ -3863,9 +4440,9 @@ function renderSubProtocolsSubTab(){
     });
   });
   el.querySelectorAll('.remove-subprotocol-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const sp = loadSubProtocols().find(s => s.id === btn.dataset.id);
-      if(!confirm(`Remove Sub-Protocol "${sp ? sp.name : ''}"? Any protocol steps that reference it will show as not found.`)) return;
+      if(!(await uiConfirm(`Remove Sub-Protocol "${sp ? sp.name : ''}"? Any protocol steps that reference it will show as not found.`))) return;
       saveSubProtocols(loadSubProtocols().filter(s => s.id !== btn.dataset.id));
       logActivity(getAdminActingUsername(), `Removed Sub-Protocol "${sp ? sp.name : ''}"`);
       renderSubProtocolsSubTab();
@@ -4075,7 +4652,7 @@ function renderAdminProtocolsTab(){
     insertSubBtn.addEventListener('click', ()=>{
       const select = document.getElementById('admin-insert-subprotocol-select');
       const sp = loadSubProtocols().find(s => s.id === select.value);
-      if(!sp){ alert('Choose a Sub-Protocol first.'); return; }
+      if(!sp){ uiAlert('Choose a Sub-Protocol first.'); return; }
       const textarea = document.getElementById('admin-new-protocol-steps');
       const marker = subProtocolMarker(sp);
       const start = textarea.selectionStart != null ? textarea.selectionStart : textarea.value.length;
@@ -4103,7 +4680,7 @@ function renderAdminProtocolsTab(){
     const calloutsText = document.getElementById('admin-new-protocol-callouts').value;
     const stepsText = document.getElementById('admin-new-protocol-steps').value;
 
-    if(!name){ alert('Enter a protocol name.'); return; }
+    if(!name){ uiAlert('Enter a protocol name.'); return; }
 
     const callouts = parseLines(calloutsText);
     const steps = parseLines(stepsText);
@@ -4210,10 +4787,10 @@ function renderAdminProtocolsTab(){
     });
   });
   content.querySelectorAll('.admin-remove-protocol-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const id = btn.dataset.id;
       const protocol = loadCustomProtocols().find(p => p.id === id);
-      if(!confirm(`Remove protocol "${protocol ? protocol.name : ''}"?`)) return;
+      if(!(await uiConfirm(`Remove protocol "${protocol ? protocol.name : ''}"?`))) return;
       const list = loadCustomProtocols().filter(p => p.id !== id);
       saveCustomProtocols(list);
       logActivity(getAdminActingUsername(), `Removed protocol "${protocol ? protocol.name : id}"`);
@@ -4259,7 +4836,7 @@ function renderAdminAllergensTab(){
   document.getElementById('admin-add-allergen-btn').addEventListener('click', ()=>{
     const commonName = document.getElementById('admin-new-allergen-common').value.trim();
     const fullName = document.getElementById('admin-new-allergen-full').value.trim();
-    if(!commonName && !fullName){ alert('Enter at least a common name or a full name.'); return; }
+    if(!commonName && !fullName){ uiAlert('Enter at least a common name or a full name.'); return; }
 
     const list = loadAllergens();
     if(editingAllergenId){
@@ -4302,15 +4879,15 @@ function renderAdminAllergensTab(){
     });
   });
   content.querySelectorAll('.admin-remove-allergen-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const id = btn.dataset.id;
       if(!id){
-        alert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Menu → Inventory → Products.`);
+        uiAlert(`"${btn.dataset.fullname}" comes from a product's ingredient list. To remove it here, edit or remove that ingredient from the product in Menu → Inventory → Products.`);
         return;
       }
       const allergen = loadAllergens().find(a => a.id === id);
       const label = allergen ? (allergen.commonName || allergen.fullName) : '';
-      if(!confirm(`Remove allergen entry "${label}"?`)) return;
+      if(!(await uiConfirm(`Remove allergen entry "${label}"?`))) return;
       const list = loadAllergens().filter(a => a.id !== id);
       saveAllergens(list);
       logActivity(getAdminActingUsername(), `Removed allergen entry "${label}"`);
@@ -4364,7 +4941,7 @@ function renderAdminErrorsTab(){
   const clearBtn = document.getElementById('admin-clear-errors-btn');
   if(clearBtn){
     clearBtn.addEventListener('click', async ()=>{
-      if(!confirm('Clear the error log? This cannot be undone.')) return;
+      if(!(await uiConfirm('Clear the error log? This cannot be undone.'))) return;
       errorsCache = [];
       try{ localStorage.setItem(ERRORS_KEY, JSON.stringify(errorsCache)); }catch(e){}
       if(isSyncConfigured()){
@@ -4437,7 +5014,7 @@ function renderOversightThreadDetail(){
   if(!thread){ oversightSelectedThreadId = null; renderOversightList(); return; }
   const ordered = [...thread.messages].reverse();
   content.innerHTML = `
-    <button class="ghost-btn" id="oversight-back-btn" style="margin-bottom:16px;">← All Conversations</button>
+    <button class="ghost-btn" id="oversight-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}All Conversations</button>
     <div class="block-label">${thread.type === 'group' ? escapeHtml(thread.name || 'Group') : escapeHtml(thread.participants.join(', '))}</div>
     <p class="caption">Participants: ${escapeHtml(thread.participants.join(', '))} · Started by ${escapeHtml(thread.creatorUsername)}</p>
     ${ordered.length ? ordered.map(m => `
@@ -4510,18 +5087,18 @@ function renderSettingsRoomsSubTab(){
 
   document.getElementById('settings-add-room-btn').addEventListener('click', ()=>{
     const name = document.getElementById('settings-new-room-name').value.trim();
-    if(!name){ alert('Enter a room name.'); return; }
+    if(!name){ uiAlert('Enter a room name.'); return; }
     const list = loadRooms();
-    if(list.some(r => r.name.toLowerCase() === name.toLowerCase())){ alert('That room already exists.'); return; }
+    if(list.some(r => r.name.toLowerCase() === name.toLowerCase())){ uiAlert('That room already exists.'); return; }
     list.push({ id: makeId(), name });
     saveRooms(list);
     logActivity(getAdminActingUsername(), `Added room "${name}"`);
     renderSettingsRoomsSubTab();
   });
   el.querySelectorAll('.settings-remove-room-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const room = loadRooms().find(r => r.id === btn.dataset.id);
-      if(!confirm(`Remove room "${room ? room.name : ''}"?`)) return;
+      if(!(await uiConfirm(`Remove room "${room ? room.name : ''}"?`))) return;
       saveRooms(loadRooms().filter(r => r.id !== btn.dataset.id));
       logActivity(getAdminActingUsername(), `Removed room "${room ? room.name : ''}"`);
       renderSettingsRoomsSubTab();
@@ -4550,20 +5127,20 @@ function renderSettingsDurationsSubTab(){
 
   document.getElementById('settings-add-duration-btn').addEventListener('click', ()=>{
     const val = parseInt(document.getElementById('settings-new-duration').value, 10);
-    if(!val || val <= 0){ alert('Enter a valid number of minutes.'); return; }
+    if(!val || val <= 0){ uiAlert('Enter a valid number of minutes.'); return; }
     const list = loadDurations();
-    if(list.includes(val)){ alert('That duration already exists.'); return; }
+    if(list.includes(val)){ uiAlert('That duration already exists.'); return; }
     list.push(val);
     saveDurations(list);
     logActivity(getAdminActingUsername(), `Added duration "${val} min"`);
     renderSettingsDurationsSubTab();
   });
   el.querySelectorAll('.settings-remove-duration-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const val = parseInt(btn.dataset.value, 10);
-      if(!confirm(`Remove the ${val} min duration?`)) return;
+      if(!(await uiConfirm(`Remove the ${val} min duration?`))) return;
       const list = loadDurations().filter(d => d !== val);
-      if(!list.length){ alert('At least one duration must remain.'); return; }
+      if(!list.length){ uiAlert('At least one duration must remain.'); return; }
       saveDurations(list);
       logActivity(getAdminActingUsername(), `Removed duration "${val} min"`);
       renderSettingsDurationsSubTab();
@@ -4639,7 +5216,7 @@ function renderSettingsCategoriesSubTab(){
     btn.addEventListener('click', ()=>{
       const key = btn.dataset.key;
       const newLabel = document.getElementById(`settings-builtin-rename-${key}`).value.trim();
-      if(!newLabel){ alert('Enter a name.'); return; }
+      if(!newLabel){ uiAlert('Enter a name.'); return; }
       const current = loadCategories();
       const overrides = { ...(current.overrides || {}) };
       overrides[key] = newLabel;
@@ -4652,19 +5229,19 @@ function renderSettingsCategoriesSubTab(){
 
   document.getElementById('settings-add-category-btn').addEventListener('click', ()=>{
     const name = document.getElementById('settings-new-category').value.trim();
-    if(!name){ alert('Enter a category name.'); return; }
-    if(BUILT_IN_CATEGORIES.includes(name.toLowerCase())){ alert('That name is already a built-in category.'); return; }
+    if(!name){ uiAlert('Enter a category name.'); return; }
+    if(BUILT_IN_CATEGORIES.includes(name.toLowerCase())){ uiAlert('That name is already a built-in category.'); return; }
     const current = loadCategories();
     const custom = current.custom || [];
-    if(custom.some(c => c.toLowerCase() === name.toLowerCase())){ alert('That category already exists.'); return; }
+    if(custom.some(c => c.toLowerCase() === name.toLowerCase())){ uiAlert('That category already exists.'); return; }
     saveCategories({ custom: [...custom, name], overrides: current.overrides || {} });
     logActivity(getAdminActingUsername(), `Added protocol category "${name}"`);
     renderSettingsCategoriesSubTab();
   });
   el.querySelectorAll('.settings-remove-category-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const name = btn.dataset.value;
-      if(!confirm(`Remove category "${name}"? Protocols already using it will keep showing it as their category, but it won't be offered for new ones.`)) return;
+      if(!(await uiConfirm(`Remove category "${name}"? Protocols already using it will keep showing it as their category, but it won't be offered for new ones.`))) return;
       const current = loadCategories();
       saveCategories({ custom: (current.custom || []).filter(c => c !== name), overrides: current.overrides || {} });
       logActivity(getAdminActingUsername(), `Removed protocol category "${name}"`);
@@ -4714,7 +5291,7 @@ function renderSettingsHomeLinksSubTab(){
     const type = document.getElementById('settings-link-type').value;
     const target = document.getElementById('settings-link-target').value.trim();
     const fallbackUrl = document.getElementById('settings-link-fallback').value.trim();
-    if(!label || !target){ alert('Enter at least a label and a web address or app scheme.'); return; }
+    if(!label || !target){ uiAlert('Enter at least a label and a web address or app scheme.'); return; }
     const list = loadHomeLinks();
     if(editingHomeLinkId){
       const existing = list.find(l => l.id === editingHomeLinkId);
@@ -4748,9 +5325,9 @@ function renderSettingsHomeLinksSubTab(){
     });
   });
   el.querySelectorAll('.settings-remove-link-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const link = loadHomeLinks().find(l => l.id === btn.dataset.id);
-      if(!confirm(`Remove the "${link ? link.label : ''}" Home link?`)) return;
+      if(!(await uiConfirm(`Remove the "${link ? link.label : ''}" Home link?`))) return;
       saveHomeLinks(loadHomeLinks().filter(l => l.id !== btn.dataset.id));
       logActivity(getAdminActingUsername(), `Removed Home link "${link ? link.label : ''}"`);
       renderHomeLinks();
@@ -4788,8 +5365,8 @@ function renderSettingsShiftTemplatesSubTab(){
     const name = document.getElementById('settings-shift-name').value.trim();
     const startMin = parseInt(document.getElementById('settings-shift-start').value, 10);
     const endMin = parseInt(document.getElementById('settings-shift-end').value, 10);
-    if(!name){ alert('Enter a shift name.'); return; }
-    if(endMin <= startMin){ alert('End time must be after start time.'); return; }
+    if(!name){ uiAlert('Enter a shift name.'); return; }
+    if(endMin <= startMin){ uiAlert('End time must be after start time.'); return; }
     const list = loadShiftTemplates();
     list.push({ id: makeId(), name, startMin, endMin });
     saveShiftTemplates(list);
@@ -4797,9 +5374,9 @@ function renderSettingsShiftTemplatesSubTab(){
     renderSettingsShiftTemplatesSubTab();
   });
   el.querySelectorAll('.settings-remove-shift-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const t = loadShiftTemplates().find(x => x.id === btn.dataset.id);
-      if(!confirm(`Remove shift template "${t ? t.name : ''}"?`)) return;
+      if(!(await uiConfirm(`Remove shift template "${t ? t.name : ''}"?`))) return;
       saveShiftTemplates(loadShiftTemplates().filter(x => x.id !== btn.dataset.id));
       logActivity(getAdminActingUsername(), `Removed shift template "${t ? t.name : ''}"`);
       renderSettingsShiftTemplatesSubTab();
@@ -4828,7 +5405,7 @@ function renderSettingsAnnouncementSubTab(){
   document.getElementById('settings-save-announcement-btn').addEventListener('click', ()=>{
     const title = document.getElementById('settings-announcement-title').value.trim();
     const message = document.getElementById('settings-announcement-message').value.trim();
-    if(loadAnnouncement().enabled && !message){ alert('Enter a message, or turn Showing at Login off.'); return; }
+    if(loadAnnouncement().enabled && !message){ uiAlert('Enter a message, or turn Showing at Login off.'); return; }
     saveAnnouncement({ ...loadAnnouncement(), title, message });
     logActivity(getAdminActingUsername(), 'Updated the login announcement');
     renderSettingsAnnouncementSubTab();
@@ -4855,7 +5432,7 @@ function renderAdminBackupTab(){
       logActivity(getAdminActingUsername(), 'Created a manual backup');
       loadBackupListIntoTab();
     } else {
-      alert((result && result.error) || 'Backup failed — check your connection.');
+      uiAlert((result && result.error) || 'Backup failed — check your connection.');
     }
     btn.textContent = 'Back Up Now';
   });
@@ -4893,7 +5470,7 @@ async function loadBackupListIntoTab(){
 
   listEl.querySelectorAll('.admin-restore-backup-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
-      if(!confirm("Restore this backup? This overwrites ALL current data — users, protocols, products, supplies, and allergens — with this backup's version. This cannot be undone.")) return;
+      if(!(await uiConfirm("Restore this backup? This overwrites ALL current data — users, protocols, products, supplies, and allergens — with this backup's version. This cannot be undone."))) return;
       btn.textContent = 'Restoring…';
       const result = await restoreBackupByKey(btn.dataset.key);
       if(result && result.ok){
@@ -4907,23 +5484,23 @@ async function loadBackupListIntoTab(){
         renderHomeScheduleList();
         renderHomeLinks();
         checkAuthAndRender();
-        alert('Backup restored — data has been refreshed.');
+        uiAlert('Backup restored — data has been refreshed.');
         renderAdminBackupTab();
       } else {
-        alert((result && result.error) || 'Restore failed — check your connection.');
+        uiAlert((result && result.error) || 'Restore failed — check your connection.');
         btn.textContent = 'Restore';
       }
     });
   });
   listEl.querySelectorAll('.admin-delete-backup-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
-      if(!confirm('Delete this backup? This cannot be undone.')) return;
+      if(!(await uiConfirm('Delete this backup? This cannot be undone.'))) return;
       const result = await deleteBackupByKey(btn.dataset.key);
       if(result && result.ok){
         logActivity(getAdminActingUsername(), `Deleted backup ${btn.dataset.key}`);
         loadBackupListIntoTab();
       } else {
-        alert((result && result.error) || 'Delete failed — check your connection.');
+        uiAlert((result && result.error) || 'Delete failed — check your connection.');
       }
     });
   });
@@ -4970,7 +5547,7 @@ function renderTakeInventory(){
   const items = getTrackedInventoryItems();
 
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-count-back-btn" style="margin-bottom:16px;">← Inventory</button>
+    <button class="ghost-btn" id="inventory-count-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Inventory</button>
     <div class="block-label">Take Inventory</div>
     <p class="caption">Enter the current count for each item. Anything not changed keeps its last known count, but is still marked as counted today.</p>
     ${items.length ? items.map(item => `
@@ -5014,7 +5591,7 @@ function renderTakeInventoryAddItem(){
   const untracked = getUntrackedInventoryItems();
 
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-add-back-btn" style="margin-bottom:16px;">← Take Inventory</button>
+    <button class="ghost-btn" id="inventory-add-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Take Inventory</button>
     <div class="block-label">Add Item to Count</div>
     <p class="caption">Choose an existing item that isn't tracked yet. Give it a starting count and a reorder threshold.</p>
     ${untracked.length ? untracked.map(item => `
@@ -5030,10 +5607,10 @@ function renderTakeInventoryAddItem(){
     renderTakeInventory();
   });
   content.querySelectorAll('.inventory-start-tracking-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const qty = prompt(`Starting count for "${btn.dataset.name}"?`, '0');
+    btn.addEventListener('click', async ()=>{
+      const qty = await uiPrompt(`Starting count for "${btn.dataset.name}"?`, '0', { inputMode:'numeric' });
       if(qty === null) return;
-      const threshold = prompt(`Reorder threshold for "${btn.dataset.name}"? (Flag as low stock at or below this number)`, '1');
+      const threshold = await uiPrompt(`Reorder threshold for "${btn.dataset.name}"? (Flag as low stock at or below this number)`, '1', { inputMode:'numeric' });
       if(threshold === null) return;
       const list = btn.dataset.type === 'product' ? loadProducts() : loadSupplies();
       const item = list.find(i => i.id === btn.dataset.id);
@@ -5061,10 +5638,10 @@ function renderTakeInventoryReview(){
   const nowLow = changes.filter(c => c.newQty <= c.item.reorderThreshold && !(c.item.quantity <= c.item.reorderThreshold));
 
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-review-back-btn" style="margin-bottom:16px;">← Keep Counting</button>
+    <button class="ghost-btn" id="inventory-review-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Keep Counting</button>
     <div class="block-label">Review Count</div>
     <p class="caption">${changedCount} of ${items.length} item${items.length===1?'':'s'} changed. Everything below will be marked as counted today.</p>
-    ${nowLow.length ? `<p class="caption" style="color:#8C4A2A;">${nowLow.length} item${nowLow.length===1?'':'s'} will newly need reordering</p>` : ''}
+    ${nowLow.length ? `<p class="caption" style="color:var(--warn-ink);">${nowLow.length} item${nowLow.length===1?'':'s'} will newly need reordering</p>` : ''}
     ${changes.map(c => `
       <div class="admin-user-row">
         <div class="admin-user-name">${escapeHtml(c.item.name)}</div>
@@ -5101,7 +5678,7 @@ function renderTakeInventoryReview(){
     takeInventoryStep = 'counting';
     adminTab = 'inventory';
     renderAdmin();
-    alert('Inventory count saved.');
+    uiAlert('Inventory count saved.');
   });
 }
 
@@ -5111,7 +5688,7 @@ function openInventoryReports(){
   const content = document.getElementById('admin-tab-content');
   const items = getTrackedInventoryItems();
   content.innerHTML = `
-    <button class="ghost-btn" id="inventory-reports-back-btn" style="margin-bottom:16px;">← Inventory</button>
+    <button class="ghost-btn" id="inventory-reports-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}Inventory</button>
     <div class="block-label">Reports</div>
     <p class="caption">${items.length} tracked item${items.length===1?'':'s'}.</p>
     <button class="primary-btn" id="inventory-print-btn" style="margin-bottom:12px;">Print Report</button>
@@ -5133,7 +5710,7 @@ function printInventoryReport(){
   });
   const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const rows = items.map(i => `
-    <tr style="${isLowStock(i) ? 'color:#8C4A2A; font-weight:600;' : ''}">
+    <tr style="${isLowStock(i) ? 'color:var(--warn-ink); font-weight:600;' : ''}">
       <td>${esc(i.name)}</td>
       <td>${i._type === 'product' ? 'Product' : 'Supply'}</td>
       <td>${i.quantity}</td>
@@ -5143,7 +5720,7 @@ function printInventoryReport(){
     </tr>
   `).join('');
   const printWindow = window.open('', '_blank');
-  if(!printWindow){ alert('Please allow pop-ups to generate the report.'); return; }
+  if(!printWindow){ uiAlert('Please allow pop-ups to generate the report.'); return; }
   printWindow.document.write(`
     <html><head><title>Inventory Report — ${new Date().toLocaleDateString()}</title>
     <style>
@@ -5195,7 +5772,7 @@ async function shareInventoryCsv(){
   const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
   const fallbackWindow = window.open(dataUri, '_blank');
   if(!fallbackWindow){
-    alert("Couldn't open the share sheet or a new tab. Please allow pop-ups and try again.");
+    uiAlert("Couldn't open the share sheet or a new tab. Please allow pop-ups and try again.");
   }
 }
 
@@ -5205,7 +5782,7 @@ function renderAdminInventoryTab(){
 
   content.innerHTML = `
     <div class="block-label">Inventory</div>
-    ${trackedCount ? `<p class="caption" style="color:#8C4A2A;">${trackedCount} item${trackedCount===1?'':'s'} need reordering</p>` : ''}
+    ${trackedCount ? `<p class="caption" style="color:var(--warn-ink);">${trackedCount} item${trackedCount===1?'':'s'} need reordering</p>` : ''}
     <button class="primary-btn" id="inventory-take-count-btn" style="margin-bottom:24px;">Take Inventory</button>
     <div class="grid">
       <button class="card-btn" id="inventory-products-btn">
@@ -5252,7 +5829,7 @@ function renderAdminProductsTab(){
     ${editing ? `<button class="ghost-btn" id="admin-cancel-product-btn">Cancel Edit</button>` : ''}
 
     <div class="block-label" style="margin-top:32px;">Products</div>
-    ${products.filter(isLowStock).length ? `<p class="caption" style="color:#8C4A2A;">${products.filter(isLowStock).length} product${products.filter(isLowStock).length===1?'':'s'} need reordering</p>` : ''}
+    ${products.filter(isLowStock).length ? `<p class="caption" style="color:var(--warn-ink);">${products.filter(isLowStock).length} product${products.filter(isLowStock).length===1?'':'s'} need reordering</p>` : ''}
     <div id="admin-product-list">
       ${products.length ? products.map(p => `
         <div class="admin-supply-row product-row">
@@ -5284,7 +5861,7 @@ function renderAdminProductsTab(){
     const reorderRaw = document.getElementById('admin-new-product-reorder').value;
     const quantity = quantityRaw === '' ? null : parseInt(quantityRaw, 10);
     const reorderThreshold = reorderRaw === '' ? null : parseInt(reorderRaw, 10);
-    if(!name){ alert('Enter a product name.'); return; }
+    if(!name){ uiAlert('Enter a product name.'); return; }
     const ingredients = parseIngredientsText(ingredientsText);
     const list = loadProducts();
     if(editingProductId){
@@ -5328,10 +5905,10 @@ function renderAdminProductsTab(){
     });
   });
   content.querySelectorAll('.admin-remove-product-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const id = btn.dataset.id;
       const product = loadProducts().find(p => p.id === id);
-      if(!confirm(`Remove product "${product ? product.name : ''}"?`)) return;
+      if(!(await uiConfirm(`Remove product "${product ? product.name : ''}"?`))) return;
       const list = loadProducts().filter(p => p.id !== id);
       saveProducts(list);
       logActivity(getAdminActingUsername(), `Removed product "${product ? product.name : id}"`);
@@ -5351,7 +5928,7 @@ function renderAdminSuppliesTab(){
     <button class="primary-btn" id="admin-add-supply-btn">Add Supply</button>
 
     <div class="block-label" style="margin-top:32px;">Supplies</div>
-    ${supplies.filter(isLowStock).length ? `<p class="caption" style="color:#8C4A2A;">${supplies.filter(isLowStock).length} suppl${supplies.filter(isLowStock).length===1?'y needs':'ies need'} reordering</p>` : ''}
+    ${supplies.filter(isLowStock).length ? `<p class="caption" style="color:var(--warn-ink);">${supplies.filter(isLowStock).length} suppl${supplies.filter(isLowStock).length===1?'y needs':'ies need'} reordering</p>` : ''}
     <div id="admin-supply-list">
       ${supplies.length ? supplies.map(s => `
         <div class="admin-supply-row">
@@ -5371,7 +5948,7 @@ function renderAdminSuppliesTab(){
 
   document.getElementById('admin-add-supply-btn').addEventListener('click', ()=>{
     const name = document.getElementById('admin-new-supply-name').value.trim();
-    if(!name){ alert('Enter a supply name.'); return; }
+    if(!name){ uiAlert('Enter a supply name.'); return; }
     const list = loadSupplies();
     list.push({ id: makeId(), name, createdAt: new Date().toISOString() });
     saveSupplies(list);
@@ -5394,10 +5971,10 @@ function renderAdminSuppliesTab(){
     });
   });
   content.querySelectorAll('.admin-remove-supply-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const id = btn.dataset.id;
       const supply = loadSupplies().find(s => s.id === id);
-      if(!confirm(`Remove supply "${supply ? supply.name : ''}"?`)) return;
+      if(!(await uiConfirm(`Remove supply "${supply ? supply.name : ''}"?`))) return;
       const list = loadSupplies().filter(s => s.id !== id);
       saveSupplies(list);
       logActivity(getAdminActingUsername(), `Removed supply "${supply ? supply.name : id}"`);
@@ -5986,7 +6563,7 @@ function matchServiceName(extractedText){
 function buildAgendaFromPastedText(text){
   const { appointments, standaloneLabels } = parsePastedSchedule(text);
   if(!appointments.length){
-    alert("Couldn't find any appointments in that text. Make sure you copied the full schedule block, including times, names, and services.");
+    uiAlert("Couldn't find any appointments in that text. Make sure you copied the full schedule block, including times, names, and services.");
     return false;
   }
 
@@ -6025,7 +6602,7 @@ function buildAgendaFromPastedText(text){
   saveAgendaState();
 
   if(unmatchedCount > 0){
-    alert(`Imported ${appointments.length} appointment${appointments.length===1?'':'s'}. ${unmatchedCount} service${unmatchedCount===1?'':'s'} couldn't be auto-matched — please check and select manually.`);
+    uiAlert(`Imported ${appointments.length} appointment${appointments.length===1?'':'s'}. ${unmatchedCount} service${unmatchedCount===1?'':'s'} couldn't be auto-matched — please check and select manually.`);
   }
   return true;
 }
@@ -6084,7 +6661,7 @@ function renderHomeScheduleList(){
   const nowMin = currentMinutesNow();
   const current = visible.find(s => nowMin >= s.time && nowMin < s.time + s.duration);
   container.innerHTML = `
-    <div class="section-label"><span class="section-icon">▤</span>Today's Schedule</div>
+    <div class="section-label"><span class="section-icon">${ico('calendar')}</span>Today's Schedule</div>
     <div class="agenda-list">
       ${visible.map(s => {
         const svcLine = [s.service, s.enhancement].filter(Boolean).join(' + ');
@@ -6097,7 +6674,7 @@ function renderHomeScheduleList(){
             <span class="ar-client">${escapeHtml(clientLine)}${s.room ? `<span class="ar-room">${escapeHtml(s.room)}</span>` : ''}</span>
             <span class="ar-service">${svcLine || '—'}</span>
           </span>
-          <span class="ar-chevron">›</span>
+          <span class="ar-chevron">${ico('chevronRight')}</span>
         </div>`;
       }).join('')}
     </div>
@@ -6319,7 +6896,7 @@ const DATA = {
 };
 
 function iconArrow(){
-  return '<span class="arrow">→</span>';
+  return `<span class="arrow">${ico('chevronRight')}</span>`;
 }
 
 function renderGrid(containerId, items, isRef=false){
@@ -6558,7 +7135,7 @@ function renderAllergyList(){
   const letters = Object.keys(groups).sort();
 
   allergyInner.innerHTML = `
-    <button class="back-btn" id="allergy-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="allergy-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Allergy Lookup</h2>
       <p class="caption">Find an ingredient to see which treatments are safe to recommend.</p>
@@ -6612,7 +7189,7 @@ function renderAllergyDetail(){
   const matchingProducts = getMatchingProducts(entry);
 
   allergyInner.innerHTML = `
-    <button class="back-btn" id="allergy-back"><span class="chev">←</span> Allergy Lookup</button>
+    <button class="back-btn" id="allergy-back"><span class="chev">${ico('chevronLeft')}</span> Allergy Lookup</button>
     <div class="agenda-step">
       <h2>${escapeHtml(allergenDisplayName(entry))}</h2>
       <p class="caption">Based on ingredients in your Products list and each treatment's Prep list.</p>
@@ -6629,7 +7206,7 @@ function renderAllergyDetail(){
         </div>
       ` : `<p class="caption">No products in your list contain this ingredient.</p>`}
 
-      <div class="block-label" style="margin-top:28px;">⚠️ Treatments That Use It — Avoid</div>
+      <div class="block-label avoid-label" style="margin-top:28px;">${ico('alert')}Treatments That Use It — Avoid</div>
       ${unsafe.length ? `
         <div class="grid">
           ${unsafe.map(p => `
@@ -6641,7 +7218,7 @@ function renderAllergyDetail(){
         </div>
       ` : `<p class="caption">No protocols use this ingredient.</p>`}
 
-      <div class="block-label" style="margin-top:28px;">✅ Recommended Treatments</div>
+      <div class="block-label" style="margin-top:28px;">${ico('checkCircle')}Recommended Treatments</div>
       ${safe.length ? `
         <div class="grid">
           ${safe.map(p => `
@@ -6715,7 +7292,7 @@ function renderProductsBrowseList(){
   const products = [...loadProducts()].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
   productsBrowseInner.innerHTML = `
-    <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="products-browse-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Products</h2>
       <p class="caption">Tap a product to see its ingredients.</p>
@@ -6752,7 +7329,7 @@ function renderProductsBrowseDetail(){
   const ingredients = [...(product.ingredients || [])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
   productsBrowseInner.innerHTML = `
-    <button class="back-btn" id="products-browse-back"><span class="chev">←</span> Products</button>
+    <button class="back-btn" id="products-browse-back"><span class="chev">${ico('chevronLeft')}</span> Products</button>
     <div class="agenda-step">
       <h2>${escapeHtml(product.name)}</h2>
       ${product.brand ? `<p class="caption">${escapeHtml(product.brand)}</p>` : ''}
@@ -6805,7 +7382,7 @@ function renderSoapNotes(){
   const today = new Date().toISOString().slice(0,10);
 
   soapNotesInner.innerHTML = `
-    <button class="back-btn" id="soap-notes-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="soap-notes-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>SOAP Notes</h2>
       <p class="caption">Kept only on this device — never sent to or stored in the shared database. Generating the PDF clears this draft afterward.</p>
@@ -6827,8 +7404,8 @@ function renderSoapNotes(){
   ['soap-client','soap-date','soap-s','soap-o','soap-a','soap-p'].forEach(id=>{
     document.getElementById(id).addEventListener('input', saveCurrentSoapDraft);
   });
-  document.getElementById('soap-clear-btn').addEventListener('click', ()=>{
-    if(!confirm('Clear this draft? This cannot be undone.')) return;
+  document.getElementById('soap-clear-btn').addEventListener('click', async ()=>{
+    if(!(await uiConfirm('Clear this draft? This cannot be undone.'))) return;
     clearSoapDraft();
     renderSoapNotes();
   });
@@ -6852,7 +7429,7 @@ function saveCurrentSoapDraft(){
 function generateSoapPdf(){
   const draft = loadSoapDraft();
   const printWindow = window.open('', '_blank');
-  if(!printWindow){ alert("Please allow pop-ups to generate the PDF, then try again."); return; }
+  if(!printWindow){ uiAlert("Please allow pop-ups to generate the PDF, then try again."); return; }
   const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
   printWindow.document.write(`
     <html>
@@ -6895,13 +7472,13 @@ function openDetail(id){
   if(!item) return;
 
   let html = `
-    <button class="back-btn" id="back-btn"><span class="chev">←</span> All treatments</button>
+    <button class="back-btn" id="back-btn"><span class="chev">${ico('chevronLeft')}</span> All treatments</button>
     <h2>${escapeHtml(item.name)}</h2>
     <p class="caption">${escapeHtml(item.caption)}</p>
   `;
 
   if(item.menuDescription){
-    html += `<button class="desc-toggle" id="desc-toggle"><span class="car">▸</span> See description</button>`;
+    html += `<button class="desc-toggle" id="desc-toggle"><span class="car">${ico('chevronRight')}</span> See description</button>`;
     html += `<p class="menu-desc hidden" id="desc-panel">${escapeHtml(item.menuDescription)}</p>`;
   }
 
@@ -7086,7 +7663,7 @@ function renderMyAccount(){
   const successHtml = myAccountSuccess ? `<div class="storage-warning" style="border-color:var(--sage-deep);">${myAccountSuccess}</div>` : '';
 
   myAccountInner.innerHTML = `
-    <button class="back-btn" id="my-account-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="my-account-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>My Account</h2>
       <p class="caption">${username}</p>
@@ -7202,7 +7779,7 @@ function renderHomeLinks(){
         <span class="ae-label">${escapeHtml(link.label)}</span>
         <span class="ae-sub">${escapeHtml(link.subtitle || '')}</span>
       </span>
-      <span class="arrow">→</span>
+      <span class="arrow">${ico('chevronRight')}</span>
     </button>
   `).join('');
 
@@ -7253,13 +7830,13 @@ function renderAgenda(){
 
 function storageWarningHtml(){
   if(STORAGE_OK) return '';
-  return `<div class="storage-warning">⚠️ This browser can't save schedule data here — entries will be lost on reload. This is usually fixed by opening the site's deployed URL directly in your browser, rather than a preview or private/incognito window.</div>`;
+  return `<div class="storage-warning">${ico('alert')}<span>This browser can't save schedule data here — entries will be lost on reload. This is usually fixed by opening the site's deployed URL directly in your browser, rather than a preview or private/incognito window.</span></div>`;
 }
 
 function renderAgendaSetup(){
   const timeOpts = TIME_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
   agendaInner.innerHTML = `
-    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="agenda-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Agenda</h2>
       <p class="caption">Paste today's schedule to build it automatically, or set a shift below to build it blank.</p>
@@ -7305,7 +7882,7 @@ function renderAgendaSetup(){
   document.getElementById('agenda-extract').addEventListener('click', ()=>{
     const text = document.getElementById('agenda-paste').value;
     if(!text.trim()){
-      alert('Paste your schedule text into the box first.');
+      uiAlert('Paste your schedule text into the box first.');
       return;
     }
     const ok = buildAgendaFromPastedText(text);
@@ -7315,7 +7892,7 @@ function renderAgendaSetup(){
     const startMin = parseInt(document.getElementById('agenda-start').value, 10);
     const endMin = parseInt(document.getElementById('agenda-end').value, 10);
     if(endMin <= startMin){
-      alert('End time must be after start time.');
+      uiAlert('End time must be after start time.');
       return;
     }
     agenda.slots = buildSlots(startMin, endMin);
@@ -7369,7 +7946,7 @@ function renderAgendaFill(){
           <select class="duration-select" data-idx="${idx}">
             ${loadDurations().map(d => `<option value="${d}" ${d===slot.duration?'selected':''}>${d} min</option>`).join('')}
           </select>
-          <button class="remove-slot-btn" data-idx="${idx}" title="Remove this appointment time" aria-label="Remove this appointment time">✕</button>
+          <button class="remove-slot-btn" data-idx="${idx}" title="Remove this appointment time" aria-label="Remove this appointment time">${ico('x')}</button>
         </div>
       </div>
       <input type="text" placeholder="Client name" data-idx="${idx}" class="agenda-client-input" value="${escapeHtml(slot.client)}">
@@ -7388,7 +7965,7 @@ function renderAgendaFill(){
     : `<option value="">No more times available</option>`;
 
   agendaInner.innerHTML = `
-    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Agenda Setup</button>
+    <button class="back-btn" id="agenda-back"><span class="chev">${ico('chevronLeft')}</span> Agenda Setup</button>
     <div class="agenda-step">
       <h2>Today's Schedule</h2>
       <p class="caption">Enter the client name and service for each appointment. Switch to 100 min for a longer appointment — it will absorb the next open slot.</p>
@@ -7449,9 +8026,9 @@ function renderAgendaFill(){
     });
   });
   agendaInner.querySelectorAll('.remove-slot-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const idx = parseInt(btn.dataset.idx,10);
-      removeSlot(idx);
+      await removeSlot(idx);
       saveAgendaState();
       renderAgendaFill();
     });
@@ -7480,10 +8057,10 @@ function closestConfiguredDuration(minutes){
   return durations.reduce((closest, d) => Math.abs(d - minutes) < Math.abs(closest - minutes) ? d : closest, durations[0]);
 }
 
-function removeSlot(idx){
+async function removeSlot(idx){
   const removed = agenda.slots[idx];
   const hasData = removed.client || removed.client2 || removed.service;
-  if(hasData && !confirm(`Remove the ${formatSlotTime(removed.time)} appointment? This will clear its entered info.`)){
+  if(hasData && !(await uiConfirm(`Remove the ${formatSlotTime(removed.time)} appointment? This will clear its entered info.`))){
     return;
   }
   agenda.slots.splice(idx, 1);
@@ -7538,7 +8115,7 @@ function currentMinutesNow(){
 
 function renderAgendaView(){
   agendaInner.innerHTML = `
-    <button class="back-btn" id="agenda-back"><span class="chev">←</span> Home</button>
+    <button class="back-btn" id="agenda-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Today's Agenda</h2>
       <p class="caption">Live view of your schedule.</p>
@@ -7555,8 +8132,8 @@ function renderAgendaView(){
     saveAgendaState();
     renderAgenda();
   });
-  document.getElementById('agenda-clear').addEventListener('click', ()=>{
-    if(!confirm('Clear today\'s schedule and start over?')) return;
+  document.getElementById('agenda-clear').addEventListener('click', async ()=>{
+    if(!(await uiConfirm('Clear today\'s schedule and start over?'))) return;
     agenda.slots = [];
     agenda.step = 'setup';
     try{ localStorage.removeItem(AGENDA_STORAGE_KEY); }catch(e){}
@@ -7605,7 +8182,7 @@ function updateAgendaLive(){
         <span class="ar-client">${escapeHtml(clientLine)}${s.room ? `<span class="ar-room">${escapeHtml(s.room)}</span>` : ''}</span>
         <span class="ar-service">${svcLine || '—'}</span>
       </span>
-      <span class="ar-chevron">›</span>
+      <span class="ar-chevron">${ico('chevronRight')}</span>
     </div>
   `;
   }).join('');
