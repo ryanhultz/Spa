@@ -1666,7 +1666,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.33.0</div>
+    <div class="app-version">v1.33.1</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -2918,6 +2918,7 @@ function setActiveNavTab(tab){
 // link inside a protocol), which can still stack normally.
 function closeAllOverlaysForNav(){
   stopMessageBurst();
+  clearComposeBar();
   document.querySelectorAll('.detail.open').forEach(el => el.classList.remove('open'));
 }
 
@@ -3000,6 +3001,7 @@ async function openMessages(){
   document.getElementById('messages-overlay').scrollTop = 0;
 }
 function closeMessagesScreen(){
+  clearComposeBar();
   document.getElementById('messages-overlay').classList.remove('open');
   setActiveNavTab('home');
 }
@@ -3133,6 +3135,7 @@ async function openThreadDetail(threadId){
 
 function closeThreadDetail(){
   stopMessageBurst();
+  clearComposeBar();
   currentThreadId = null;
   currentThreadInfo = null;
   currentThreadMessages = [];
@@ -3143,6 +3146,8 @@ function closeThreadDetail(){
 function stopMessageBurst(){
   if(messageBurstInterval){ clearInterval(messageBurstInterval); messageBurstInterval = null; }
   if(messageBurstTimeout){ clearTimeout(messageBurstTimeout); messageBurstTimeout = null; }
+}
+function clearComposeBar(){
   const composeBarContainer = document.getElementById('thread-compose-bar-container');
   if(composeBarContainer) composeBarContainer.innerHTML = '';
 }
