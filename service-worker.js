@@ -20,7 +20,7 @@
  * the network, untouched.
  */
 
-const CACHE_NAME = 'stop-shell-v2';
+const CACHE_NAME = 'stop-shell-v3';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
