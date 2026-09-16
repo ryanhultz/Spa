@@ -2402,6 +2402,197 @@
     color:var(--ink);
   }
   .ir-new-item .row-chip{ white-space:normal; text-align:left; text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif; font-size:12.5px; }
+  /* ============ v1.39.0 — Messaging ============ */
+  .msg-notice{
+    display:flex; align-items:flex-start; gap:8px;
+    margin:4px 0 16px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:var(--stone-deep);
+    border:1px solid var(--line);
+    font-size:13px; line-height:1.45;
+    color:var(--ink);
+  }
+  .msg-notice .ico{ flex:none; width:16px; height:16px; margin-top:1px; color:var(--gold); }
+  .msg-live-status{ display:flex; align-items:center; justify-content:center; gap:6px; margin:18px 0 0; font-size:11.5px; color:var(--ink-soft); }
+  .msg-live-status .dot{ width:7px; height:7px; border-radius:50%; background:var(--gold); }
+  .msg-live-status.live .dot{ background:#5E9E6A; }
+  .count-inline{ margin-left:8px; font-size:10px; letter-spacing:.04em; color:var(--ink-soft); }
+
+  .avatar{
+    flex:none;
+    width:42px; height:42px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--sage); color:#fff;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:600; letter-spacing:.02em;
+  }
+  .avatar.group{ background:var(--gold); }
+  .avatar.small{ width:34px; height:34px; font-size:12px; }
+
+  .inbox-list, .people-list{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .inbox-row, .people-row{
+    all:unset; box-sizing:border-box; cursor:pointer;
+    width:100%;
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+  }
+  .inbox-row:last-child, .people-row:last-child{ border-bottom:none; }
+  .inbox-row:active, .people-row:not(.static):active{ background:var(--stone-deep); }
+  .people-row.static{ cursor:default; }
+  .ib-main, .pr-main{ flex:1; min-width:0; display:block; }
+  .ib-top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .ib-top b{ font-family:'Fraunces',serif; font-weight:500; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ib-top time{ flex:none; font-size:12px; color:var(--ink-soft); }
+  .ib-bottom{ display:flex; align-items:center; gap:10px; margin-top:2px; }
+  .ib-preview{ flex:1; min-width:0; font-size:13.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ib-preview.deleted{ font-style:italic; }
+  .ib-sub{ display:block; margin-top:1px; font-size:11.5px; color:var(--ink-soft); opacity:.8; }
+  .inbox-row.unread .ib-top b{ font-weight:700; }
+  .inbox-row.unread .ib-preview{ color:var(--ink); font-weight:500; }
+  .inbox-row.unread .ib-top time{ color:var(--sage-text); font-weight:600; }
+  .unread-count{
+    flex:none; min-width:20px; height:20px; padding:0 6px; box-sizing:border-box;
+    border-radius:999px; background:var(--sage); color:#fff;
+    font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .pr-main b{ display:block; font-size:14.5px; font-weight:600; }
+  .pr-main small{ display:block; margin-top:1px; font-size:12px; color:var(--ink-soft); }
+  .pr-check{ flex:none; width:22px; height:22px; color:var(--sage-text); }
+  .pr-check .ico{ width:22px; height:22px; }
+  .people-row.picked{ background:var(--stone-deep); }
+
+  .thread-step h2{ margin-bottom:4px; }
+  .thread-title-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .thread-title-row h2{ min-width:0; overflow-wrap:anywhere; }
+  .thread-menu-btn{ flex:none; width:38px; height:38px; margin-top:6px; }
+  .thread-menu-btn .ico{ width:18px; height:18px; }
+  .thread-sub{ margin:0 0 10px; }
+  .thread-messages-list{ padding-bottom:90px; }
+  .thread-empty, .thread-hint{ text-align:center; }
+  .thread-hint{ margin:18px 0 0; font-size:11.5px; opacity:.8; }
+  .load-older-btn{
+    all:unset; box-sizing:border-box; cursor:pointer;
+    display:block; margin:0 auto 12px; padding:8px 14px;
+    border-radius:999px; border:1px solid var(--line); background:var(--card);
+    font-size:12.5px; color:var(--sage-text);
+  }
+  .day-divider{ display:flex; align-items:center; gap:10px; margin:18px 0 10px; font-size:11.5px; color:var(--ink-soft); }
+  .day-divider::before, .day-divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .day-divider span{ font-family:'JetBrains Mono',monospace; letter-spacing:.06em; text-transform:uppercase; font-size:10px; }
+  .message-row{ display:flex; flex-direction:column; align-items:flex-start; margin-top:2px; }
+  .message-row.run-start{ margin-top:10px; }
+  .message-row.mine{ align-items:flex-end; }
+  .message-sender{ margin:0 0 3px 12px; font-size:11.5px; font-weight:600; color:var(--ink-soft); }
+  .message-bubble{
+    max-width:78%;
+    padding:9px 13px;
+    border-radius:18px;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-size:15px; line-height:1.4;
+    overflow-wrap:anywhere;
+    -webkit-touch-callout:none;
+  }
+  .message-row.theirs:not(.run-end) .message-bubble{ border-bottom-left-radius:6px; }
+  .message-row.theirs:not(.run-start) .message-bubble{ border-top-left-radius:6px; }
+  .message-row.mine .message-bubble{ background:var(--sage); border-color:var(--sage); color:#fff; }
+  .message-row.mine:not(.run-end) .message-bubble{ border-bottom-right-radius:6px; }
+  .message-row.mine:not(.run-start) .message-bubble{ border-top-right-radius:6px; }
+  .message-bubble.can-delete{ -webkit-user-select:none; user-select:none; cursor:default; transition:transform .15s ease, opacity .15s ease; }
+  .message-bubble.can-delete.pressing{ transform:scale(.97); opacity:.85; }
+  .message-bubble.deleted{ background:transparent !important; border:1px dashed var(--line) !important; color:var(--ink-soft) !important; }
+  .bubble-deleted{ font-style:italic; font-size:13.5px; }
+  .message-row.pending .message-bubble{ opacity:.7; }
+  .message-row.pending.failed .message-bubble{ opacity:1; background:var(--warn-bg); border-color:var(--warn-border); color:var(--ink); }
+  .message-meta{ margin:3px 8px 0; font-size:11px; color:var(--ink-soft); }
+  .msg-failed{ display:inline-flex; align-items:center; gap:4px; color:var(--warn-ink); }
+  .msg-failed .ico{ width:12px; height:12px; }
+  .link-btn{ all:unset; cursor:pointer; text-decoration:underline; font-weight:600; }
+
+  #thread-compose-bar-container{ display:none; }
+  #thread-compose-bar-container.open{
+    display:block;
+    position:fixed;
+    left:0; right:0;
+    bottom:calc(64px + env(safe-area-inset-bottom));
+    z-index:210;
+    max-width:560px;
+    margin:0 auto;
+  }
+  #thread-compose-bar-container .thread-compose-bar{
+    position:static;
+    align-items:flex-end;
+    padding:10px 16px;
+  }
+  .thread-compose-bar textarea{
+    all:unset;
+    flex:1; min-width:0; box-sizing:border-box;
+    max-height:140px;
+    overflow-y:auto;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:10px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    line-height:1.35;
+    color:var(--ink);
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+  .thread-compose-bar textarea:focus{ border-color:var(--gold); }
+  #thread-send-btn{
+    all:unset; cursor:pointer; flex:none;
+    width:40px; height:40px; border-radius:50%;
+    background:var(--brand); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #thread-send-btn .ico{ width:20px; height:20px; stroke-width:2.4; }
+  #thread-send-btn:active{ background:var(--brand-pressed); }
+  .new-messages-pill{
+    all:unset; cursor:pointer;
+    position:absolute; left:50%; top:-44px; transform:translateX(-50%);
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px; border-radius:999px;
+    background:var(--brand); color:#fff;
+    font-size:12.5px; font-weight:600;
+    box-shadow:0 6px 18px -8px rgba(0,0,0,.4);
+  }
+  .new-messages-pill .ico{ width:14px; height:14px; }
+
+  .action-sheet .action-list{ display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+  .action-item{
+    all:unset; box-sizing:border-box; cursor:pointer;
+    display:flex; align-items:flex-start; gap:12px;
+    padding:11px 10px; border-radius:12px;
+    color:var(--ink);
+  }
+  .action-item:hover, .action-item:focus-visible{ background:var(--stone-deep); }
+  .action-item .ico{ flex:none; width:18px; height:18px; margin-top:1px; color:var(--sage-text); }
+  .action-item b{ display:block; font-size:15px; font-weight:600; }
+  .action-item small{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-soft); line-height:1.4; }
+  .action-item.danger b, .action-item.danger .ico{ color:var(--warn-ink); }
+
+  .oversight-row.is-deleted b{ color:var(--ink-soft); }
+  .oversight-summary{ border-color:var(--line); }
+  .oversight-thread{ margin-top:6px; }
+  .oversight-msg{ padding:10px 12px; margin-bottom:8px; border-radius:12px; background:var(--card); border:1px solid var(--line); }
+  .oversight-msg.deleted{ background:var(--avoid-bg); border-color:var(--warn-border); }
+  .om-head{ display:flex; justify-content:space-between; gap:10px; font-size:12.5px; }
+  .om-head time{ color:var(--ink-soft); flex:none; }
+  .om-text{ margin-top:4px; font-size:14.5px; line-height:1.45; overflow-wrap:anywhere; }
+  .oversight-msg.deleted .om-text{ text-decoration:line-through; text-decoration-color:var(--warn-border); }
+  .om-deleted{ display:flex; align-items:center; gap:4px; margin-top:6px; font-size:11.5px; font-weight:600; color:var(--warn-ink); }
+  .om-deleted .ico{ width:12px; height:12px; }
 </style>
 </head>
 <body>
@@ -2505,7 +2696,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.38.0</div>
+    <div class="app-version">v1.39.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -3053,24 +3244,55 @@ async function deleteUserOnServer(username){
   }
 }
 
-/* ---------- Messaging: data layer ---------- */
+/* ---------- Messaging: data layer (v1.39.0) ----------
+ * Talks to the MessagingHub through the sync Worker. Personal messaging
+ * always uses the staff login (never the master password); oversight
+ * calls use whichever session is active in Management.
+ */
 
 let threadsCache = [];
-let currentThreadId = null;
-let currentThreadMessages = [];
-let currentThreadInfo = null;
-let messageBurstInterval = null;
-let messageBurstTimeout = null;
+const MESSAGING_NOTICE = 'This is not a private messaging platform.';
+
+function messagingHeaders(extra){
+  const token = getSessionToken();
+  const headers = { ...(extra || {}) };
+  if(token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
+async function msgRequest(method, path, body, useActiveSession){
+  if(!isSyncConfigured()) return { ok: false, status: 0, error: "Sync isn't set up on this device yet." };
+  const extra = body !== undefined ? { 'Content-Type': 'application/json' } : {};
+  try{
+    const res = await fetch(`${SYNC_API_BASE}${path}`, {
+      method,
+      cache: 'no-store',
+      headers: useActiveSession ? authHeaders(extra) : messagingHeaders(extra),
+      body: body !== undefined ? JSON.stringify(body) : undefined
+    });
+    let json = null;
+    try{ json = await res.json(); }catch(e){}
+    if(Array.isArray(json)) return { ok: res.ok, status: res.status, list: json };
+    const ok = res.ok && !(json && json.ok === false);
+    return { ...(json || {}), ok, status: res.status, error: ok ? null : ((json && json.error) || `Server error (${res.status}).`) };
+  }catch(e){
+    return { ok: false, status: 0, error: "Couldn't reach the server." };
+  }
+}
+
+function makeClientId(){
+  const rand = (crypto && crypto.getRandomValues) ? [...crypto.getRandomValues(new Uint8Array(9))].map(b => b.toString(16).padStart(2, '0')).join('') : Math.random().toString(36).slice(2);
+  return `c${Date.now().toString(36)}${rand}`.slice(0, 40);
+}
 
 async function refreshThreadsFromServer(){
-  if(!isSyncConfigured()) return;
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads`, { headers: authHeaders() });
-    if(!res.ok) return;
-    const data = await res.json();
-    if(Array.isArray(data)) threadsCache = data;
-  }catch(e){}
-  updateMessagesBadge();
+  if(!isSyncConfigured() || !getCurrentUser() || !getSessionToken()) return;
+  const r = await msgRequest('GET', '/messages/threads');
+  if(r.ok && Array.isArray(r.list)){
+    threadsCache = r.list;
+    updateMessagesBadge();
+    onThreadsChanged();
+  }
 }
 
 function updateMessagesBadge(){
@@ -3085,95 +3307,220 @@ function updateMessagesBadge(){
   }
 }
 
-async function createThread(type, participantUsernames, name){
-  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads`, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ type, participantUsernames, name })
-    });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
+const createThread = (type, participantUsernames, name, firstMessage) =>
+  msgRequest('POST', '/messages/threads', { type, participantUsernames, name, firstMessage });
+const fetchThreadDetail = (threadId, before, oversightView) => {
+  const qs = [before ? `before=${encodeURIComponent(before)}` : '', oversightView ? 'view=oversight' : ''].filter(Boolean).join('&');
+  return msgRequest('GET', `/messages/threads/${encodeURIComponent(threadId)}${qs ? `?${qs}` : ''}`, undefined, !!oversightView);
+};
+const sendMessageToThread = (threadId, text, clientId) =>
+  msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/messages`, { text, clientId });
+const deleteMessageFromThread = (threadId, msgId) =>
+  msgRequest('POST', `/messages/messages/${encodeURIComponent(msgId)}/delete`, { threadId });
+const deleteThreadOnServer = (threadId, useActiveSession) =>
+  msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/delete`, {}, useActiveSession);
+const updateGroupMember = (threadId, action, username, useActiveSession) =>
+  msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/members`, { action, username }, useActiveSession);
+const renameThreadOnServer = (threadId, name, useActiveSession) =>
+  msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/rename`, { name }, useActiveSession);
+const hideThreadOnServer = (threadId) => msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/hide`, {});
+const leaveThreadOnServer = (threadId) => msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/leave`, {});
+const markThreadReadOnServer = (threadId) => msgRequest('POST', `/messages/threads/${encodeURIComponent(threadId)}/read`, {});
 
-async function fetchThreadDetail(threadId){
-  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}`, { headers: authHeaders() });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
-
-async function sendMessageToThread(threadId, text){
-  if(!isSyncConfigured()) return { ok:false, error:"Sync isn't set up on this device yet." };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/messages`, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ text })
-    });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
-
-async function deleteMessageFromThread(threadId, msgId){
-  if(!isSyncConfigured()) return { ok:false };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/messages/${msgId}/delete`, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ threadId })
-    });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
-
-async function deleteThreadOnServer(threadId){
-  if(!isSyncConfigured()) return { ok:false };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/delete`, {
-      method: 'POST',
-      headers: authHeaders()
-    });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
-
-async function updateGroupMember(threadId, action, username){
-  if(!isSyncConfigured()) return { ok:false };
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/threads/${threadId}/members`, {
-      method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ action, username })
-    });
-    return await res.json();
-  }catch(e){
-    return { ok:false, error: "Couldn't reach the server." };
-  }
-}
-
-// Other participants in a thread, from the current user's point of view —
-// used for both the thread-list preview and the thread header.
+// Other current participants, from the signed-in person's point of view.
 function otherParticipants(thread){
-  const me = getCurrentUser();
-  return (thread.participants || []).filter(p => p.toLowerCase() !== (me || '').toLowerCase());
+  const me = (getCurrentUser() || '').toLowerCase();
+  return (thread.participants || []).filter(p => p.toLowerCase() !== me);
 }
 function threadDisplayName(thread){
   if(thread.type === 'group') return thread.name || 'Group';
   const others = otherParticipants(thread);
-  return others.length ? others.map(getDisplayFullName).join(', ') : thread.name || 'Conversation';
+  if(others.length) return others.map(getDisplayFullName).join(', ');
+  const me = (getCurrentUser() || '').toLowerCase();
+  const former = (thread.formerParticipants || []).filter(p => p.toLowerCase() !== me);
+  return former.length ? former.map(getDisplayFullName).join(', ') : 'Conversation';
+}
+function isFormerOnlyDm(thread){
+  return thread.type === 'dm' && !otherParticipants(thread).length;
+}
+function personInitials(label){
+  const words = String(label || '?').replace(/[^A-Za-z0-9 ]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return '?';
+  return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+function isSameUser(a, b){ return String(a || '').toLowerCase() === String(b || '').toLowerCase(); }
+
+function shortWhen(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const now = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(now) - startOf(d)) / 86400000);
+  if(days === 0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if(days === 1) return 'Yesterday';
+  if(days < 7) return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+}
+function dayLabel(iso){
+  const d = new Date(iso);
+  const now = new Date();
+  const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(now) - startOf(d)) / 86400000);
+  if(days === 0) return 'Today';
+  if(days === 1) return 'Yesterday';
+  if(days < 7) return d.toLocaleDateString([], { weekday: 'long' });
+  return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+}
+function previewText(thread){
+  const m = thread.lastMessage;
+  if(!m) return 'No messages yet';
+  const mine = isSameUser(m.sender, getCurrentUser());
+  if(m.deleted) return mine ? 'You deleted a message' : 'Message deleted';
+  const who = mine ? 'You: ' : (thread.type === 'group' ? `${getDisplayFullName(m.sender).split(' ')[0]}: ` : '');
+  const flat = String(m.text || '').replace(/\s+/g, ' ').trim();
+  const cut = flat.length > 80 ? `${flat.slice(0, 80).trimEnd()}…` : flat;
+  return who + cut;
+}
+
+/* ---------- Live updates ---------- */
+
+const messagingLive = { wanted: false, ws: null, connected: false, retry: 0, retryTimer: null, pingTimer: null, pollTimer: null, readTimer: null };
+
+function startMessagingRealtime(){
+  if(!isSyncConfigured() || !getCurrentUser() || !getSessionToken()) return;
+  messagingLive.wanted = true;
+  connectMessagingSocket();
+  if(!messagingLive.pollTimer){
+    // Fallback: if the live connection can't open, check once a minute.
+    messagingLive.pollTimer = setInterval(() => {
+      if(!messagingLive.wanted || document.hidden || messagingLive.connected) return;
+      refreshThreadsFromServer();
+      catchUpOpenThread();
+    }, 60 * 1000);
+  }
+}
+
+function stopMessagingRealtime(){
+  messagingLive.wanted = false;
+  clearTimeout(messagingLive.retryTimer);
+  clearInterval(messagingLive.pingTimer);
+  clearInterval(messagingLive.pollTimer);
+  messagingLive.pollTimer = null;
+  const ws = messagingLive.ws;
+  messagingLive.ws = null;
+  messagingLive.connected = false;
+  if(ws){ try{ ws.close(1000, 'signed out'); }catch(e){} }
+  threadsCache = [];
+  updateMessagesBadge();
+  updateLiveStatus();
+}
+
+async function connectMessagingSocket(){
+  if(!messagingLive.wanted || document.hidden || typeof WebSocket === 'undefined') return;
+  const current = messagingLive.ws;
+  if(current && (current.readyState === 0 || current.readyState === 1)) return;
+  const t = await msgRequest('GET', '/messages/socket-ticket');
+  if(!messagingLive.wanted) return;
+  if(!t.ok || !t.ticket){ scheduleMessagingReconnect(); return; }
+  let ws;
+  try{
+    ws = new WebSocket(`${SYNC_API_BASE.replace(/^http/i, 'ws')}/messages/socket?ticket=${encodeURIComponent(t.ticket)}`);
+  }catch(e){ scheduleMessagingReconnect(); return; }
+  messagingLive.ws = ws;
+  ws.onopen = () => {
+    messagingLive.connected = true;
+    messagingLive.retry = 0;
+    clearInterval(messagingLive.pingTimer);
+    messagingLive.pingTimer = setInterval(() => { try{ ws.send('ping'); }catch(e){} }, 25 * 1000);
+    updateLiveStatus();
+    // Catch up on anything sent while disconnected.
+    refreshThreadsFromServer();
+    catchUpOpenThread();
+  };
+  ws.onmessage = (event) => {
+    if(event.data === 'pong') return;
+    let data;
+    try{ data = JSON.parse(event.data); }catch(e){ return; }
+    handleMessagingEvent(data);
+  };
+  ws.onclose = () => {
+    if(messagingLive.ws !== ws) return;
+    messagingLive.ws = null;
+    messagingLive.connected = false;
+    clearInterval(messagingLive.pingTimer);
+    updateLiveStatus();
+    scheduleMessagingReconnect();
+  };
+  ws.onerror = () => { try{ ws.close(); }catch(e){} };
+}
+
+function scheduleMessagingReconnect(){
+  if(!messagingLive.wanted) return;
+  clearTimeout(messagingLive.retryTimer);
+  const delay = Math.min(60 * 1000, 2000 * Math.pow(2, messagingLive.retry++));
+  messagingLive.retryTimer = setTimeout(connectMessagingSocket, delay);
+}
+
+function resumeMessaging(){
+  if(!messagingLive.wanted) return;
+  refreshThreadsFromServer();
+  catchUpOpenThread();
+  messagingLive.retry = 0;
+  connectMessagingSocket();
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden) resumeMessaging(); });
+window.addEventListener('online', resumeMessaging);
+window.addEventListener('pageshow', (e) => { if(e.persisted) resumeMessaging(); });
+
+function updateLiveStatus(){
+  const el = document.getElementById('messages-live-status');
+  if(!el) return;
+  el.classList.toggle('live', messagingLive.connected);
+  el.innerHTML = messagingLive.connected
+    ? '<span class="dot"></span>Live'
+    : '<span class="dot"></span>Reconnecting — checking every minute';
+}
+
+function handleMessagingEvent(ev){
+  const me = getCurrentUser();
+  if(ev.type === 'message' && ev.message){
+    const t = threadsCache.find(x => x.id === ev.threadId);
+    const viewing = isThreadOnScreen(ev.threadId);
+    if(t){
+      t.lastMessage = ev.message;
+      t.lastActivityAt = ev.message.timestamp;
+      if(!isSameUser(ev.message.sender, me) && !viewing) t.unreadCount = (t.unreadCount || 0) + 1;
+      threadsCache.sort((a, b) => String(b.lastActivityAt || '').localeCompare(String(a.lastActivityAt || '')));
+      updateMessagesBadge();
+      onThreadsChanged();
+    } else {
+      refreshThreadsFromServer();
+    }
+    if(threadView.id === ev.threadId) receiveLiveMessage(ev.message, viewing);
+  } else if(ev.type === 'message-deleted'){
+    const t = threadsCache.find(x => x.id === ev.threadId);
+    if(t && t.lastMessage && t.lastMessage.id === ev.messageId){ t.lastMessage = { ...t.lastMessage, deleted: true, text: '' }; onThreadsChanged(); }
+    if(threadView.id === ev.threadId){
+      const m = threadView.messages.find(x => x.id === ev.messageId);
+      if(m){ m.deleted = true; m.text = ''; renderThreadMessagesList({ keepPosition: true }); }
+    }
+    refreshThreadsFromServer();
+  } else if(ev.type === 'read'){
+    const t = threadsCache.find(x => x.id === ev.threadId);
+    if(t && t.unreadCount){ t.unreadCount = 0; updateMessagesBadge(); onThreadsChanged(); }
+  } else if(ev.type === 'thread-updated'){
+    refreshThreadsFromServer();
+    if(threadView.id === ev.threadId) catchUpOpenThread();
+  }
+}
+
+// Marks the open conversation read shortly after new messages arrive.
+function scheduleMarkRead(threadId){
+  clearTimeout(messagingLive.readTimer);
+  messagingLive.readTimer = setTimeout(() => {
+    if(isThreadOnScreen(threadId)) markThreadReadOnServer(threadId);
+  }, 1200);
 }
 
 async function fetchBackupList(){
@@ -3926,7 +4273,9 @@ function checkAuthAndRender(trustSession){
     gate.classList.add('hidden');
     if(nav) nav.style.display = 'flex';
     renderHomeGreeting();
+    startMessagingRealtime();
   } else {
+    stopMessagingRealtime();
     if(current && !trustSession && !findUser(current)) clearCurrentUser();
     gate.classList.remove('hidden');
     if(nav) nav.style.display = 'none';
@@ -4174,6 +4523,8 @@ async function attemptCreateAccount(username, password, confirmPw, code, securit
 function logout(){
   const current = getCurrentUser();
   if(current) logActivity(current, 'Logged out');
+  stopMessagingRealtime();
+  closeMessages();
   clearCurrentUser();
   clearMasterToken();
   adminSessionMode = null;
@@ -4266,338 +4617,776 @@ function renderMenuScreen(){
   });
 }
 
-// Placeholder until the full messaging feature is built — gives the nav
-// item a real destination now rather than a dead button.
-let messagesScreenStep = 'list'; // 'list' | 'new'
-let newMessageSelectedUsernames = [];
-let newMessageIsGroup = false;
+/* ---------- Messages screens (v1.39.0) ---------- */
 
-async function openMessages(){
-  messagesScreenStep = 'list';
-  await refreshThreadsFromServer();
-  renderMessagesScreen();
-  document.getElementById('messages-overlay').classList.add('open');
-  document.getElementById('messages-overlay').scrollTop = 0;
+const messagesOverlay = document.getElementById('messages-overlay');
+const messagesInner = document.getElementById('messages-inner');
+const composeBarContainer = document.getElementById('thread-compose-bar-container');
+
+let messagesScreenStep = 'list';   // 'list' | 'new' | 'thread' | 'members'
+let inboxSearch = '';
+const newMessageDraft = { mode: 'dm', selected: [], groupName: '', text: '', search: '' };
+const threadView = { id: null, thread: null, messages: [], hasMore: false, loadingOlder: false, pending: [], unseen: 0, loadError: null };
+
+function isThreadOnScreen(threadId){
+  return messagesScreenStep === 'thread' && threadView.id === threadId
+    && messagesOverlay.classList.contains('open') && !document.hidden;
 }
-function closeMessagesScreen(){
-  document.getElementById('messages-overlay').classList.remove('open');
-  setActiveNavTab('home');
+
+function openMessages(){
+  messagesScreenStep = 'list';
+  resetThreadView();
+  renderMessagesScreen();
+  messagesOverlay.classList.add('open');
+  messagesOverlay.scrollTop = 0;
+  refreshThreadsFromServer();
+  startMessagingRealtime();
+}
+function closeMessages(){
+  stopMessageBurst();
+  messagesOverlay.classList.remove('open');
+}
+// Called whenever Messages is left by the bottom nav.
+function stopMessageBurst(){
+  composeBarContainer.innerHTML = '';
+  composeBarContainer.classList.remove('open');
+  if(messagesScreenStep === 'thread') { messagesScreenStep = 'list'; resetThreadView(); }
+}
+function resetThreadView(){
+  Object.assign(threadView, { id: null, thread: null, messages: [], hasMore: false, loadingOlder: false, pending: [], unseen: 0, loadError: null });
 }
 
 function renderMessagesScreen(){
-  if(messagesScreenStep === 'new'){
-    renderNewMessageScreen();
-    return;
-  }
-  const inner = document.getElementById('messages-inner');
-  const me = getCurrentUser();
-  const sorted = [...threadsCache].sort((a,b) => {
-    const at = a.lastMessage ? a.lastMessage.timestamp : '';
-    const bt = b.lastMessage ? b.lastMessage.timestamp : '';
-    return bt.localeCompare(at);
-  });
+  if(messagesScreenStep === 'thread' && threadView.id) renderThreadScreen();
+  else if(messagesScreenStep === 'new') renderNewMessageScreen();
+  else if(messagesScreenStep === 'members' && threadView.id) renderMembersScreen();
+  else { messagesScreenStep = 'list'; renderInboxScreen(); }
+}
 
-  inner.innerHTML = `
-    <button class="back-btn" id="messages-back-btn"><span class="chev">${ico('chevronLeft')}</span> Home</button>
+function onThreadsChanged(){
+  if(!messagesOverlay.classList.contains('open')) return;
+  if(messagesScreenStep === 'list') renderInboxRows();
+}
+
+function noticeHtml(){
+  return `<p class="msg-notice">${ico('info')}<span>${escapeHtml(MESSAGING_NOTICE)}</span></p>`;
+}
+
+/* ---------- Inbox ---------- */
+
+function renderInboxScreen(){
+  composeBarContainer.innerHTML = '';
+  composeBarContainer.classList.remove('open');
+  messagesInner.innerHTML = `
+    <button class="back-btn" id="messages-back"><span class="chev">${ico('chevronLeft')}</span> Home</button>
     <div class="agenda-step">
       <h2>Messages</h2>
-      <button class="primary-btn" id="new-message-btn">New Message</button>
-      <div class="block-label" style="margin-top:24px;">Conversations</div>
-      ${sorted.length ? `<div class="grid">${sorted.map(t => {
-        const myTurn = t.lastMessage && t.lastMessage.sender && t.lastMessage.sender.toLowerCase() !== (me || '').toLowerCase();
-        const turnLabel = t.lastMessage ? (myTurn ? 'Waiting on you' : 'Waiting on reply') : '';
-        return `
-        <button class="card-btn thread-row-btn" data-id="${t.id}">
-          <span>
-            <span class="name">${escapeHtml(threadDisplayName(t))}${t.unreadCount ? ` <span class="reorder-badge">${t.unreadCount}</span>` : ''}</span>
-            <span class="meta">${t.lastMessage ? escapeHtml(t.lastMessage.sender === me ? 'You: ' : '') + escapeHtml(t.lastMessage.text).slice(0,60) : 'No messages yet'}</span>
-            ${turnLabel ? `<span class="turn-indicator ${myTurn ? 'my-turn' : ''}">${turnLabel}</span>` : ''}
-          </span>
-          ${iconArrow()}
-        </button>
-      `;
-      }).join('')}</div>` : `<p class="caption">No conversations yet. Tap New Message to start one.</p>`}
+      ${noticeHtml()}
+      <button class="primary-btn protocol-add-btn" id="new-message-btn" type="button">${ico('plus')} New Message</button>
+      <label class="search-field ${threadsCache.length ? '' : 'is-hidden'}" id="inbox-search-wrap">
+        ${ico('search')}
+        <input type="search" id="inbox-search" placeholder="Search conversations" value="${escapeHtml(inboxSearch)}" autocomplete="off" aria-label="Search conversations">
+      </label>
+      <div id="inbox-rows"></div>
+      <p class="msg-live-status ${messagingLive.connected ? 'live' : ''}" id="messages-live-status"></p>
     </div>
   `;
-
-  document.getElementById('messages-back-btn').addEventListener('click', closeMessagesScreen);
-  document.getElementById('new-message-btn').addEventListener('click', ()=>{
-    newMessageSelectedUsernames = [];
-    newMessageIsGroup = false;
+  document.getElementById('messages-back').addEventListener('click', () => { closeMessages(); setActiveNavTab('home'); });
+  document.getElementById('new-message-btn').addEventListener('click', () => {
+    Object.assign(newMessageDraft, { mode: 'dm', selected: [], groupName: '', text: '', search: '' });
     messagesScreenStep = 'new';
     renderMessagesScreen();
+    messagesOverlay.scrollTop = 0;
   });
-  inner.querySelectorAll('.thread-row-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      openThreadDetail(btn.dataset.id);
-    });
-  });
+  const search = document.getElementById('inbox-search');
+  search.addEventListener('input', () => { inboxSearch = search.value; renderInboxRows(); });
+  renderInboxRows();
+  updateLiveStatus();
 }
 
-function renderNewMessageScreen(){
-  const inner = document.getElementById('messages-inner');
-  const me = getCurrentUser();
-  const others = loadUsers().filter(u => u.username.toLowerCase() !== (me || '').toLowerCase());
-
-  inner.innerHTML = `
-    <button class="back-btn" id="new-message-back-btn"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
-    <div class="agenda-step">
-      <h2>New Message</h2>
-      <p class="caption">${newMessageIsGroup ? 'Choose everyone to include, then name the group.' : 'Choose one person, or switch to a group.'}</p>
-      <div class="perm-chip-row">
-        <button class="perm-chip ${!newMessageIsGroup ? 'active' : ''}" id="new-message-mode-dm">Direct Message</button>
-        <button class="perm-chip ${newMessageIsGroup ? 'active' : ''}" id="new-message-mode-group">Group</button>
-      </div>
-      ${newMessageIsGroup ? `<div class="field"><label>Group Name</label><input type="text" id="new-group-name" placeholder="e.g. Front Desk"></div>` : ''}
-      <div class="block-label" style="margin-top:20px;">${newMessageIsGroup ? 'Add People' : 'Choose Someone'}</div>
-      ${others.length ? others.map(u => `
-        <label class="choice-checkbox-item" style="padding:8px 0;">
-          <input type="${newMessageIsGroup ? 'checkbox' : 'radio'}" name="new-message-recipient" class="new-message-recipient-input" value="${escapeHtml(u.username)}" ${newMessageSelectedUsernames.includes(u.username) ? 'checked' : ''}>
-          ${escapeHtml(u.username)}
-        </label>
-      `).join('') : `<p class="caption">No other users yet.</p>`}
-      <button class="primary-btn" id="start-thread-btn" style="margin-top:20px;">Start Conversation</button>
-    </div>
-  `;
-
-  document.getElementById('new-message-back-btn').addEventListener('click', ()=>{
-    messagesScreenStep = 'list';
-    renderMessagesScreen();
+function renderInboxRows(){
+  const box = document.getElementById('inbox-rows');
+  if(!box) return;
+  const wrap = document.getElementById('inbox-search-wrap');
+  if(wrap) wrap.classList.toggle('is-hidden', !threadsCache.length);
+  const q = inboxSearch.trim().toLowerCase();
+  const rows = threadsCache.filter(t => {
+    if(!q) return true;
+    const names = [threadDisplayName(t), ...(t.participants || []), ...(t.participants || []).map(getDisplayFullName)].join(' ').toLowerCase();
+    return names.includes(q);
   });
-  document.getElementById('new-message-mode-dm').addEventListener('click', ()=>{
-    newMessageIsGroup = false;
-    newMessageSelectedUsernames = newMessageSelectedUsernames.slice(0,1);
-    renderNewMessageScreen();
-  });
-  document.getElementById('new-message-mode-group').addEventListener('click', ()=>{
-    newMessageIsGroup = true;
-    renderNewMessageScreen();
-  });
-  inner.querySelectorAll('.new-message-recipient-input').forEach(input=>{
-    input.addEventListener('change', ()=>{
-      if(newMessageIsGroup){
-        if(input.checked) newMessageSelectedUsernames.push(input.value);
-        else newMessageSelectedUsernames = newMessageSelectedUsernames.filter(u => u !== input.value);
-      } else {
-        newMessageSelectedUsernames = [input.value];
-      }
-    });
-  });
-  document.getElementById('start-thread-btn').addEventListener('click', async ()=>{
-    if(!newMessageSelectedUsernames.length){ uiAlert('Choose at least one person.'); return; }
-    const groupName = newMessageIsGroup ? document.getElementById('new-group-name').value.trim() : '';
-    if(newMessageIsGroup && !groupName){ uiAlert('Enter a group name.'); return; }
-    const result = await createThread(newMessageIsGroup ? 'group' : 'dm', newMessageSelectedUsernames, groupName);
-    if(!result.ok){ uiAlert(result.error || 'Could not start that conversation.'); return; }
-    await refreshThreadsFromServer();
-    messagesScreenStep = 'list';
-    openThreadDetail(result.thread.id);
-  });
-}
-
-async function openThreadDetail(threadId){
-  stopMessageBurst();
-  const result = await fetchThreadDetail(threadId);
-  if(!result.ok){
-    uiAlert(result.error || 'Could not open that conversation.');
-    messagesScreenStep = 'list';
-    renderMessagesScreen();
+  if(!threadsCache.length){
+    box.innerHTML = `<p class="caption">No conversations yet. Tap New Message to start one.</p>`;
     return;
   }
-  currentThreadId = threadId;
-  currentThreadInfo = result.thread;
-  currentThreadMessages = result.messages;
-  renderThreadDetail();
-  refreshThreadsFromServer(); // updates the badge now that this thread is marked read
-}
-
-function closeThreadDetail(){
-  stopMessageBurst();
-  currentThreadId = null;
-  currentThreadInfo = null;
-  currentThreadMessages = [];
-  messagesScreenStep = 'list';
-  renderMessagesScreen();
-}
-
-function stopMessageBurst(){
-  if(messageBurstInterval){ clearInterval(messageBurstInterval); messageBurstInterval = null; }
-  if(messageBurstTimeout){ clearTimeout(messageBurstTimeout); messageBurstTimeout = null; }
-  const composeBarContainer = document.getElementById('thread-compose-bar-container');
-  if(composeBarContainer) composeBarContainer.innerHTML = '';
-}
-// A short, fast poll window right after activity in this specific thread —
-// nobody else's polling rate changes because of this. New activity found
-// during the burst extends it; after 5 quiet minutes it stops on its own
-// and this thread just goes back to the normal 15-minute cycle.
-function startMessageBurst(threadId){
-  stopMessageBurst();
-  messageBurstInterval = setInterval(async ()=>{
-    if(currentThreadId !== threadId) { stopMessageBurst(); return; }
-    const result = await fetchThreadDetail(threadId);
-    if(result.ok){
-      const foundNew = result.messages.length !== currentThreadMessages.length;
-      currentThreadMessages = result.messages;
-      renderThreadMessagesList();
-      if(foundNew){ startMessageBurst(threadId); refreshThreadsFromServer(); }
-    }
-  }, 20000);
-  messageBurstTimeout = setTimeout(stopMessageBurst, 5 * 60 * 1000);
-}
-
-function renderThreadDetail(){
-  const inner = document.getElementById('messages-inner');
-  const thread = currentThreadInfo;
-  const isCreator = thread.creatorUsername.toLowerCase() === (getCurrentUser() || '').toLowerCase();
-
-  inner.innerHTML = `
-    <button class="back-btn" id="thread-back-btn"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
-    <div class="agenda-step">
-      <h2>${escapeHtml(threadDisplayName(thread))}</h2>
-      ${thread.type === 'group' ? `<p class="caption">${escapeHtml(thread.participants.join(', '))}</p>` : ''}
-      ${isCreator ? `
-        <div class="perm-chip-row">
-          ${thread.type === 'group' ? `<button class="perm-chip" id="manage-group-btn">Manage Group</button>` : ''}
-          <button class="perm-chip" id="delete-thread-btn">${thread.type === 'group' ? 'Delete Group' : 'Delete Conversation'}</button>
-        </div>
-      ` : ''}
-      <div id="thread-messages-list" style="margin-top:20px; padding-bottom:76px;"></div>
-    </div>
-  `;
-
-  // Rendered into a true top-level element (outside the sliding Messages
-  // overlay), the same way the persistent nav bar is — a .detail overlay's
-  // own slide-open transform would otherwise re-anchor anything inside it
-  // marked position:fixed, making it drift with scrolling instead of
-  // staying locked to the actual screen.
-  const composeBarContainer = document.getElementById('thread-compose-bar-container');
-  composeBarContainer.innerHTML = `
-    <div class="thread-compose-bar">
-      <input type="text" id="thread-compose-input" placeholder="Type a message…">
-      <button class="primary-btn" id="thread-send-btn">Send</button>
-    </div>
-  `;
-
-  renderThreadMessagesList();
-
-  document.getElementById('thread-back-btn').addEventListener('click', closeThreadDetail);
-  const sendBtn = document.getElementById('thread-send-btn');
-  const composeInput = document.getElementById('thread-compose-input');
-  const doSend = async ()=>{
-    const text = composeInput.value.trim();
-    if(!text) return;
-    composeInput.value = '';
-    const result = await sendMessageToThread(currentThreadId, text);
-    if(!result.ok){ uiAlert(result.error || 'Could not send that message.'); return; }
-    currentThreadMessages.unshift(result.message);
-    renderThreadMessagesList();
-    startMessageBurst(currentThreadId);
-    refreshThreadsFromServer();
-  };
-  sendBtn.addEventListener('click', doSend);
-  composeInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') doSend(); });
-
-  const deleteThreadBtn = document.getElementById('delete-thread-btn');
-  if(deleteThreadBtn){
-    deleteThreadBtn.addEventListener('click', async ()=>{
-      if(!(await uiConfirm(`Delete this ${thread.type === 'group' ? 'group' : 'conversation'} for everyone? This cannot be undone.`))) return;
-      const result = await deleteThreadOnServer(currentThreadId);
-      if(!result.ok){ uiAlert(result.error || 'Could not delete.'); return; }
-      closeThreadDetail();
-      await refreshThreadsFromServer();
-      renderMessagesScreen();
-    });
+  if(!rows.length){
+    box.innerHTML = `<p class="caption">No conversations match that search.</p>`;
+    return;
   }
-  const manageBtn = document.getElementById('manage-group-btn');
-  if(manageBtn){
-    manageBtn.addEventListener('click', renderGroupManageScreen);
-  }
-
-  // Start the fast window immediately on opening too, since opening a
-  // thread usually means you're actively expecting a reply right now.
-  startMessageBurst(currentThreadId);
-}
-
-function renderThreadMessagesList(){
-  const container = document.getElementById('thread-messages-list');
-  if(!container) return;
-  const me = getCurrentUser();
-  const ordered = [...currentThreadMessages].reverse(); // oldest first for natural reading order
-  container.innerHTML = ordered.map(m => {
-    const isMine = m.sender.toLowerCase() === (me || '').toLowerCase();
+  box.innerHTML = `<div class="inbox-list">${rows.map(t => {
+    const name = threadDisplayName(t);
+    const unread = t.unreadCount || 0;
+    const sub = t.type === 'group' ? `${(t.participants || []).length} people` : (isFormerOnlyDm(t) ? 'No longer on staff' : '');
     return `
-      <div style="display:flex; flex-direction:column; align-items:${isMine ? 'flex-end' : 'flex-start'}; margin-bottom:10px;">
-        ${currentThreadInfo.type === 'group' && !isMine ? `<span style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(getDisplayFullName(m.sender))}</span>` : ''}
-        <div style="max-width:78%; background:${isMine ? 'var(--sage)' : 'var(--card)'}; color:${isMine ? '#fff' : 'var(--ink)'}; border-radius:14px; padding:9px 13px; font-size:14px; position:relative;">
-          ${escapeHtml(m.text)}
-          ${isMine ? `<button class="delete-message-btn" data-id="${m.id}" style="all:unset; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.75;" aria-label="Delete message">${ico('x')}</button>` : ''}
-        </div>
-        <span style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${new Date(m.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+      <button type="button" class="inbox-row ${unread ? 'unread' : ''}" data-id="${escapeHtml(t.id)}">
+        <span class="avatar ${t.type === 'group' ? 'group' : ''}" aria-hidden="true">${escapeHtml(personInitials(name))}</span>
+        <span class="ib-main">
+          <span class="ib-top"><b>${escapeHtml(name)}</b><time>${escapeHtml(shortWhen(t.lastActivityAt))}</time></span>
+          <span class="ib-bottom">
+            <span class="ib-preview ${t.lastMessage && t.lastMessage.deleted ? 'deleted' : ''}">${escapeHtml(previewText(t))}</span>
+            ${unread ? `<span class="unread-count" aria-label="${unread} unread">${unread > 99 ? '99+' : unread}</span>` : ''}
+          </span>
+          ${sub ? `<span class="ib-sub">${escapeHtml(sub)}</span>` : ''}
+        </span>
+      </button>
+    `;
+  }).join('')}</div>`;
+  box.querySelectorAll('.inbox-row').forEach(btn => btn.addEventListener('click', () => openThread(btn.dataset.id)));
+}
+
+/* ---------- New message ---------- */
+
+function renderNewMessageScreen(){
+  composeBarContainer.innerHTML = '';
+  composeBarContainer.classList.remove('open');
+  const d = newMessageDraft;
+  const me = getCurrentUser();
+  const people = loadUsers()
+    .filter(u => !isSameUser(u.username, me))
+    .map(u => ({ username: u.username, name: getDisplayFullName(u.username) }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+  messagesInner.innerHTML = `
+    <button class="back-btn" id="new-message-back"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
+    <div class="agenda-step">
+      <h2>New Message</h2>
+      ${noticeHtml()}
+      <div class="perm-chip-row">
+        <button class="perm-chip ${d.mode === 'dm' ? 'active' : ''}" data-mode="dm">One person</button>
+        <button class="perm-chip ${d.mode === 'group' ? 'active' : ''}" data-mode="group">Group</button>
+      </div>
+      ${d.mode === 'group' ? `
+        <div class="field"><label for="new-group-name">Group name</label><input type="text" id="new-group-name" maxlength="80" placeholder="e.g. Front Desk" value="${escapeHtml(d.groupName)}"></div>
+      ` : ''}
+      <div class="block-label">${d.mode === 'group' ? 'People' : 'To'}${d.selected.length ? `<span class="count-inline">${d.selected.length} selected</span>` : ''}</div>
+      ${d.selected.length ? `<div class="allergy-chips">${d.selected.map(u => `<span class="allergy-chip">${escapeHtml(getDisplayFullName(u))}<button type="button" class="allergy-chip-x" data-unpick="${escapeHtml(u)}" aria-label="Remove ${escapeHtml(getDisplayFullName(u))}">${ico('x')}</button></span>`).join('')}</div>` : ''}
+      <label class="search-field">
+        ${ico('search')}
+        <input type="search" id="people-search" placeholder="Search staff" value="${escapeHtml(d.search)}" autocomplete="off" aria-label="Search staff">
+      </label>
+      <div class="people-list" role="${d.mode === 'group' ? 'group' : 'radiogroup'}">
+        ${people.length ? people.map(p => {
+          const picked = d.selected.some(s => isSameUser(s, p.username));
+          return `
+            <button type="button" class="people-row ${picked ? 'picked' : ''}" data-username="${escapeHtml(p.username)}" data-search="${escapeHtml(`${p.name} ${p.username}`.toLowerCase())}" role="${d.mode === 'group' ? 'checkbox' : 'radio'}" aria-checked="${picked}">
+              <span class="avatar small" aria-hidden="true">${escapeHtml(personInitials(p.name))}</span>
+              <span class="pr-main"><b>${escapeHtml(p.name)}</b>${p.name !== p.username ? `<small>${escapeHtml(p.username)}</small>` : ''}</span>
+              <span class="pr-check">${picked ? ico('checkCircle') : ''}</span>
+            </button>
+          `;
+        }).join('') : `<p class="caption" style="padding:12px 14px;margin:0;">No other staff accounts yet.</p>`}
+      </div>
+      <p class="caption is-hidden" id="people-empty">No one matches that search.</p>
+      <div class="field" style="margin-top:18px;">
+        <label for="new-message-text">Message</label>
+        <textarea id="new-message-text" rows="3" placeholder="Write your message">${escapeHtml(d.text)}</textarea>
+      </div>
+      <button class="primary-btn" id="new-message-send" type="button">Send</button>
+    </div>
+  `;
+
+  const capture = () => {
+    const name = document.getElementById('new-group-name');
+    if(name) d.groupName = name.value;
+    d.text = document.getElementById('new-message-text').value;
+    d.search = document.getElementById('people-search').value;
+  };
+  document.getElementById('new-message-back').addEventListener('click', () => {
+    capture();
+    messagesScreenStep = 'list';
+    renderMessagesScreen();
+  });
+  messagesInner.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => {
+    capture();
+    d.mode = btn.dataset.mode;
+    if(d.mode === 'dm' && d.selected.length > 1) d.selected = d.selected.slice(0, 1);
+    renderNewMessageScreen();
+  }));
+  messagesInner.querySelectorAll('[data-unpick]').forEach(btn => btn.addEventListener('click', () => {
+    capture();
+    d.selected = d.selected.filter(u => !isSameUser(u, btn.dataset.unpick));
+    renderNewMessageScreen();
+  }));
+  messagesInner.querySelectorAll('.people-row').forEach(row => row.addEventListener('click', () => {
+    capture();
+    const u = row.dataset.username;
+    const picked = d.selected.some(s => isSameUser(s, u));
+    if(d.mode === 'dm') d.selected = picked ? [] : [u];
+    else d.selected = picked ? d.selected.filter(s => !isSameUser(s, u)) : [...d.selected, u];
+    const y = messagesOverlay.scrollTop;
+    renderNewMessageScreen();
+    messagesOverlay.scrollTop = y;
+  }));
+  const search = document.getElementById('people-search');
+  const applySearch = () => {
+    const q = search.value.trim().toLowerCase();
+    let any = false;
+    messagesInner.querySelectorAll('.people-row').forEach(row => {
+      const show = !q || row.dataset.search.includes(q);
+      row.classList.toggle('is-hidden', !show);
+      if(show) any = true;
+    });
+    document.getElementById('people-empty').classList.toggle('is-hidden', any || !people.length);
+  };
+  search.addEventListener('input', () => { d.search = search.value; applySearch(); });
+  applySearch();
+
+  const sendBtn = document.getElementById('new-message-send');
+  sendBtn.addEventListener('click', async () => {
+    capture();
+    const text = d.text.trim();
+    if(!d.selected.length){ uiAlert(d.mode === 'group' ? 'Choose at least one person.' : 'Choose who to message.'); return; }
+    if(d.mode === 'group' && !d.groupName.trim()){ uiAlert('Enter a group name.'); document.getElementById('new-group-name').focus(); return; }
+    if(!text){ uiAlert('Write a message first.'); document.getElementById('new-message-text').focus(); return; }
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    if(!d.clientId) d.clientId = makeClientId();
+    const r = await createThread(d.mode, d.selected, d.mode === 'group' ? d.groupName.trim() : undefined, { text, clientId: d.clientId });
+    if(!r.ok || !r.thread){
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send';
+      uiAlert(r.error || "Couldn't send. Please try again.", { tone: 'error' });
+      return;
+    }
+    Object.assign(newMessageDraft, { mode: 'dm', selected: [], groupName: '', text: '', search: '', clientId: null });
+    await refreshThreadsFromServer();
+    openThread(r.thread.id);
+  });
+}
+
+/* ---------- Conversation ---------- */
+
+async function openThread(threadId){
+  resetThreadView();
+  threadView.id = threadId;
+  threadView.thread = threadsCache.find(t => t.id === threadId) || null;
+  messagesScreenStep = 'thread';
+  renderThreadScreen();
+  const r = await fetchThreadDetail(threadId);
+  if(threadView.id !== threadId) return;
+  if(!r.ok){
+    threadView.loadError = r.error || "Couldn't load this conversation.";
+    renderThreadScreen();
+    return;
+  }
+  threadView.thread = r.thread;
+  threadView.messages = [...(r.messages || [])].reverse();
+  threadView.hasMore = !!r.hasMore;
+  const cached = threadsCache.find(t => t.id === threadId);
+  if(cached && cached.unreadCount){ cached.unreadCount = 0; updateMessagesBadge(); }
+  renderThreadScreen();
+  scrollThreadToBottom();
+}
+
+// Reload the newest page after reconnecting or a change elsewhere,
+// keeping any older messages already loaded.
+async function catchUpOpenThread(){
+  const id = threadView.id;
+  if(!id || messagesScreenStep === 'list') return;
+  const r = await fetchThreadDetail(id);
+  if(threadView.id !== id) return;
+  if(!r.ok){
+    if(r.status === 403 || r.status === 404){
+      uiAlert('This conversation is no longer available to you.', { tone: 'info' });
+      messagesScreenStep = 'list';
+      resetThreadView();
+      renderMessagesScreen();
+    }
+    return;
+  }
+  const fresh = [...(r.messages || [])].reverse();
+  const oldestFresh = fresh.length ? fresh[0].seq : Infinity;
+  const kept = threadView.messages.filter(m => m.seq !== null && m.seq < oldestFresh);
+  const demoLocal = threadView.messages.filter(m => m.seq === null);
+  const before = threadView.messages.length;
+  threadView.thread = r.thread;
+  threadView.messages = [...kept, ...fresh, ...demoLocal];
+  if(!kept.length) threadView.hasMore = !!r.hasMore;
+  threadView.pending = threadView.pending.filter(p => !fresh.some(m => m.clientId && m.clientId === p.clientId));
+  if(messagesScreenStep === 'thread'){
+    renderThreadHeader();
+    renderThreadMessagesList({ keepPosition: true, arrived: threadView.messages.length > before });
+  } else if(messagesScreenStep === 'members'){
+    renderMembersScreen();
+  }
+}
+
+function receiveLiveMessage(message, viewing){
+  if(threadView.messages.some(m => m.id === message.id)) return;
+  threadView.pending = threadView.pending.filter(p => !(message.clientId && p.clientId === message.clientId));
+  threadView.messages.push(message);
+  const mine = isSameUser(message.sender, getCurrentUser());
+  renderThreadMessagesList({ keepPosition: !mine, arrived: !mine, forceBottom: mine });
+  if(viewing && !mine) scheduleMarkRead(threadView.id);
+}
+
+function threadPermissions(){
+  const t = threadView.thread;
+  const me = getCurrentUser();
+  if(!t) return { isGroup: false, isCreator: false, isMember: false };
+  return {
+    isGroup: t.type === 'group',
+    isCreator: isSameUser(t.creatorUsername, me),
+    isMember: (t.participants || []).some(p => isSameUser(p, me))
+  };
+}
+
+function renderThreadScreen(){
+  const t = threadView.thread;
+  messagesInner.innerHTML = `
+    <button class="back-btn" id="thread-back"><span class="chev">${ico('chevronLeft')}</span> Messages</button>
+    <div class="agenda-step thread-step">
+      <div id="thread-header"></div>
+      <div id="thread-messages-list" class="thread-messages-list"></div>
+    </div>
+  `;
+  document.getElementById('thread-back').addEventListener('click', () => {
+    stopMessageBurst();
+    messagesScreenStep = 'list';
+    resetThreadView();
+    renderMessagesScreen();
+    refreshThreadsFromServer();
+  });
+  renderThreadHeader();
+  if(threadView.loadError){
+    document.getElementById('thread-messages-list').innerHTML = `<p class="caption">${escapeHtml(threadView.loadError)}</p>`;
+    composeBarContainer.innerHTML = '';
+    composeBarContainer.classList.remove('open');
+    return;
+  }
+  renderComposeBar();
+  renderThreadMessagesList({ forceBottom: true });
+  if(!t) document.getElementById('thread-messages-list').innerHTML = `<p class="caption">Loading…</p>`;
+}
+
+function renderThreadHeader(){
+  const box = document.getElementById('thread-header');
+  const t = threadView.thread;
+  if(!box) return;
+  if(!t){ box.innerHTML = `<h2>Conversation</h2>`; return; }
+  const perm = threadPermissions();
+  const members = (t.participants || []).map(getDisplayFullName);
+  const sub = perm.isGroup
+    ? `${members.length} ${members.length === 1 ? 'person' : 'people'}: ${members.join(', ')}`
+    : (isFormerOnlyDm(t) ? 'No longer on staff — you can read the history, but replies can\u2019t be sent.' : '');
+  box.innerHTML = `
+    <div class="thread-title-row">
+      <h2>${escapeHtml(threadDisplayName(t))}</h2>
+      <button type="button" class="row-icon-btn thread-menu-btn" id="thread-menu-btn" aria-label="Conversation options">${ico('menu')}</button>
+    </div>
+    ${sub ? `<p class="caption thread-sub">${escapeHtml(sub)}</p>` : ''}
+    ${noticeHtml()}
+  `;
+  document.getElementById('thread-menu-btn').addEventListener('click', openThreadMenu);
+}
+
+function renderComposeBar(){
+  const t = threadView.thread;
+  if(t && isFormerOnlyDm(t)){
+    composeBarContainer.innerHTML = '';
+    composeBarContainer.classList.remove('open');
+    return;
+  }
+  composeBarContainer.innerHTML = `
+    <button type="button" class="new-messages-pill is-hidden" id="new-messages-pill">New messages ${ico('chevronDown')}</button>
+    <div class="thread-compose-bar">
+      <textarea id="thread-compose-input" rows="1" placeholder="Message" aria-label="Message" maxlength="4000"></textarea>
+      <button type="button" id="thread-send-btn" aria-label="Send">${ico('chevronUp')}</button>
+    </div>
+  `;
+  composeBarContainer.classList.add('open');
+  const input = document.getElementById('thread-compose-input');
+  const grow = () => {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
+    const list = document.getElementById('thread-messages-list');
+    if(list) list.style.paddingBottom = `${composeBarContainer.offsetHeight + 16}px`;
+  };
+  input.addEventListener('input', grow);
+  input.addEventListener('keydown', (e) => {
+    const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if(e.key === 'Enter' && !e.shiftKey && !touch){ e.preventDefault(); sendFromComposer(); }
+  });
+  document.getElementById('thread-send-btn').addEventListener('click', () => { sendFromComposer(); input.focus(); });
+  document.getElementById('new-messages-pill').addEventListener('click', () => scrollThreadToBottom(true));
+  grow();
+}
+
+function sendFromComposer(){
+  const input = document.getElementById('thread-compose-input');
+  if(!input || !threadView.id) return;
+  const text = input.value.replace(/\s+$/, '');
+  if(!text.trim()) return;
+  input.value = '';
+  input.dispatchEvent(new Event('input'));
+  const pending = { clientId: makeClientId(), text, status: 'sending', timestamp: new Date().toISOString() };
+  threadView.pending.push(pending);
+  renderThreadMessagesList({ forceBottom: true });
+  deliverPending(pending);
+}
+
+async function deliverPending(pending){
+  const threadId = threadView.id;
+  pending.status = 'sending';
+  pending.error = null;
+  renderThreadMessagesList({ keepPosition: true });
+  const r = await sendMessageToThread(threadId, pending.text, pending.clientId);
+  if(threadView.id !== threadId) return;
+  if(!r.ok || !r.message){
+    pending.status = 'failed';
+    pending.error = r.error || "Couldn't send.";
+    renderThreadMessagesList({ keepPosition: true });
+    return;
+  }
+  threadView.pending = threadView.pending.filter(p => p !== pending);
+  if(!threadView.messages.some(m => m.id === r.message.id)) threadView.messages.push(r.message);
+  const cached = threadsCache.find(t => t.id === threadId);
+  if(cached){ cached.lastMessage = r.message; cached.lastActivityAt = r.message.timestamp; }
+  renderThreadMessagesList({ forceBottom: true });
+}
+
+function distanceFromBottom(){
+  return messagesOverlay.scrollHeight - messagesOverlay.scrollTop - messagesOverlay.clientHeight;
+}
+function scrollThreadToBottom(smooth){
+  requestAnimationFrame(() => {
+    messagesOverlay.scrollTo({ top: messagesOverlay.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    threadView.unseen = 0;
+    const pill = document.getElementById('new-messages-pill');
+    if(pill) pill.classList.add('is-hidden');
+  });
+}
+
+function renderThreadMessagesList(opts){
+  opts = opts || {};
+  const list = document.getElementById('thread-messages-list');
+  if(!list || !threadView.thread) return;
+  const nearBottom = distanceFromBottom() < 140;
+  const prevHeight = messagesOverlay.scrollHeight;
+  const prevTop = messagesOverlay.scrollTop;
+  const me = getCurrentUser();
+  const isGroup = threadView.thread.type === 'group';
+  const all = [
+    ...threadView.messages.map(m => ({ ...m, kind: 'sent' })),
+    ...threadView.pending.map(p => ({ id: `pending-${p.clientId}`, sender: me, text: p.text, timestamp: p.timestamp, kind: 'pending', pending: p }))
+  ];
+
+  let html = '';
+  if(threadView.hasMore){
+    html += `<button type="button" class="load-older-btn" id="load-older-btn" ${threadView.loadingOlder ? 'disabled' : ''}>${threadView.loadingOlder ? 'Loading…' : 'Load earlier messages'}</button>`;
+  }
+  if(!all.length){
+    html += `<p class="caption thread-empty">No messages yet. Say hello below.</p>`;
+  }
+  let lastDay = '';
+  all.forEach((m, i) => {
+    const day = new Date(m.timestamp).toDateString();
+    if(day !== lastDay){
+      html += `<div class="day-divider"><span>${escapeHtml(dayLabel(m.timestamp))}</span></div>`;
+      lastDay = day;
+    }
+    const prev = all[i - 1];
+    const next = all[i + 1];
+    const mine = isSameUser(m.sender, me);
+    const gap = (a, b) => Math.abs(new Date(b.timestamp) - new Date(a.timestamp)) > 10 * 60 * 1000;
+    const startsRun = !prev || !isSameUser(prev.sender, m.sender) || gap(prev, m) || new Date(prev.timestamp).toDateString() !== day;
+    const endsRun = !next || !isSameUser(next.sender, m.sender) || gap(m, next) || new Date(next.timestamp).toDateString() !== day;
+    const time = new Date(m.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    let body;
+    if(m.deleted){
+      body = `<span class="bubble-deleted">${mine ? 'You deleted this message' : 'Message deleted'}</span>`;
+    } else {
+      body = escapeHtml(m.text).replace(/\n/g, '<br>');
+    }
+    let footer = '';
+    if(m.kind === 'pending'){
+      footer = m.pending.status === 'failed'
+        ? `<span class="msg-failed">${ico('alert')}Not sent · <button type="button" class="link-btn retry-send" data-client="${escapeHtml(m.pending.clientId)}">Retry</button> · <button type="button" class="link-btn discard-send" data-client="${escapeHtml(m.pending.clientId)}">Remove</button></span>`
+        : `<span class="msg-sending">Sending…</span>`;
+    } else if(endsRun){
+      footer = `<span class="msg-time">${escapeHtml(time)}</span>`;
+    }
+    const canDelete = mine && m.kind === 'sent' && !m.deleted && m.seq !== null;
+    html += `
+      <div class="message-row ${mine ? 'mine' : 'theirs'} ${startsRun ? 'run-start' : ''} ${endsRun ? 'run-end' : ''} ${m.kind === 'pending' ? `pending ${m.pending.status}` : ''}">
+        ${isGroup && !mine && startsRun ? `<div class="message-sender">${escapeHtml(getDisplayFullName(m.sender))}</div>` : ''}
+        <div class="message-bubble ${m.deleted ? 'deleted' : ''} ${canDelete ? 'can-delete' : ''}" ${canDelete ? `data-msg-id="${escapeHtml(m.id)}" tabindex="0" aria-label="Your message. Press and hold to delete."` : ''}>${body}</div>
+        ${footer ? `<div class="message-meta">${footer}</div>` : ''}
       </div>
     `;
-  }).join('');
-  container.querySelectorAll('.delete-message-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      if(!(await uiConfirm('Delete this message?'))) return;
-      const result = await deleteMessageFromThread(currentThreadId, btn.dataset.id);
-      if(!result.ok){ uiAlert(result.error || 'Could not delete that message.'); return; }
-      currentThreadMessages = currentThreadMessages.filter(m => m.id !== btn.dataset.id);
-      renderThreadMessagesList();
-    });
   });
-  // Scroll the overlay itself rather than using scrollIntoView, which
-  // pulls the whole page around and fights with the fixed compose bar.
-  const overlay = document.getElementById('messages-overlay');
-  if(overlay) overlay.scrollTop = overlay.scrollHeight;
+  if(all.some(m => isSameUser(m.sender, me) && m.kind === 'sent' && !m.deleted)){
+    html += `<p class="caption thread-hint">Press and hold a message you sent to delete it.</p>`;
+  }
+  list.innerHTML = html;
+
+  const olderBtn = document.getElementById('load-older-btn');
+  if(olderBtn) olderBtn.addEventListener('click', loadOlderMessages);
+  list.querySelectorAll('.retry-send').forEach(btn => btn.addEventListener('click', () => {
+    const p = threadView.pending.find(x => x.clientId === btn.dataset.client);
+    if(p) deliverPending(p);
+  }));
+  list.querySelectorAll('.discard-send').forEach(btn => btn.addEventListener('click', () => {
+    threadView.pending = threadView.pending.filter(x => x.clientId !== btn.dataset.client);
+    renderThreadMessagesList({ keepPosition: true });
+  }));
+  list.querySelectorAll('.message-bubble.can-delete').forEach(attachLongPress);
+  list.style.paddingBottom = `${(composeBarContainer.classList.contains('open') ? composeBarContainer.offsetHeight : 0) + 16}px`;
+
+  if(opts.prepended){
+    messagesOverlay.scrollTop = prevTop + (messagesOverlay.scrollHeight - prevHeight);
+  } else if(opts.forceBottom || (nearBottom && !opts.stayPut)){
+    scrollThreadToBottom();
+  } else if(opts.keepPosition){
+    messagesOverlay.scrollTop = prevTop;
+    if(opts.arrived){
+      threadView.unseen++;
+      const pill = document.getElementById('new-messages-pill');
+      if(pill) pill.classList.remove('is-hidden');
+    }
+  }
 }
 
-function renderGroupManageScreen(){
-  const inner = document.getElementById('messages-inner');
-  const thread = currentThreadInfo;
-  const me = getCurrentUser();
-  const others = loadUsers().filter(u =>
-    u.username.toLowerCase() !== (me || '').toLowerCase() &&
-    !thread.participants.some(p => p.toLowerCase() === u.username.toLowerCase())
-  );
+function attachLongPress(el){
+  let timer = null;
+  let startX = 0, startY = 0;
+  const cancel = () => { clearTimeout(timer); timer = null; el.classList.remove('pressing'); };
+  el.addEventListener('pointerdown', (e) => {
+    if(e.button && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY;
+    el.classList.add('pressing');
+    timer = setTimeout(() => { cancel(); if(navigator.vibrate) navigator.vibrate(15); confirmDeleteMessage(el.dataset.msgId); }, 550);
+  });
+  el.addEventListener('pointermove', (e) => { if(timer && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)) cancel(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => el.addEventListener(type, cancel));
+  el.addEventListener('contextmenu', (e) => { e.preventDefault(); cancel(); confirmDeleteMessage(el.dataset.msgId); });
+  el.addEventListener('keydown', (e) => { if(e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); confirmDeleteMessage(el.dataset.msgId); } });
+}
 
-  inner.innerHTML = `
-    <button class="back-btn" id="manage-back-btn"><span class="chev">${ico('chevronLeft')}</span> ${escapeHtml(threadDisplayName(thread))}</button>
+async function confirmDeleteMessage(msgId){
+  const threadId = threadView.id;
+  if(!msgId || !threadId) return;
+  if(!(await uiConfirm('Delete this message? Others will see "Message deleted". This is not a private messaging platform — managers can still see what it said.'))) return;
+  const r = await deleteMessageFromThread(threadId, msgId);
+  if(!r.ok){ uiAlert(r.error || "Couldn't delete the message.", { tone: 'error' }); return; }
+  const m = threadView.messages.find(x => x.id === msgId);
+  if(m){ m.deleted = true; m.text = ''; }
+  renderThreadMessagesList({ keepPosition: true, stayPut: true });
+}
+
+async function loadOlderMessages(){
+  if(threadView.loadingOlder || !threadView.hasMore) return;
+  const id = threadView.id;
+  const oldest = threadView.messages.find(m => m.seq !== null);
+  if(!oldest) return;
+  threadView.loadingOlder = true;
+  renderThreadMessagesList({ keepPosition: true, stayPut: true });
+  const r = await fetchThreadDetail(id, oldest.seq);
+  if(threadView.id !== id) return;
+  threadView.loadingOlder = false;
+  if(!r.ok){ uiAlert(r.error || "Couldn't load earlier messages.", { tone: 'error' }); renderThreadMessagesList({ keepPosition: true, stayPut: true }); return; }
+  const older = [...(r.messages || [])].reverse().filter(m => !threadView.messages.some(x => x.id === m.id));
+  threadView.messages = [...older, ...threadView.messages];
+  threadView.hasMore = !!r.hasMore;
+  renderThreadMessagesList({ prepended: true });
+}
+
+/* ---------- Conversation menu ---------- */
+
+function uiActionSheet(title, actions){
+  return new Promise(resolve => {
+    const prevFocus = document.activeElement;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'ui-dialog-backdrop';
+    backdrop.innerHTML = `
+      <div class="ui-dialog action-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+        <h3 class="ui-dialog-title">${escapeHtml(title)}</h3>
+        <div class="action-list">
+          ${actions.map(a => `
+            <button type="button" class="action-item ${a.danger ? 'danger' : ''}" data-key="${escapeHtml(a.key)}">
+              ${a.icon ? ico(a.icon) : ''}<span><b>${escapeHtml(a.label)}</b>${a.hint ? `<small>${escapeHtml(a.hint)}</small>` : ''}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="ui-dialog-actions"><button type="button" class="ui-btn ui-btn-secondary" data-key="">Cancel</button></div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    document.body.classList.add('ui-dialog-open');
+    let done = false;
+    const finish = (key) => {
+      if(done) return;
+      done = true;
+      document.removeEventListener('keydown', onKey, true);
+      backdrop.classList.remove('show');
+      setTimeout(() => {
+        backdrop.remove();
+        if(!document.querySelector('.ui-dialog-backdrop')) document.body.classList.remove('ui-dialog-open');
+      }, 220);
+      if(prevFocus && prevFocus.focus){ try{ prevFocus.focus({ preventScroll: true }); }catch(e){} }
+      resolve(key || null);
+    };
+    const onKey = (e) => { if(e.key === 'Escape'){ e.preventDefault(); finish(null); } };
+    document.addEventListener('keydown', onKey, true);
+    backdrop.addEventListener('click', (e) => {
+      if(e.target === backdrop) return finish(null);
+      const btn = e.target.closest('[data-key]');
+      if(btn) finish(btn.dataset.key);
+    });
+    requestAnimationFrame(() => {
+      backdrop.classList.add('show');
+      const first = backdrop.querySelector('.action-item');
+      if(first) first.focus({ preventScroll: true });
+    });
+  });
+}
+
+async function openThreadMenu(){
+  const t = threadView.thread;
+  if(!t) return;
+  const perm = threadPermissions();
+  const actions = [];
+  if(perm.isGroup){
+    actions.push({ key: 'members', label: perm.isCreator ? 'Manage members' : 'View members', icon: 'clipboard' });
+    if(perm.isCreator) actions.push({ key: 'rename', label: 'Rename group', icon: 'pen' });
+  }
+  actions.push({ key: 'hide', label: 'Hide conversation', hint: 'Removes it from your list until a new message arrives.', icon: 'eye' });
+  if(perm.isGroup && perm.isMember) actions.push({ key: 'leave', label: 'Leave group', hint: perm.isCreator ? 'The longest-standing member takes over the group.' : 'You won\u2019t see new messages.', icon: 'chevronLeft', danger: true });
+  if(perm.isCreator) actions.push({ key: 'delete', label: 'Delete for everyone', hint: 'Removes it for all members. Managers can still see it.', icon: 'x', danger: true });
+  const choice = await uiActionSheet(threadDisplayName(t), actions);
+  if(!choice || threadView.id !== t.id) return;
+
+  if(choice === 'members'){
+    messagesScreenStep = 'members';
+    composeBarContainer.classList.remove('open');
+    renderMessagesScreen();
+    messagesOverlay.scrollTop = 0;
+  } else if(choice === 'rename'){
+    const name = await uiPrompt('Rename group', t.name || '', { confirmText: 'Save' });
+    if(name === null) return;
+    if(!name.trim()){ uiAlert('Enter a group name.'); return; }
+    const r = await renameThreadOnServer(t.id, name.trim());
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    if(r.thread) threadView.thread = r.thread;
+    renderThreadHeader();
+    refreshThreadsFromServer();
+    uiAlert('Group renamed.', { tone: 'success' });
+  } else if(choice === 'hide'){
+    const r = await hideThreadOnServer(t.id);
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    threadsCache = threadsCache.filter(x => x.id !== t.id);
+    updateMessagesBadge();
+    backToInbox();
+    uiAlert('Conversation hidden. It comes back if someone sends a new message.', { tone: 'info' });
+  } else if(choice === 'leave'){
+    if(!(await uiConfirm(`Leave "${threadDisplayName(t)}"? You won't see new messages unless someone adds you back.`, { confirmText: 'Leave', danger: true }))) return;
+    const r = await leaveThreadOnServer(t.id);
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    threadsCache = threadsCache.filter(x => x.id !== t.id);
+    updateMessagesBadge();
+    backToInbox();
+    uiAlert(`You left "${threadDisplayName(t)}".`, { tone: 'info' });
+  } else if(choice === 'delete'){
+    if(!(await uiConfirm(`Delete "${threadDisplayName(t)}" for everyone? It disappears for all members. This is not a private messaging platform — managers can still see it.`))) return;
+    const r = await deleteThreadOnServer(t.id);
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    threadsCache = threadsCache.filter(x => x.id !== t.id);
+    updateMessagesBadge();
+    backToInbox();
+    uiAlert('Conversation deleted.', { tone: 'info' });
+  }
+}
+
+function backToInbox(){
+  stopMessageBurst();
+  messagesScreenStep = 'list';
+  resetThreadView();
+  renderMessagesScreen();
+  refreshThreadsFromServer();
+}
+
+/* ---------- Group members ---------- */
+
+let memberSearch = '';
+
+function renderMembersScreen(){
+  composeBarContainer.innerHTML = '';
+  composeBarContainer.classList.remove('open');
+  const t = threadView.thread;
+  if(!t){ messagesScreenStep = 'thread'; renderMessagesScreen(); return; }
+  const perm = threadPermissions();
+  const me = getCurrentUser();
+  const members = (t.participants || []).map(u => ({ username: u, name: getDisplayFullName(u) }));
+  const others = loadUsers()
+    .filter(u => !(t.participants || []).some(p => isSameUser(p, u.username)))
+    .map(u => ({ username: u.username, name: getDisplayFullName(u.username) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  messagesInner.innerHTML = `
+    <button class="back-btn" id="members-back"><span class="chev">${ico('chevronLeft')}</span> Conversation</button>
     <div class="agenda-step">
-      <h2>Manage Group</h2>
-      <div class="block-label">Members</div>
-      ${thread.participants.map(p => `
-        <div class="admin-user-row">
-          <div class="admin-user-name">${escapeHtml(p)}${p.toLowerCase() === thread.creatorUsername.toLowerCase() ? ' <span class="admin-supply-empty">(creator)</span>' : ''}</div>
-          ${p.toLowerCase() !== thread.creatorUsername.toLowerCase() ? `<button class="ghost-btn remove-member-btn" data-username="${escapeHtml(p)}">Remove</button>` : ''}
-        </div>
-      `).join('')}
-      <div class="block-label" style="margin-top:24px;">Add Someone</div>
-      ${others.length ? others.map(u => `
-        <div class="admin-user-row">
-          <div class="admin-user-name">${escapeHtml(u.username)}</div>
-          <button class="ghost-btn add-member-btn" data-username="${escapeHtml(u.username)}">Add</button>
-        </div>
-      `).join('') : `<p class="caption">Everyone is already in this group.</p>`}
+      <h2>${escapeHtml(t.name || 'Group')}</h2>
+      <p class="caption">${perm.isCreator ? 'You started this group, so you can add and remove people.' : `Started by ${escapeHtml(getDisplayFullName(t.creatorUsername))}.`}</p>
+      <div class="block-label">Members<span class="count-inline">${members.length}</span></div>
+      <div class="people-list">
+        ${members.map(m => `
+          <div class="people-row static">
+            <span class="avatar small" aria-hidden="true">${escapeHtml(personInitials(m.name))}</span>
+            <span class="pr-main"><b>${escapeHtml(m.name)}${isSameUser(m.username, me) ? ' (you)' : ''}</b><small>${isSameUser(m.username, t.creatorUsername) ? 'Group creator' : escapeHtml(m.username)}</small></span>
+            ${perm.isCreator && !isSameUser(m.username, me) ? `<button type="button" class="row-chip danger member-remove" data-username="${escapeHtml(m.username)}">Remove</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ${perm.isCreator ? `
+        <div class="block-label" style="margin-top:24px;">Add people</div>
+        ${others.length ? `
+          <label class="search-field">
+            ${ico('search')}
+            <input type="search" id="member-search" placeholder="Search staff" value="${escapeHtml(memberSearch)}" autocomplete="off" aria-label="Search staff">
+          </label>
+          <div class="people-list">
+            ${others.map(o => `
+              <div class="people-row static add-candidate" data-search="${escapeHtml(`${o.name} ${o.username}`.toLowerCase())}">
+                <span class="avatar small" aria-hidden="true">${escapeHtml(personInitials(o.name))}</span>
+                <span class="pr-main"><b>${escapeHtml(o.name)}</b>${o.name !== o.username ? `<small>${escapeHtml(o.username)}</small>` : ''}</span>
+                <button type="button" class="row-chip primary member-add" data-username="${escapeHtml(o.username)}">${ico('plus')}Add</button>
+              </div>
+            `).join('')}
+          </div>
+        ` : `<p class="caption">Everyone is already in this group.</p>`}
+      ` : ''}
     </div>
   `;
-
-  document.getElementById('manage-back-btn').addEventListener('click', ()=>{ renderThreadDetail(); });
-  inner.querySelectorAll('.remove-member-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const result = await updateGroupMember(currentThreadId, 'remove', btn.dataset.username);
-      if(!result.ok){ uiAlert(result.error || 'Could not remove that person.'); return; }
-      currentThreadInfo = result.thread;
-      renderGroupManageScreen();
-    });
+  document.getElementById('members-back').addEventListener('click', () => {
+    messagesScreenStep = 'thread';
+    renderMessagesScreen();
+    scrollThreadToBottom();
   });
-  inner.querySelectorAll('.add-member-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const result = await updateGroupMember(currentThreadId, 'add', btn.dataset.username);
-      if(!result.ok){ uiAlert(result.error || 'Could not add that person.'); return; }
-      currentThreadInfo = result.thread;
-      renderGroupManageScreen();
-    });
-  });
+  const search = document.getElementById('member-search');
+  if(search){
+    const apply = () => messagesInner.querySelectorAll('.add-candidate').forEach(row => row.classList.toggle('is-hidden', !!memberSearch.trim() && !row.dataset.search.includes(memberSearch.trim().toLowerCase())));
+    search.addEventListener('input', () => { memberSearch = search.value; apply(); });
+    apply();
+  }
+  const change = async (action, username) => {
+    if(action === 'remove' && !(await uiConfirm(`Remove ${getDisplayFullName(username)} from "${t.name}"? They won't see new messages.`))) return;
+    const r = await updateGroupMember(t.id, action, username);
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    if(r.thread) threadView.thread = r.thread;
+    renderMembersScreen();
+    uiAlert(action === 'add' ? `Added ${getDisplayFullName(username)}.` : `Removed ${getDisplayFullName(username)}.`, { tone: 'success' });
+  };
+  messagesInner.querySelectorAll('.member-add').forEach(b => b.addEventListener('click', () => change('add', b.dataset.username)));
+  messagesInner.querySelectorAll('.member-remove').forEach(b => b.addEventListener('click', () => change('remove', b.dataset.username)));
 }
 
 document.getElementById('nav-home-btn').addEventListener('click', ()=>{
@@ -4769,6 +5558,7 @@ function renderAdmin(){
         if(adminTab === 'inventory'){ inventoryView = 'home'; countStep = 'counting'; }
         if(adminTab === 'allergens' && allergenAdminView !== 'edit'){ allergenAdminView = 'list'; }
         if(adminTab === 'protocols'){ protocolLinkOpen = false; }
+        if(adminTab === 'messages'){ oversightLoaded = false; oversightView.id = null; }
         renderAdmin();
       });
     });
@@ -6671,76 +7461,226 @@ function renderAdminErrorsTab(){
 
 /* ---------- Messages oversight (Management → Messages) ---------- */
 
+/* ============ Menu → Messages (oversight, rebuilt in v1.39.0) ============ */
+
 let oversightThreads = [];
-let oversightSelectedThreadId = null;
+let oversightLoaded = false;
+let oversightFilter = 'all';     // 'all' | 'group' | 'dm' | 'deleted'
+let oversightSearch = '';
+const oversightView = { id: null, thread: null, messages: [], hasMore: false, loading: false, error: null };
+
+function oversightName(t){
+  if(t.type === 'group') return t.name || 'Group';
+  const names = [...(t.participants || []), ...(t.formerParticipants || [])];
+  return names.map(getDisplayFullName).join(' & ') || 'Conversation';
+}
+
+async function loadOversightThreads(){
+  const r = await msgRequest('GET', '/messages/oversight', undefined, true);
+  oversightLoaded = true;
+  if(r.ok && Array.isArray(r.list)){ oversightThreads = r.list; return null; }
+  oversightThreads = [];
+  return r.error || "Couldn't load conversations.";
+}
 
 async function renderAdminMessagesTab(){
   const content = document.getElementById('admin-tab-content');
-  content.innerHTML = `<p class="caption">Loading conversations…</p>`;
-  if(!isSyncConfigured()){
-    content.innerHTML = `<p class="caption">Sync isn't set up yet on this device.</p>`;
-    return;
+  if(!content) return;
+  if(oversightView.id){ renderOversightThread(content); return; }
+  setAdminScreenHeader('Messages', 'Menu', () => { adminTab = null; renderAdmin(); });
+  if(!oversightLoaded){
+    content.innerHTML = `<p class="caption">Loading conversations…</p>`;
+    const err = await loadOversightThreads();
+    if(adminTab !== 'messages' || oversightView.id) return;
+    if(err){ content.innerHTML = `<p class="caption">${escapeHtml(err)}</p>`; return; }
   }
-  try{
-    const res = await fetch(`${SYNC_API_BASE}/messages/oversight`, { headers: authHeaders() });
-    const data = await res.json();
-    oversightThreads = Array.isArray(data) ? data : [];
-  }catch(e){
-    oversightThreads = [];
-  }
-  renderOversightList();
+  renderOversightList(content);
 }
 
-function renderOversightList(){
-  const content = document.getElementById('admin-tab-content');
-  if(oversightSelectedThreadId){
-    renderOversightThreadDetail();
-    return;
-  }
-  const sorted = [...oversightThreads].sort((a,b) => {
-    const at = a.messages[0] ? a.messages[0].timestamp : a.createdAt;
-    const bt = b.messages[0] ? b.messages[0].timestamp : b.createdAt;
-    return bt.localeCompare(at);
-  });
+function renderOversightList(content){
+  const counts = {
+    all: oversightThreads.length,
+    group: oversightThreads.filter(t => t.type === 'group' && !t.deleted).length,
+    dm: oversightThreads.filter(t => t.type === 'dm' && !t.deleted).length,
+    deleted: oversightThreads.filter(t => t.deleted).length
+  };
+  const shown = oversightThreads.filter(t =>
+    oversightFilter === 'all' ? true : oversightFilter === 'deleted' ? t.deleted : (t.type === oversightFilter && !t.deleted));
+
   content.innerHTML = `
-    <div class="block-label">All Conversations</div>
-    <p class="caption">Every direct message and group in the system — visible here because of the Messages permission, independent of whether you're actually part of the conversation.</p>
-    ${sorted.length ? sorted.map(t => `
-      <div class="admin-user-row">
-        <button class="admin-product-toggle oversight-thread-btn" data-id="${t.id}">
-          <span class="admin-user-name">${t.type === 'group' ? escapeHtml(t.name || 'Group') : escapeHtml(t.participants.join(', '))}</span>
-          <span class="tap-hint">${t.messages.length} message${t.messages.length===1?'':'s'} · Started by ${escapeHtml(t.creatorUsername)}</span>
-        </button>
-      </div>
-    `).join('') : `<p class="caption">No conversations yet.</p>`}
+    <p class="msg-notice">${ico('info')}<span>${escapeHtml(MESSAGING_NOTICE)} Everyone with Messages access can read every conversation here, including deleted messages. Opening a conversation you're not part of is recorded in the Activity Log.</span></p>
+    <label class="search-field">
+      ${ico('search')}
+      <input type="search" id="oversight-search" placeholder="Search by name or group" value="${escapeHtml(oversightSearch)}" autocomplete="off" aria-label="Search conversations">
+    </label>
+    <div class="perm-chip-row">
+      ${[['all', 'All'], ['group', 'Groups'], ['dm', 'Direct'], ['deleted', 'Deleted']].map(([k, label]) =>
+        `<button class="perm-chip ${oversightFilter === k ? 'active' : ''}" data-ofilter="${k}">${label} ${counts[k]}</button>`).join('')}
+      <button class="perm-chip" id="oversight-refresh">Refresh</button>
+    </div>
+    <div class="safety-list" id="oversight-list">
+      ${shown.map(t => {
+        const people = [...(t.participants || [])].map(getDisplayFullName);
+        const meta = [
+          `${t.messageCount} message${t.messageCount === 1 ? '' : 's'}`,
+          t.deletedMessageCount ? `${t.deletedMessageCount} deleted` : '',
+          t.type === 'group' ? `${people.length} member${people.length === 1 ? '' : 's'}` : 'Direct',
+          shortWhen(t.lastActivityAt)
+        ].filter(Boolean).join(' · ');
+        const search = [oversightName(t), ...(t.participants || []), ...people, ...(t.formerParticipants || [])].join(' ').toLowerCase();
+        return `
+          <button type="button" class="safety-row oversight-row ${t.deleted ? 'is-deleted' : ''}" data-id="${escapeHtml(t.id)}" data-search="${escapeHtml(search)}">
+            <span class="avatar small ${t.type === 'group' ? 'group' : ''}" aria-hidden="true">${escapeHtml(personInitials(oversightName(t)))}</span>
+            <span class="sr-main">
+              <b>${escapeHtml(oversightName(t))}${t.deleted ? ' <span class="reorder-badge">Deleted</span>' : ''}</b>
+              <small>${escapeHtml(meta)}</small>
+            </span>
+            ${ico('chevronRight')}
+          </button>
+        `;
+      }).join('')}
+    </div>
+    <p class="caption ${shown.length ? 'is-hidden' : ''}" id="oversight-empty">${oversightThreads.length ? 'Nothing matches.' : 'No conversations yet.'}</p>
   `;
-  content.querySelectorAll('.oversight-thread-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      oversightSelectedThreadId = btn.dataset.id;
-      renderOversightList();
+
+  const search = document.getElementById('oversight-search');
+  const apply = () => {
+    const q = oversightSearch.trim().toLowerCase();
+    let any = false;
+    content.querySelectorAll('.oversight-row').forEach(row => {
+      const show = !q || row.dataset.search.includes(q);
+      row.classList.toggle('is-hidden', !show);
+      if(show) any = true;
     });
+    document.getElementById('oversight-empty').classList.toggle('is-hidden', any);
+    document.getElementById('oversight-list').classList.toggle('is-hidden', !any);
+  };
+  search.addEventListener('input', () => { oversightSearch = search.value; apply(); });
+  apply();
+  content.querySelectorAll('[data-ofilter]').forEach(b => b.addEventListener('click', () => { oversightFilter = b.dataset.ofilter; renderOversightList(content); }));
+  document.getElementById('oversight-refresh').addEventListener('click', async () => {
+    content.querySelector('#oversight-list').style.opacity = '.5';
+    await loadOversightThreads();
+    renderOversightList(content);
   });
+  content.querySelectorAll('.oversight-row').forEach(b => b.addEventListener('click', () => openOversightThread(b.dataset.id)));
 }
 
-function renderOversightThreadDetail(){
-  const content = document.getElementById('admin-tab-content');
-  const thread = oversightThreads.find(t => t.id === oversightSelectedThreadId);
-  if(!thread){ oversightSelectedThreadId = null; renderOversightList(); return; }
-  const ordered = [...thread.messages].reverse();
+async function openOversightThread(id){
+  Object.assign(oversightView, { id, thread: oversightThreads.find(t => t.id === id) || null, messages: [], hasMore: false, loading: true, error: null });
+  renderAdminMessagesTab();
+  scrollAdminToTop();
+  const r = await fetchThreadDetail(id, null, true);
+  if(oversightView.id !== id) return;
+  oversightView.loading = false;
+  if(!r.ok){ oversightView.error = r.error || "Couldn't load this conversation."; renderAdminMessagesTab(); return; }
+  oversightView.thread = r.thread;
+  oversightView.messages = [...(r.messages || [])].reverse();
+  oversightView.hasMore = !!r.hasMore;
+  renderAdminMessagesTab();
+}
+
+function closeOversightThread(){
+  Object.assign(oversightView, { id: null, thread: null, messages: [], hasMore: false, loading: false, error: null });
+  renderAdminMessagesTab();
+  scrollAdminToTop();
+}
+
+function renderOversightThread(content){
+  const t = oversightView.thread;
+  setAdminScreenHeader(t ? oversightName(t) : 'Conversation', 'All Conversations', closeOversightThread);
+  if(oversightView.error){ content.innerHTML = `<p class="caption">${escapeHtml(oversightView.error)}</p>`; return; }
+  if(!t || oversightView.loading && !oversightView.messages.length){ content.innerHTML = `<p class="caption">Loading…</p>`; return; }
+
+  const members = (t.participants || []).map(getDisplayFullName);
+  const former = (t.formerParticipants || []).map(getDisplayFullName);
+  const canManage = t.type === 'group' && !t.deleted;
+  let lastDay = '';
+  const rows = oversightView.messages.map(m => {
+    let divider = '';
+    const day = new Date(m.timestamp).toDateString();
+    if(day !== lastDay){ divider = `<div class="day-divider"><span>${escapeHtml(dayLabel(m.timestamp))}</span></div>`; lastDay = day; }
+    return `${divider}
+      <div class="oversight-msg ${m.deleted ? 'deleted' : ''}">
+        <div class="om-head"><b>${escapeHtml(getDisplayFullName(m.sender))}</b><time>${escapeHtml(new Date(m.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}</time></div>
+        <div class="om-text">${escapeHtml(m.text).replace(/\n/g, '<br>')}</div>
+        ${m.deleted ? `<div class="om-deleted">${ico('x')}Deleted by sender ${escapeHtml(m.deletedAt ? new Date(m.deletedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '')}</div>` : ''}
+      </div>`;
+  }).join('');
+
   content.innerHTML = `
-    <button class="ghost-btn" id="oversight-back-btn" style="margin-bottom:16px;">${ico('chevronLeft')}All Conversations</button>
-    <div class="block-label">${thread.type === 'group' ? escapeHtml(thread.name || 'Group') : escapeHtml(thread.participants.join(', '))}</div>
-    <p class="caption">Participants: ${escapeHtml(thread.participants.join(', '))} · Started by ${escapeHtml(thread.creatorUsername)}</p>
-    ${ordered.length ? ordered.map(m => `
-      <div class="admin-user-row">
-        <div class="admin-user-name">${escapeHtml(m.sender)}<span class="admin-supply-empty" style="display:block;font-size:11px;margin-top:2px;">${new Date(m.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span></div>
-        <div style="font-size:13px; color:var(--ink); max-width:60%; text-align:right;">${escapeHtml(m.text)}</div>
+    <div class="notice-card oversight-summary">
+      <div class="nc-text">
+        <b>${t.type === 'group' ? 'Group' : 'Direct message'}${t.deleted ? ' — deleted' : ''}</b>
+        <small>${t.type === 'group' ? `Created by ${escapeHtml(getDisplayFullName(t.creatorUsername))}. ` : ''}Members: ${escapeHtml(members.join(', ') || 'none')}${former.length ? `. Former: ${escapeHtml(former.join(', '))}` : ''}${t.deleted ? `. Deleted by ${escapeHtml(getDisplayFullName(t.deletedBy || ''))} ${escapeHtml(t.deletedAt ? new Date(t.deletedAt).toLocaleString() : '')}` : ''}</small>
       </div>
-    `).join('') : `<p class="caption">No messages yet.</p>`}
+    </div>
+    ${canManage ? `
+      <div class="chip-row">
+        <button type="button" class="row-chip" id="ov-rename">${ico('pen')}Rename</button>
+        <button type="button" class="row-chip" id="ov-add">${ico('plus')}Add member</button>
+        <button type="button" class="row-chip" id="ov-remove">${ico('x')}Remove member</button>
+        <button type="button" class="row-chip danger" id="ov-delete">${ico('x')}Delete conversation</button>
+      </div>
+    ` : ''}
+    ${oversightView.hasMore ? `<button type="button" class="load-older-btn" id="ov-older">${oversightView.loading ? 'Loading…' : 'Load earlier messages'}</button>` : ''}
+    <div class="oversight-thread">${rows || '<p class="caption">No messages.</p>'}</div>
   `;
-  document.getElementById('oversight-back-btn').addEventListener('click', ()=>{
-    oversightSelectedThreadId = null;
-    renderOversightList();
+
+  const older = document.getElementById('ov-older');
+  if(older) older.addEventListener('click', async () => {
+    const oldest = oversightView.messages[0];
+    if(!oldest || oversightView.loading) return;
+    oversightView.loading = true;
+    older.textContent = 'Loading…';
+    const r = await fetchThreadDetail(t.id, oldest.seq, true);
+    oversightView.loading = false;
+    if(oversightView.id !== t.id) return;
+    if(r.ok){
+      oversightView.messages = [...[...(r.messages || [])].reverse(), ...oversightView.messages];
+      oversightView.hasMore = !!r.hasMore;
+    } else {
+      uiAlert(r.error, { tone: 'error' });
+    }
+    renderAdminMessagesTab();
+  });
+
+  if(!canManage) return;
+  const afterChange = async (r, message) => {
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    if(r.thread) oversightView.thread = { ...oversightView.thread, ...r.thread };
+    await loadOversightThreads();
+    renderAdminMessagesTab();
+    uiAlert(message, { tone: 'success' });
+  };
+  document.getElementById('ov-rename').addEventListener('click', async () => {
+    const name = await uiPrompt('Rename group', t.name || '', { confirmText: 'Save' });
+    if(name === null || !name.trim()) return;
+    afterChange(await renameThreadOnServer(t.id, name.trim(), true), 'Group renamed.');
+  });
+  document.getElementById('ov-add').addEventListener('click', async () => {
+    const candidates = loadUsers().filter(u => !(t.participants || []).some(p => isSameUser(p, u.username)));
+    if(!candidates.length){ uiAlert('Everyone is already in this group.'); return; }
+    const pick = await uiActionSheet('Add to group', candidates.map(u => ({ key: u.username, label: getDisplayFullName(u.username), hint: u.username })));
+    if(!pick) return;
+    afterChange(await updateGroupMember(t.id, 'add', pick, true), `Added ${getDisplayFullName(pick)}.`);
+  });
+  document.getElementById('ov-remove').addEventListener('click', async () => {
+    if(!(t.participants || []).length){ uiAlert('This group has no members.'); return; }
+    const pick = await uiActionSheet('Remove from group', t.participants.map(u => ({ key: u, label: getDisplayFullName(u), hint: isSameUser(u, t.creatorUsername) ? 'Creator — the group passes to the next member' : u, danger: true })));
+    if(!pick) return;
+    if(!(await uiConfirm(`Remove ${getDisplayFullName(pick)} from "${t.name}"?`))) return;
+    afterChange(await updateGroupMember(t.id, 'remove', pick, true), `Removed ${getDisplayFullName(pick)}.`);
+  });
+  document.getElementById('ov-delete').addEventListener('click', async () => {
+    if(!(await uiConfirm(`Delete "${t.name}" for everyone? Members will no longer see it. It stays visible here.`))) return;
+    const r = await deleteThreadOnServer(t.id, true);
+    if(!r.ok){ uiAlert(r.error, { tone: 'error' }); return; }
+    await loadOversightThreads();
+    const fresh = oversightThreads.find(x => x.id === t.id);
+    if(fresh) oversightView.thread = { ...oversightView.thread, ...fresh };
+    renderAdminMessagesTab();
+    uiAlert('Conversation deleted.', { tone: 'success' });
   });
 }
 
