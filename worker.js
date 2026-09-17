@@ -1,3 +1,5 @@
+import { DurableObject } from 'cloudflare:workers';
+
 /**
  * The Ledger — Sync Worker
  *
@@ -50,8 +52,31 @@
  * (see README.md). Automatic backups older than 30 days are cleaned
  * up automatically; manual backups are kept until deleted by hand.
  *
+ * Messaging (v1.39.0): every /messages/* request is checked here, then
+ * handed to the MessagingHub Durable Object (bottom of this file), which
+ * stores conversations in its own SQLite database and pushes new
+ * messages to open apps over WebSockets. Existing KV conversations are
+ * copied into it automatically the first time it starts.
+ *   GET  /messages/socket-ticket              -> {ok, ticket} (60-second pass)
+ *   GET  /messages/socket?ticket=...          -> WebSocket (live updates)
+ *   GET  /messages/threads                    -> your conversations
+ *   POST /messages/threads                    {type, participantUsernames, name, firstMessage?}
+ *   GET  /messages/threads/:id?before=&limit= -> messages (newest first, paged)
+ *   POST /messages/threads/:id/messages       {text, clientId}
+ *   POST /messages/threads/:id/read|hide|leave
+ *   POST /messages/threads/:id/rename         {name}
+ *   POST /messages/threads/:id/members        {action: add|remove, username}
+ *   POST /messages/threads/:id/delete
+ *   POST /messages/messages/:msgId/delete     {threadId}
+ *   GET  /messages/oversight                  -> all conversations (Messages permission)
+ * This is not a private messaging platform: deleted messages and
+ * conversations are kept for anyone with the Messages permission, and
+ * reading a conversation you aren't part of is written to the Activity Log.
+ *
  * Requires:
  *   - A KV namespace bound to this Worker as STOP_KV
+ *   - A Durable Object binding MESSAGING_HUB -> class MessagingHub
+ *     (SQLite storage; see wrangler.toml and DEPLOY-MESSAGING.md)
  *   - Three Secrets set on this Worker: ADMIN_PASSWORD, INVITE_CODE,
  *     AUTH_SECRET (see README.md for setup steps)
  */
@@ -502,7 +527,7 @@ export default {
       // they touch actually saves — until an admin explicitly activates
       // them in Management → Users. Accounts an admin creates directly
       // (Add User) are unaffected by this and start as real accounts.
-      const newUser = { username, passwordHash, passwordSalt, permissions, lastLogin: now, createdAt: now, isDemo: true };
+      const newUser = { username, passwordHash, passwordSalt, permissions, lastLogin: now, createdAt: now, updatedAt: now, isDemo: true };
       if (securityQuestion) newUser.securityQuestion = securityQuestion;
       if (securityAnswer) newUser.securityAnswer = securityAnswer;
       if (firstName) newUser.firstName = firstName;
@@ -629,6 +654,10 @@ export default {
       }
       if (permissions !== undefined) user.permissions = permissions;
       if (isDemo !== undefined) user.isDemo = isDemo;
+      // Deliberately stamped here rather than inside putUser: a login only
+      // touches lastLogin, and bumping this on every login would make the
+      // "someone else changed this user" check fire constantly later on.
+      user.updatedAt = new Date().toISOString();
       await putUser(env, user);
       return jsonResponse({ ok: true });
     }
@@ -643,6 +672,17 @@ export default {
       try { body = await request.json(); } catch (e) { return jsonResponse({ ok: false, error: 'Invalid JSON' }, 400); }
       if (!body || !body.username) return jsonResponse({ ok: false, error: 'Missing username' }, 400);
       await deleteUserRecord(env, body.username);
+      // Take them out of their conversations so a future account with the
+      // same username can't see old messages, and hand their groups on.
+      if (env.MESSAGING_HUB) {
+        try {
+          const hub = env.MESSAGING_HUB.get(env.MESSAGING_HUB.idFromName('main'));
+          await hub.fetch(new Request('https://hub/internal/user-deleted', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: body.username }),
+          }));
+        } catch (e) { console.error('Could not update messaging for deleted user', e); }
+      }
       return jsonResponse({ ok: true });
     }
 
@@ -740,253 +780,79 @@ export default {
       return jsonResponse({ ok: true });
     }
 
-    /* ---------------- Messaging ---------------- */
-    // Real per-user privacy, not just the app choosing not to show something:
-    // GET /messages/threads only ever returns threads the caller's own index
-    // says they belong to, and GET /messages/threads/:id refuses anyone who
-    // isn't an actual participant — with one disclosed exception, oversight
-    // (a separate, explicitly-permissioned endpoint for reading everything).
+    /* ---------------- Messaging (MessagingHub Durable Object) ---------------- */
 
-    function threadKey(id) { return `thread:${id}`; }
-    function messagesKey(threadId) { return `messages:${threadId}`; }
-    function userThreadsKey(username) { return `userthreads:${username.toLowerCase()}`; }
+    if (url.pathname.startsWith('/messages/')) {
+      if (!env.MESSAGING_HUB) {
+        return jsonResponse({ ok: false, error: 'Messaging isn\'t set up on the server yet (MESSAGING_HUB binding missing).' }, 503);
+      }
+      const hub = env.MESSAGING_HUB.get(env.MESSAGING_HUB.idFromName('main'));
 
-    async function getThread(id) {
-      const raw = await env.STOP_KV.get(threadKey(id));
-      if (!raw) return null;
-      try { return JSON.parse(raw); } catch (e) { return null; }
-    }
-    async function putThread(thread) {
-      await env.STOP_KV.put(threadKey(thread.id), JSON.stringify(thread));
-    }
-    async function getUserThreads(username) {
-      const raw = await env.STOP_KV.get(userThreadsKey(username));
-      try { const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? list : []; }
-      catch (e) { return []; }
-    }
-    async function putUserThreads(username, list) {
-      await env.STOP_KV.put(userThreadsKey(username), JSON.stringify(list));
-    }
-    async function getThreadMessages(threadId) {
-      const raw = await env.STOP_KV.get(messagesKey(threadId));
-      try { const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? list : []; }
-      catch (e) { return []; }
-    }
-    function isParticipant(thread, username) {
-      return !!(thread && thread.participants.some(p => p.toLowerCase() === username.toLowerCase()));
-    }
-
-    if (url.pathname === '/messages/threads' && request.method === 'POST') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      let body;
-      try { body = await request.json(); } catch (e) { return jsonResponse({ ok: false, error: 'Invalid JSON' }, 400); }
-      const { type, participantUsernames, name } = body || {};
-      if (type !== 'dm' && type !== 'group') return jsonResponse({ ok: false, error: 'Invalid thread type.' }, 400);
-      if (!Array.isArray(participantUsernames) || !participantUsernames.length) {
-        return jsonResponse({ ok: false, error: 'Missing participants.' }, 400);
-      }
-      const creator = payload.username;
-      const allParticipants = Array.from(new Set([creator, ...participantUsernames]));
-      for (const uname of allParticipants) {
-        const u = await getUserByUsername(env, uname);
-        if (!u) return jsonResponse({ ok: false, error: `User "${uname}" not found.` }, 400);
-      }
-      if (type === 'dm' && allParticipants.length !== 2) {
-        return jsonResponse({ ok: false, error: "A direct message needs exactly one other person." }, 400);
-      }
-      if (type === 'dm') {
-        // Reuse an existing DM between the same two people instead of
-        // fragmenting their conversation across duplicate threads.
-        const creatorThreads = await getUserThreads(creator);
-        for (const ut of creatorThreads) {
-          const existing = await getThread(ut.threadId);
-          if (existing && existing.type === 'dm' && existing.participants.length === 2 &&
-              existing.participants.every(p => allParticipants.includes(p))) {
-            return jsonResponse({ ok: true, thread: existing });
-          }
+      // Live updates. Browsers can't send the login header on a WebSocket,
+      // so the app first gets a signed 60-second ticket (below) and passes
+      // that instead. Nothing is stored for tickets.
+      if (url.pathname === '/messages/socket') {
+        if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket') {
+          return jsonResponse({ ok: false, error: 'Expected a WebSocket.' }, 426);
         }
-      }
-      const id = crypto.randomUUID();
-      const thread = {
-        id, type, participants: allParticipants, creatorUsername: creator,
-        name: type === 'group' ? (name || 'Group') : null,
-        createdAt: new Date().toISOString(),
-      };
-      await putThread(thread);
-      await env.STOP_KV.put(messagesKey(id), '[]');
-      for (const uname of allParticipants) {
-        const list = await getUserThreads(uname);
-        list.push({ threadId: id, lastReadAt: uname === creator ? new Date().toISOString() : null });
-        await putUserThreads(uname, list);
-      }
-      return jsonResponse({ ok: true, thread });
-    }
-
-    if (url.pathname === '/messages/threads' && request.method === 'GET') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const userThreads = await getUserThreads(payload.username);
-      const results = [];
-      for (const ut of userThreads) {
-        const thread = await getThread(ut.threadId);
-        if (!thread) continue;
-        const messages = await getThreadMessages(ut.threadId);
-        const lastMessage = messages[0] || null;
-        const unreadCount = ut.lastReadAt ? messages.filter(m => m.timestamp > ut.lastReadAt).length : messages.length;
-        results.push({
-          id: thread.id, type: thread.type, name: thread.name,
-          participants: thread.participants, creatorUsername: thread.creatorUsername,
-          lastMessage, unreadCount,
-        });
-      }
-      return jsonResponse(results);
-    }
-
-    const threadDetailMatch = url.pathname.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)$/);
-    if (threadDetailMatch && request.method === 'GET') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const threadId = threadDetailMatch[1];
-      const thread = await getThread(threadId);
-      if (!thread) return jsonResponse({ ok: false, error: 'Thread not found.' }, 404);
-      const isMember = isParticipant(thread, payload.username);
-      const hasOversight = hasPermission(payload, 'messages');
-      if (!isMember && !hasOversight) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const messages = await getThreadMessages(threadId);
-      if (isMember) {
-        // Oversight viewing a thread never marks it read for the real
-        // participants — only an actual member opening it does that.
-        const userThreads = await getUserThreads(payload.username);
-        const entry = userThreads.find(t => t.threadId === threadId);
-        if (entry) {
-          entry.lastReadAt = new Date().toISOString();
-          await putUserThreads(payload.username, userThreads);
+        const origin = request.headers.get('Origin');
+        if (origin && getAllowedOrigin(request, env) !== origin) {
+          return new Response('Forbidden', { status: 403 });
         }
-      }
-      return jsonResponse({ ok: true, thread, messages });
-    }
-
-    const sendMessageMatch = url.pathname.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/messages$/);
-    if (sendMessageMatch && request.method === 'POST') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const threadId = sendMessageMatch[1];
-      const thread = await getThread(threadId);
-      if (!thread) return jsonResponse({ ok: false, error: 'Thread not found.' }, 404);
-      if (!isParticipant(thread, payload.username)) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      let body;
-      try { body = await request.json(); } catch (e) { return jsonResponse({ ok: false, error: 'Invalid JSON' }, 400); }
-      const text = body && body.text ? String(body.text).slice(0, 4000) : '';
-      if (!text.trim()) return jsonResponse({ ok: false, error: 'Message is empty.' }, 400);
-      if (await isDemoToken(env, payload)) {
-        return jsonResponse({ ok: true, message: { id: 'demo', sender: payload.username, text, timestamp: new Date().toISOString() } });
-      }
-      const message = { id: crypto.randomUUID(), sender: payload.username, text, timestamp: new Date().toISOString() };
-      const messages = await getThreadMessages(threadId);
-      messages.unshift(message);
-      while (messages.length > 500) messages.pop();
-      await env.STOP_KV.put(messagesKey(threadId), JSON.stringify(messages));
-      const senderThreads = await getUserThreads(payload.username);
-      const entry = senderThreads.find(t => t.threadId === threadId);
-      if (entry) { entry.lastReadAt = message.timestamp; await putUserThreads(payload.username, senderThreads); }
-      return jsonResponse({ ok: true, message });
-    }
-
-    const deleteMessageMatch = url.pathname.match(/^\/messages\/messages\/([a-zA-Z0-9-]+)\/delete$/);
-    if (deleteMessageMatch && request.method === 'POST') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const msgId = deleteMessageMatch[1];
-      let body;
-      try { body = await request.json(); } catch (e) { return jsonResponse({ ok: false, error: 'Invalid JSON' }, 400); }
-      const threadId = body && body.threadId;
-      if (!threadId) return jsonResponse({ ok: false, error: 'Missing threadId.' }, 400);
-      if (await isDemoToken(env, payload)) return jsonResponse({ ok: true });
-      const messages = await getThreadMessages(threadId);
-      const target = messages.find(m => m.id === msgId);
-      if (!target) return jsonResponse({ ok: false, error: 'Message not found.' }, 404);
-      if (target.sender.toLowerCase() !== payload.username.toLowerCase()) {
-        return jsonResponse({ ok: false, error: 'You can only delete your own messages.' }, 403);
-      }
-      await env.STOP_KV.put(messagesKey(threadId), JSON.stringify(messages.filter(m => m.id !== msgId)));
-      return jsonResponse({ ok: true });
-    }
-
-    const deleteThreadMatch = url.pathname.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/delete$/);
-    if (deleteThreadMatch && request.method === 'POST') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const threadId = deleteThreadMatch[1];
-      const thread = await getThread(threadId);
-      if (!thread) return jsonResponse({ ok: true }); // already gone
-      if (thread.creatorUsername.toLowerCase() !== payload.username.toLowerCase()) {
-        return jsonResponse({ ok: false, error: 'Only the creator can delete this.' }, 403);
-      }
-      if (await isDemoToken(env, payload)) return jsonResponse({ ok: true });
-      await env.STOP_KV.delete(threadKey(threadId));
-      await env.STOP_KV.delete(messagesKey(threadId));
-      for (const uname of thread.participants) {
-        const list = await getUserThreads(uname);
-        await putUserThreads(uname, list.filter(t => t.threadId !== threadId));
-      }
-      return jsonResponse({ ok: true });
-    }
-
-    const membersMatch = url.pathname.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/members$/);
-    if (membersMatch && request.method === 'POST') {
-      const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!payload || !payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const threadId = membersMatch[1];
-      const thread = await getThread(threadId);
-      if (!thread) return jsonResponse({ ok: false, error: 'Thread not found.' }, 404);
-      if (thread.type !== 'group') return jsonResponse({ ok: false, error: 'Only groups have members to manage.' }, 400);
-      if (thread.creatorUsername.toLowerCase() !== payload.username.toLowerCase()) {
-        return jsonResponse({ ok: false, error: 'Only the creator can manage members.' }, 403);
-      }
-      let body;
-      try { body = await request.json(); } catch (e) { return jsonResponse({ ok: false, error: 'Invalid JSON' }, 400); }
-      const { action, username } = body || {};
-      if (!username) return jsonResponse({ ok: false, error: 'Missing username.' }, 400);
-      if (await isDemoToken(env, payload)) return jsonResponse({ ok: true, thread });
-      if (action === 'add') {
-        const u = await getUserByUsername(env, username);
-        if (!u) return jsonResponse({ ok: false, error: 'User not found.' }, 400);
-        if (!thread.participants.some(p => p.toLowerCase() === username.toLowerCase())) {
-          thread.participants.push(username);
-          await putThread(thread);
-          const list = await getUserThreads(username);
-          list.push({ threadId, lastReadAt: null });
-          await putUserThreads(username, list);
+        const ticket = await verifyToken(url.searchParams.get('ticket'), env.AUTH_SECRET);
+        if (!ticket || ticket.purpose !== 'messages-socket' || !ticket.username) {
+          return new Response('Not authorized', { status: 403 });
         }
-      } else if (action === 'remove') {
-        if (username.toLowerCase() === thread.creatorUsername.toLowerCase()) {
-          return jsonResponse({ ok: false, error: 'The creator cannot be removed. Delete the group instead.' }, 400);
-        }
-        thread.participants = thread.participants.filter(p => p.toLowerCase() !== username.toLowerCase());
-        await putThread(thread);
-        const list = await getUserThreads(username);
-        await putUserThreads(username, list.filter(t => t.threadId !== threadId));
-      } else {
-        return jsonResponse({ ok: false, error: 'Invalid action.' }, 400);
+        const headers = new Headers(request.headers);
+        headers.set('X-Hub-User', ticket.username);
+        headers.delete('X-Hub-Oversight');
+        headers.delete('X-Hub-Demo');
+        return hub.fetch(new Request('https://hub/messages/socket', { method: 'GET', headers }));
       }
-      return jsonResponse({ ok: true, thread });
-    }
 
-    if (url.pathname === '/messages/oversight' && request.method === 'GET') {
       const payload = await verifyToken(getBearerToken(request), env.AUTH_SECRET);
-      if (!hasPermission(payload, 'messages')) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
-      const listResult = await env.STOP_KV.list({ prefix: 'thread:' });
-      const threads = [];
-      for (const key of listResult.keys) {
-        const raw = await env.STOP_KV.get(key.name);
-        if (!raw) continue;
-        let thread;
-        try { thread = JSON.parse(raw); } catch (e) { continue; }
-        const messages = await getThreadMessages(thread.id);
-        threads.push({ ...thread, messages });
+      if (!payload) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
+
+      if (url.pathname === '/messages/socket-ticket' && request.method === 'GET') {
+        if (!payload.username) return jsonResponse({ ok: false, error: 'Not authorized.' }, 403);
+        const ticket = await signToken(
+          { username: payload.username, purpose: 'messages-socket', exp: Date.now() + 60 * 1000 },
+          env.AUTH_SECRET
+        );
+        return jsonResponse({ ok: true, ticket });
       }
-      return jsonResponse(threads);
+
+      const oversight = hasPermission(payload, 'messages');
+      const isDemo = await isDemoToken(env, payload);
+      let bodyText;
+      if (request.method === 'POST') {
+        bodyText = await request.text();
+        if (!bodyText.trim()) bodyText = '{}';
+      }
+      const hubRes = await hub.fetch(new Request(`https://hub${url.pathname}${url.search}`, {
+        method: request.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Hub-User': payload.username || '',
+          'X-Hub-Oversight': oversight ? '1' : '0',
+          'X-Hub-Demo': isDemo ? '1' : '0',
+        },
+        body: bodyText,
+      }));
+      const text = await hubRes.text();
+
+      // Reading a conversation you aren't part of is always logged here,
+      // on the server, so no app version can skip it.
+      const logLine = hubRes.headers.get('X-Hub-Log');
+      if (logLine && hubRes.ok && !isDemo) {
+        try {
+          const actor = payload.isMaster ? 'Master' : payload.username;
+          await appendLogEntry('stop-activity', {
+            username: actor, action: decodeURIComponent(logLine), timestamp: new Date().toISOString(),
+          }, 200);
+        } catch (e) { console.error('Could not log oversight view', e); }
+      }
+      return new Response(text, { status: hubRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     /* ---------------- Generic data endpoints ---------------- */
@@ -1043,3 +909,627 @@ export default {
     })());
   },
 };
+
+/* ======================================================================
+ * MessagingHub — one Durable Object (SQLite storage) for all messaging.
+ *
+ * Requests reach it only through the Worker above, which has already
+ * checked the login token and passes who is asking in X-Hub-* headers.
+ * The hub handles one request at a time with its own database, so two
+ * people sending at once can never overwrite each other, and new
+ * messages are pushed to open apps over hibernating WebSockets.
+ *
+ * "This is not a private messaging platform": deleted messages and
+ * deleted conversations are kept (hidden from staff, visible to anyone
+ * with the Messages permission), and whenever someone reads a
+ * conversation they aren't part of, the Worker writes it to the
+ * Activity Log.
+ * ====================================================================== */
+
+const HUB_SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)`,
+  `CREATE TABLE IF NOT EXISTS threads (
+     id TEXT PRIMARY KEY,
+     type TEXT NOT NULL,
+     name TEXT,
+     creator TEXT NOT NULL,
+     created_at TEXT NOT NULL,
+     last_seq INTEGER NOT NULL DEFAULT 0,
+     last_message_at TEXT,
+     deleted INTEGER NOT NULL DEFAULT 0,
+     deleted_at TEXT,
+     deleted_by TEXT
+   )`,
+  `CREATE TABLE IF NOT EXISTS members (
+     thread_id TEXT NOT NULL,
+     username TEXT NOT NULL,
+     username_lc TEXT NOT NULL,
+     joined_at TEXT NOT NULL,
+     last_read_seq INTEGER NOT NULL DEFAULT 0,
+     hidden_seq INTEGER,
+     PRIMARY KEY (thread_id, username_lc)
+   )`,
+  `CREATE INDEX IF NOT EXISTS members_by_user ON members (username_lc)`,
+  `CREATE TABLE IF NOT EXISTS messages (
+     seq INTEGER PRIMARY KEY AUTOINCREMENT,
+     id TEXT NOT NULL UNIQUE,
+     thread_id TEXT NOT NULL,
+     sender TEXT NOT NULL,
+     sender_lc TEXT NOT NULL,
+     text TEXT NOT NULL,
+     timestamp TEXT NOT NULL,
+     client_id TEXT,
+     deleted_at TEXT,
+     deleted_by TEXT
+   )`,
+  `CREATE INDEX IF NOT EXISTS messages_by_thread ON messages (thread_id, seq)`,
+  `CREATE INDEX IF NOT EXISTS messages_by_client ON messages (thread_id, sender_lc, client_id)`,
+];
+
+const HUB_PAGE_SIZE = 50;
+const HUB_MAX_TEXT = 4000;
+const HUB_MAX_GROUP_NAME = 80;
+
+function hubJson(obj, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...extraHeaders } });
+}
+
+export class MessagingHub extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx = ctx;
+    this.env = env;
+    this.sql = ctx.storage.sql;
+    for (const statement of HUB_SCHEMA) this.sql.exec(statement);
+    // Answered without waking the object, so idle connections stay free.
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+    ctx.blockConcurrencyWhile(async () => {
+      try { await this.migrateFromKvIfNeeded(); }
+      catch (e) { console.error('Messaging migration failed; will retry on next start:', e); }
+    });
+  }
+
+  /* ---------- small SQL helpers ---------- */
+  bind(values) { return values.map(v => (v === undefined ? null : v)); }
+  rows(query, ...values) { return this.sql.exec(query, ...this.bind(values)).toArray(); }
+  one(query, ...values) { return this.rows(query, ...values)[0] || null; }
+  run(query, ...values) { this.sql.exec(query, ...this.bind(values)); }
+  now() { return new Date().toISOString(); }
+
+  getThread(id) { return this.one(`SELECT * FROM threads WHERE id = ?`, id); }
+  getMembers(threadId) {
+    return this.rows(`SELECT rowid AS rid, * FROM members WHERE thread_id = ? ORDER BY joined_at, rid`, threadId);
+  }
+  getMember(threadId, usernameLc) {
+    return this.one(`SELECT * FROM members WHERE thread_id = ? AND username_lc = ?`, threadId, usernameLc);
+  }
+  formerParticipants(threadId, members) {
+    const current = new Set(members.map(m => m.username_lc));
+    return this.rows(`SELECT sender, MIN(seq) AS first_seq FROM messages WHERE thread_id = ? GROUP BY sender_lc ORDER BY first_seq`, threadId)
+      .map(r => r.sender)
+      .filter(name => !current.has(String(name).toLowerCase()));
+  }
+  threadOut(t) {
+    const members = this.getMembers(t.id);
+    return {
+      id: t.id,
+      type: t.type,
+      name: t.name,
+      participants: members.map(m => m.username),
+      formerParticipants: this.formerParticipants(t.id, members),
+      creatorUsername: t.creator,
+      createdAt: t.created_at,
+      lastActivityAt: t.last_message_at || t.created_at,
+      deleted: !!t.deleted,
+      deletedAt: t.deleted_at || null,
+      deletedBy: t.deleted_by || null,
+    };
+  }
+  messageOut(m, reveal) {
+    const deleted = !!m.deleted_at;
+    return {
+      id: m.id,
+      seq: m.seq,
+      sender: m.sender,
+      text: deleted && !reveal ? '' : m.text,
+      timestamp: m.timestamp,
+      deleted,
+      deletedAt: m.deleted_at || null,
+      clientId: m.client_id || null,
+    };
+  }
+  lastMessage(threadId) {
+    return this.one(`SELECT * FROM messages WHERE thread_id = ? ORDER BY seq DESC LIMIT 1`, threadId);
+  }
+  threadLabel(t) {
+    if (t.type === 'group') return t.name || 'Group';
+    const members = this.getMembers(t.id).map(m => m.username);
+    const names = [...members, ...this.formerParticipants(t.id, this.getMembers(t.id))];
+    return names.join(' & ') || 'Conversation';
+  }
+
+  /* ---------- live connections ---------- */
+  broadcast(usernamesLc, event) {
+    const payload = JSON.stringify(event);
+    for (const lc of new Set(usernamesLc)) {
+      for (const ws of this.ctx.getWebSockets(lc)) {
+        try { ws.send(payload); } catch (e) { /* closed socket */ }
+      }
+    }
+  }
+  memberLcs(threadId) { return this.getMembers(threadId).map(m => m.username_lc); }
+
+  async webSocketMessage(ws, message) { /* clients only send pings, answered automatically */ }
+  async webSocketClose(ws, code, reason) {
+    try { ws.close(code, reason); } catch (e) { /* already closed */ }
+  }
+  async webSocketError(ws) {
+    try { ws.close(1011, 'error'); } catch (e) { /* already closed */ }
+  }
+
+  /* ---------- users ---------- */
+  // null = no such account; undefined = couldn't check right now.
+  async lookupUser(username) {
+    if (!username) return null;
+    try { return await getUserByUsername(this.env, username); } catch (e) { return undefined; }
+  }
+  nextCreator(threadId, excludeLc) {
+    return this.getMembers(threadId).find(m => m.username_lc !== excludeLc) || null;
+  }
+  // Removes one person from a conversation. A group whose creator leaves
+  // passes to its longest-standing member; one left empty is closed.
+  removeMemberSync(t, usernameLc, actor) {
+    this.run(`DELETE FROM members WHERE thread_id = ? AND username_lc = ?`, t.id, usernameLc);
+    if (t.type === 'group' && String(t.creator).toLowerCase() === usernameLc) {
+      const heir = this.nextCreator(t.id, usernameLc);
+      if (heir) this.run(`UPDATE threads SET creator = ? WHERE id = ?`, heir.username, t.id);
+      else this.run(`UPDATE threads SET deleted = 1, deleted_at = ?, deleted_by = ? WHERE id = ?`, this.now(), actor, t.id);
+    }
+  }
+  userDeletedSync(usernameLc, threadIds) {
+    for (const id of threadIds) {
+      const t = this.getThread(id);
+      if (t) this.removeMemberSync(t, usernameLc, '(account removed)');
+    }
+  }
+
+  /* ---------- one-time move from KV ---------- */
+  async migrateFromKvIfNeeded() {
+    if (this.one(`SELECT value FROM meta WHERE key = 'kv_migrated'`)) return;
+    const kv = this.env.STOP_KV;
+    if (!kv) {
+      this.run(`INSERT OR REPLACE INTO meta (key, value) VALUES ('kv_migrated', ?)`, this.now() + ' (no KV binding)');
+      return;
+    }
+    const keys = [];
+    let cursor;
+    do {
+      const page = await kv.list({ prefix: 'thread:', cursor });
+      keys.push(...page.keys.map(k => k.name));
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+
+    const userCache = new Map();
+    const userExists = async (name) => {
+      const lc = String(name).toLowerCase();
+      if (!userCache.has(lc)) {
+        const raw = await kv.get(`user:${lc}`);
+        userCache.set(lc, raw ? (JSON.parse(raw).username || name) : null);
+      }
+      return userCache.get(lc);
+    };
+    const indexCache = new Map();
+    const readIndex = async (name) => {
+      const lc = String(name).toLowerCase();
+      if (!indexCache.has(lc)) {
+        const raw = await kv.get(`userthreads:${lc}`);
+        let list = [];
+        try { list = raw ? JSON.parse(raw) : []; } catch (e) { list = []; }
+        indexCache.set(lc, Array.isArray(list) ? list : []);
+      }
+      return indexCache.get(lc);
+    };
+
+    const plans = [];
+    for (const key of keys) {
+      const raw = await kv.get(key);
+      if (!raw) continue;
+      let thread;
+      try { thread = JSON.parse(raw); } catch (e) { continue; }
+      if (!thread || !thread.id || !Array.isArray(thread.participants)) continue;
+      const msgRaw = await kv.get(`messages:${thread.id}`);
+      let messages = [];
+      try { messages = msgRaw ? JSON.parse(msgRaw) : []; } catch (e) { messages = []; }
+      const members = [];
+      for (const p of thread.participants) {
+        const canonical = await userExists(p);
+        if (!canonical) continue;
+        const entry = (await readIndex(p)).find(e => e.threadId === thread.id);
+        members.push({ username: canonical, lastReadAt: entry ? entry.lastReadAt : null });
+      }
+      plans.push({ thread, messages: Array.isArray(messages) ? messages : [], members });
+    }
+
+    this.ctx.storage.transactionSync(() => {
+      for (const { thread, messages, members } of plans) {
+        if (this.getThread(thread.id)) continue;
+        const createdAt = thread.createdAt || this.now();
+        this.run(`INSERT INTO threads (id, type, name, creator, created_at) VALUES (?, ?, ?, ?, ?)`,
+          thread.id, thread.type === 'group' ? 'group' : 'dm', thread.type === 'group' ? (thread.name || 'Group') : null,
+          thread.creatorUsername || (members[0] && members[0].username) || '(unknown)', createdAt);
+        const ordered = [...messages].reverse(); // KV kept newest first
+        for (const m of ordered) {
+          if (!m || !m.id || !m.sender) continue;
+          this.run(`INSERT OR IGNORE INTO messages (id, thread_id, sender, sender_lc, text, timestamp) VALUES (?, ?, ?, ?, ?, ?)`,
+            m.id, thread.id, m.sender, String(m.sender).toLowerCase(), String(m.text || ''), m.timestamp || createdAt);
+        }
+        const last = this.lastMessage(thread.id);
+        if (last) this.run(`UPDATE threads SET last_seq = ?, last_message_at = ? WHERE id = ?`, last.seq, last.timestamp, thread.id);
+        const creatorLc = String(thread.creatorUsername || '').toLowerCase();
+        const sortedMembers = [...members].sort((a, b) => (a.username.toLowerCase() === creatorLc ? -1 : b.username.toLowerCase() === creatorLc ? 1 : 0));
+        sortedMembers.forEach((mem, i) => {
+          let readSeq = 0;
+          if (mem.lastReadAt) {
+            const r = this.one(`SELECT MAX(seq) AS s FROM messages WHERE thread_id = ? AND timestamp <= ?`, thread.id, mem.lastReadAt);
+            readSeq = (r && r.s) || 0;
+          }
+          const joined = new Date(new Date(createdAt).getTime() + i).toISOString();
+          this.run(`INSERT OR IGNORE INTO members (thread_id, username, username_lc, joined_at, last_read_seq) VALUES (?, ?, ?, ?, ?)`,
+            thread.id, mem.username, mem.username.toLowerCase(), joined, readSeq);
+        });
+        const t = this.getThread(thread.id);
+        if (t.type === 'group' && !this.getMember(t.id, String(t.creator).toLowerCase())) {
+          const heir = this.nextCreator(t.id, '');
+          if (heir) this.run(`UPDATE threads SET creator = ? WHERE id = ?`, heir.username, t.id);
+        }
+        if (!this.getMembers(t.id).length) {
+          this.run(`UPDATE threads SET deleted = 1, deleted_at = ?, deleted_by = '(no remaining members)' WHERE id = ?`, this.now(), t.id);
+        }
+      }
+      this.run(`INSERT OR REPLACE INTO meta (key, value) VALUES ('kv_migrated', ?)`, `${this.now()} (${plans.length} conversations)`);
+    });
+  }
+
+  /* ---------- request routing ---------- */
+  async fetch(request) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const who = {
+      me: request.headers.get('X-Hub-User') || '',
+      oversight: request.headers.get('X-Hub-Oversight') === '1',
+      demo: request.headers.get('X-Hub-Demo') === '1',
+    };
+    who.meLc = who.me.toLowerCase();
+    try {
+      if (path === '/messages/socket') return this.acceptSocket(who);
+      if (path === '/internal/user-deleted' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const lc = String((body && body.username) || '').toLowerCase();
+        if (!lc) return hubJson({ ok: false, error: 'Missing username.' }, 400);
+        const ids = this.rows(`SELECT thread_id FROM members WHERE username_lc = ?`, lc).map(r => r.thread_id);
+        this.ctx.storage.transactionSync(() => this.userDeletedSync(lc, ids));
+        for (const id of ids) this.broadcast(this.memberLcs(id), { type: 'thread-updated', threadId: id });
+        this.broadcast([lc], { type: 'signed-out' });
+        return hubJson({ ok: true, threads: ids.length });
+      }
+
+      const body = request.method === 'POST' ? await request.json().catch(() => null) : null;
+      if (request.method === 'POST' && body === null) return hubJson({ ok: false, error: 'Invalid JSON' }, 400);
+
+      if (path === '/messages/oversight' && request.method === 'GET') return this.oversightList(who);
+      if (path === '/messages/threads' && request.method === 'GET') return this.listThreads(who);
+      if (path === '/messages/threads' && request.method === 'POST') return this.createThread(who, body);
+
+      let m;
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)$/)) && request.method === 'GET') return this.threadDetail(who, m[1], url);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/messages$/)) && request.method === 'POST') return this.sendMessage(who, m[1], body);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/read$/)) && request.method === 'POST') return this.markRead(who, m[1], body);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/hide$/)) && request.method === 'POST') return this.hideThread(who, m[1]);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/leave$/)) && request.method === 'POST') return this.leaveThread(who, m[1]);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/rename$/)) && request.method === 'POST') return this.renameThread(who, m[1], body);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/members$/)) && request.method === 'POST') return this.updateMembers(who, m[1], body);
+      if ((m = path.match(/^\/messages\/threads\/([a-zA-Z0-9-]+)\/delete$/)) && request.method === 'POST') return this.deleteThread(who, m[1]);
+      if ((m = path.match(/^\/messages\/messages\/([a-zA-Z0-9-]+)\/delete$/)) && request.method === 'POST') return this.deleteMessage(who, m[1], body);
+      return hubJson({ ok: false, error: 'Not found.' }, 404);
+    } catch (e) {
+      console.error('MessagingHub error', e);
+      return hubJson({ ok: false, error: 'Messaging error. Please try again.' }, 500);
+    }
+  }
+
+  requireUser(who) {
+    return who.me ? null : hubJson({ ok: false, error: 'Messaging needs a staff login (not the master password).' }, 403);
+  }
+
+  acceptSocket(who) {
+    if (!who.me) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair);
+    this.ctx.acceptWebSocket(server, [who.meLc]);
+    server.serializeAttachment({ username: who.me });
+    server.send(JSON.stringify({ type: 'hello' }));
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  listThreads(who) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const rows = this.rows(
+      `SELECT t.*, mb.last_read_seq, mb.hidden_seq FROM threads t
+       JOIN members mb ON mb.thread_id = t.id
+       WHERE mb.username_lc = ? AND t.deleted = 0`, who.meLc);
+    const out = [];
+    for (const t of rows) {
+      if (t.hidden_seq !== null && t.hidden_seq !== undefined && t.last_seq <= t.hidden_seq) continue;
+      const last = this.lastMessage(t.id);
+      const unread = this.one(
+        `SELECT COUNT(*) AS n FROM messages WHERE thread_id = ? AND seq > ? AND sender_lc != ? AND deleted_at IS NULL`,
+        t.id, t.last_read_seq || 0, who.meLc);
+      out.push({
+        ...this.threadOut(t),
+        lastMessage: last ? this.messageOut(last, false) : null,
+        unreadCount: unread ? unread.n : 0,
+      });
+    }
+    out.sort((a, b) => String(b.lastActivityAt).localeCompare(String(a.lastActivityAt)));
+    return hubJson(out);
+  }
+
+  insertMessageSync(t, sender, text, clientId) {
+    const senderLc = sender.toLowerCase();
+    if (clientId) {
+      const existing = this.one(`SELECT * FROM messages WHERE thread_id = ? AND sender_lc = ? AND client_id = ?`, t.id, senderLc, clientId);
+      if (existing) return { row: existing, duplicate: true };
+    }
+    const id = crypto.randomUUID();
+    const ts = this.now();
+    this.run(`INSERT INTO messages (id, thread_id, sender, sender_lc, text, timestamp, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      id, t.id, sender, senderLc, text, ts, clientId || null);
+    const row = this.one(`SELECT * FROM messages WHERE id = ?`, id);
+    this.run(`UPDATE threads SET last_seq = ?, last_message_at = ? WHERE id = ?`, row.seq, ts, t.id);
+    this.run(`UPDATE members SET last_read_seq = ? WHERE thread_id = ? AND username_lc = ?`, row.seq, t.id, senderLc);
+    return { row, duplicate: false };
+  }
+
+  cleanText(value) {
+    const text = String(value == null ? '' : value).replace(/\r\n?/g, '\n').slice(0, HUB_MAX_TEXT);
+    return text.trim() ? text.replace(/^\s+|\s+$/g, '') : '';
+  }
+  cleanClientId(value) {
+    const id = String(value || '').slice(0, 64);
+    return /^[a-zA-Z0-9_-]{6,64}$/.test(id) ? id : null;
+  }
+
+  async createThread(who, body) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    if (who.demo) return hubJson({ ok: false, error: "Demo accounts can't start conversations." }, 403);
+    const { type, participantUsernames, name, firstMessage } = body || {};
+    if (type !== 'dm' && type !== 'group') return hubJson({ ok: false, error: 'Invalid conversation type.' }, 400);
+    if (!Array.isArray(participantUsernames) || !participantUsernames.length) return hubJson({ ok: false, error: 'Choose at least one person.' }, 400);
+
+    const people = new Map([[who.meLc, who.me]]);
+    for (const raw of participantUsernames) {
+      const u = await this.lookupUser(String(raw || ''));
+      if (u === undefined) return hubJson({ ok: false, error: "Couldn't check that person right now. Please try again." }, 503);
+      if (!u) return hubJson({ ok: false, error: `User "${raw}" not found.` }, 400);
+      people.set(u.username.toLowerCase(), u.username);
+    }
+    if (type === 'dm' && people.size !== 2) return hubJson({ ok: false, error: 'A direct message needs exactly one other person.' }, 400);
+    const groupName = type === 'group' ? String(name || '').trim().slice(0, HUB_MAX_GROUP_NAME) : null;
+    if (type === 'group' && !groupName) return hubJson({ ok: false, error: 'Enter a group name.' }, 400);
+    const text = firstMessage ? this.cleanText(firstMessage.text) : '';
+    const clientId = firstMessage ? this.cleanClientId(firstMessage.clientId) : null;
+
+    let thread, messageRow = null, created = false, duplicate = false;
+    this.ctx.storage.transactionSync(() => {
+      if (type === 'dm') {
+        const lcs = [...people.keys()];
+        thread = this.one(
+          `SELECT t.* FROM threads t
+           WHERE t.type = 'dm' AND t.deleted = 0
+             AND (SELECT COUNT(*) FROM members m WHERE m.thread_id = t.id) = 2
+             AND EXISTS (SELECT 1 FROM members m WHERE m.thread_id = t.id AND m.username_lc = ?)
+             AND EXISTS (SELECT 1 FROM members m WHERE m.thread_id = t.id AND m.username_lc = ?)
+           LIMIT 1`, lcs[0], lcs[1]);
+        if (thread) this.run(`UPDATE members SET hidden_seq = NULL WHERE thread_id = ? AND username_lc = ?`, thread.id, who.meLc);
+      }
+      if (!thread) {
+        const id = crypto.randomUUID();
+        const now = this.now();
+        this.run(`INSERT INTO threads (id, type, name, creator, created_at) VALUES (?, ?, ?, ?, ?)`, id, type, groupName, who.me, now);
+        [...people.values()].forEach((username, i) => {
+          const joined = new Date(Date.now() + i).toISOString();
+          this.run(`INSERT INTO members (thread_id, username, username_lc, joined_at) VALUES (?, ?, ?, ?)`, id, username, username.toLowerCase(), joined);
+        });
+        thread = this.getThread(id);
+        created = true;
+      }
+      if (text) {
+        const r = this.insertMessageSync(thread, who.me, text, clientId);
+        messageRow = r.row;
+        duplicate = r.duplicate;
+      }
+    });
+    const lcs = this.memberLcs(thread.id);
+    if (created) this.broadcast(lcs, { type: 'thread-updated', threadId: thread.id });
+    const message = messageRow ? this.messageOut(messageRow, false) : null;
+    if (message && !duplicate) this.broadcast(lcs, { type: 'message', threadId: thread.id, message });
+    return hubJson({ ok: true, created, thread: this.threadOut(this.getThread(thread.id)), message });
+  }
+
+  async threadDetail(who, threadId, url) {
+    let t = this.getThread(threadId);
+    if (!t || (t.deleted && !who.oversight)) return hubJson({ ok: false, error: 'Conversation not found.' }, 404);
+    const member = who.me ? this.getMember(threadId, who.meLc) : null;
+    if (!member && !who.oversight) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+
+    // A group whose creator's account no longer exists passes to the
+    // longest-standing member (covers accounts removed by a backup restore).
+    if (t.type === 'group' && !t.deleted && (await this.lookupUser(t.creator)) === null) {
+      const lc = String(t.creator).toLowerCase();
+      this.ctx.storage.transactionSync(() => this.removeMemberSync(t, lc, '(account removed)'));
+      t = this.getThread(threadId);
+    }
+
+    const reveal = who.oversight && url.searchParams.get('view') === 'oversight';
+    const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || HUB_PAGE_SIZE, 10) || HUB_PAGE_SIZE));
+    const beforeRaw = parseInt(url.searchParams.get('before') || '', 10);
+    const before = Number.isFinite(beforeRaw) ? beforeRaw : null;
+    const page = before === null
+      ? this.rows(`SELECT * FROM messages WHERE thread_id = ? ORDER BY seq DESC LIMIT ?`, threadId, limit + 1)
+      : this.rows(`SELECT * FROM messages WHERE thread_id = ? AND seq < ? ORDER BY seq DESC LIMIT ?`, threadId, before, limit + 1);
+    const hasMore = page.length > limit;
+    const messages = page.slice(0, limit).map(m => this.messageOut(m, reveal));
+
+    if (member && before === null && (member.last_read_seq || 0) < t.last_seq) {
+      this.run(`UPDATE members SET last_read_seq = ? WHERE thread_id = ? AND username_lc = ?`, t.last_seq, threadId, who.meLc);
+      this.broadcast([who.meLc], { type: 'read', threadId });
+    }
+    const headers = {};
+    if (!member && before === null) {
+      headers['X-Hub-Log'] = encodeURIComponent(`Viewed conversation "${this.threadLabel(t)}" (oversight)`);
+    }
+    return hubJson({ ok: true, thread: this.threadOut(t), messages, hasMore, isMember: !!member }, 200, headers);
+  }
+
+  sendMessage(who, threadId, body) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const t = this.getThread(threadId);
+    if (!t || t.deleted) return hubJson({ ok: false, error: 'This conversation no longer exists.' }, 404);
+    if (!this.getMember(threadId, who.meLc)) return hubJson({ ok: false, error: "You're no longer in this conversation." }, 403);
+    const text = this.cleanText(body.text);
+    if (!text) return hubJson({ ok: false, error: 'Message is empty.' }, 400);
+    const clientId = this.cleanClientId(body.clientId);
+    if (who.demo) {
+      return hubJson({ ok: true, demo: true, message: { id: `demo-${crypto.randomUUID()}`, seq: null, sender: who.me, text, timestamp: this.now(), deleted: false, deletedAt: null, clientId } });
+    }
+    let r;
+    this.ctx.storage.transactionSync(() => { r = this.insertMessageSync(t, who.me, text, clientId); });
+    const message = this.messageOut(r.row, false);
+    if (!r.duplicate) this.broadcast(this.memberLcs(threadId), { type: 'message', threadId, message });
+    return hubJson({ ok: true, message, duplicate: r.duplicate });
+  }
+
+  markRead(who, threadId, body) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const t = this.getThread(threadId);
+    const member = t ? this.getMember(threadId, who.meLc) : null;
+    if (!member) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+    const wanted = Number.isFinite(body && body.seq) ? Math.min(body.seq, t.last_seq) : t.last_seq;
+    if ((member.last_read_seq || 0) < wanted) {
+      this.run(`UPDATE members SET last_read_seq = ? WHERE thread_id = ? AND username_lc = ?`, wanted, threadId, who.meLc);
+      this.broadcast([who.meLc], { type: 'read', threadId });
+    }
+    return hubJson({ ok: true });
+  }
+
+  hideThread(who, threadId) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const t = this.getThread(threadId);
+    if (!t || !this.getMember(threadId, who.meLc)) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+    this.run(`UPDATE members SET hidden_seq = ?, last_read_seq = MAX(last_read_seq, ?) WHERE thread_id = ? AND username_lc = ?`, t.last_seq, t.last_seq, threadId, who.meLc);
+    this.broadcast([who.meLc], { type: 'thread-updated', threadId });
+    return hubJson({ ok: true });
+  }
+
+  leaveThread(who, threadId) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const t = this.getThread(threadId);
+    if (!t || t.deleted || !this.getMember(threadId, who.meLc)) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+    if (t.type !== 'group') return hubJson({ ok: false, error: 'Use Hide for a direct message.' }, 400);
+    if (who.demo) return hubJson({ ok: true });
+    const before = this.memberLcs(threadId);
+    this.ctx.storage.transactionSync(() => this.removeMemberSync(t, who.meLc, who.me));
+    this.broadcast(before, { type: 'thread-updated', threadId });
+    return hubJson({ ok: true });
+  }
+
+  canManage(who, t) {
+    return who.oversight || (!!who.me && String(t.creator).toLowerCase() === who.meLc);
+  }
+
+  renameThread(who, threadId, body) {
+    const t = this.getThread(threadId);
+    if (!t || t.deleted) return hubJson({ ok: false, error: 'Conversation not found.' }, 404);
+    if (t.type !== 'group') return hubJson({ ok: false, error: 'Only groups have names.' }, 400);
+    if (!this.canManage(who, t)) return hubJson({ ok: false, error: 'Only the group creator can rename it.' }, 403);
+    const name = String((body && body.name) || '').trim().slice(0, HUB_MAX_GROUP_NAME);
+    if (!name) return hubJson({ ok: false, error: 'Enter a group name.' }, 400);
+    if (who.demo) return hubJson({ ok: true, thread: this.threadOut(t) });
+    this.run(`UPDATE threads SET name = ? WHERE id = ?`, name, threadId);
+    this.broadcast(this.memberLcs(threadId), { type: 'thread-updated', threadId });
+    return hubJson({ ok: true, thread: this.threadOut(this.getThread(threadId)) });
+  }
+
+  async updateMembers(who, threadId, body) {
+    const t = this.getThread(threadId);
+    if (!t || t.deleted) return hubJson({ ok: false, error: 'Conversation not found.' }, 404);
+    if (t.type !== 'group') return hubJson({ ok: false, error: 'Only groups have members to manage.' }, 400);
+    if (!this.canManage(who, t)) return hubJson({ ok: false, error: 'Only the group creator can manage members.' }, 403);
+    const { action, username } = body || {};
+    if (!username) return hubJson({ ok: false, error: 'Missing username.' }, 400);
+    if (who.demo) return hubJson({ ok: true, thread: this.threadOut(t) });
+    const before = this.memberLcs(threadId);
+    if (action === 'add') {
+      const u = await this.lookupUser(username);
+      if (u === undefined) return hubJson({ ok: false, error: "Couldn't check that person right now. Please try again." }, 503);
+      if (!u) return hubJson({ ok: false, error: 'User not found.' }, 400);
+      const fresh = this.getThread(threadId);
+      this.run(`INSERT OR IGNORE INTO members (thread_id, username, username_lc, joined_at, last_read_seq) VALUES (?, ?, ?, ?, ?)`,
+        threadId, u.username, u.username.toLowerCase(), this.now(), fresh.last_seq);
+    } else if (action === 'remove') {
+      const lc = String(username).toLowerCase();
+      if (!this.getMember(threadId, lc)) return hubJson({ ok: true, thread: this.threadOut(t) });
+      this.ctx.storage.transactionSync(() => this.removeMemberSync(t, lc, who.me || 'Master'));
+    } else {
+      return hubJson({ ok: false, error: 'Invalid action.' }, 400);
+    }
+    this.broadcast([...before, ...this.memberLcs(threadId)], { type: 'thread-updated', threadId });
+    return hubJson({ ok: true, thread: this.threadOut(this.getThread(threadId)) });
+  }
+
+  deleteThread(who, threadId) {
+    const t = this.getThread(threadId);
+    if (!t || t.deleted) return hubJson({ ok: true });
+    if (!this.canManage(who, t)) return hubJson({ ok: false, error: 'Only the person who started this can delete it.' }, 403);
+    if (who.demo) return hubJson({ ok: true });
+    this.run(`UPDATE threads SET deleted = 1, deleted_at = ?, deleted_by = ? WHERE id = ?`, this.now(), who.me || 'Master', threadId);
+    this.broadcast(this.memberLcs(threadId), { type: 'thread-updated', threadId });
+    return hubJson({ ok: true });
+  }
+
+  deleteMessage(who, msgId, body) {
+    const denied = this.requireUser(who);
+    if (denied) return denied;
+    const threadId = body && body.threadId;
+    const m = this.one(`SELECT * FROM messages WHERE id = ? AND thread_id = ?`, msgId, threadId || '');
+    if (!m) return hubJson({ ok: false, error: 'Message not found.' }, 404);
+    if (m.sender_lc !== who.meLc) return hubJson({ ok: false, error: 'You can only delete your own messages.' }, 403);
+    if (who.demo || m.deleted_at) return hubJson({ ok: true });
+    this.run(`UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?`, this.now(), who.me, msgId);
+    this.broadcast(this.memberLcs(threadId), { type: 'message-deleted', threadId, messageId: msgId });
+    return hubJson({ ok: true });
+  }
+
+  oversightList(who) {
+    if (!who.oversight) return hubJson({ ok: false, error: 'Not authorized.' }, 403);
+    const threads = this.rows(`SELECT * FROM threads`).map(t => {
+      const counts = this.one(
+        `SELECT COUNT(*) AS total, SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS removed FROM messages WHERE thread_id = ?`, t.id);
+      const last = this.lastMessage(t.id);
+      return {
+        ...this.threadOut(t),
+        messageCount: counts ? counts.total : 0,
+        deletedMessageCount: counts ? (counts.removed || 0) : 0,
+        lastMessage: last ? this.messageOut(last, true) : null,
+      };
+    });
+    threads.sort((a, b) => String(b.lastActivityAt).localeCompare(String(a.lastActivityAt)));
+    return hubJson(threads);
+  }
+}
