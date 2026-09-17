@@ -2700,7 +2700,7 @@
   <div id="home-links"></div>
 
   <div class="home-footer">
-    <div class="app-version">v1.39.1</div>
+    <div class="app-version">v1.40.0</div>
   </div>
   <div class="copyright-line">© 2026 Ryan Hultz</div>
 </div>
@@ -4421,6 +4421,8 @@ async function lookupSecurityQuestion(username){
 
 async function submitPasswordRecovery(username, answer, newPassword){
   if(!answer || !newPassword){ authError = 'Fill in both fields.'; renderAuthView(); return; }
+  const recoverPassErr = passwordRuleError(newPassword);
+  if(recoverPassErr){ authError = recoverPassErr; renderAuthView(); return; }
   let result;
   try{
     const res = await fetch(`${SYNC_API_BASE}/auth/recover-password`, {
@@ -4488,6 +4490,10 @@ async function attemptLogin(username, password){
 async function attemptCreateAccount(username, password, confirmPw, code, securityQuestion, securityAnswer, firstName, lastName){
   if(!username || !password || !confirmPw){ authError = 'Fill in all fields.'; renderAuthView(); return; }
   if(password !== confirmPw){ authError = 'Passwords do not match.'; renderAuthView(); return; }
+  const signupNameErr = usernameRuleError(username);
+  if(signupNameErr){ authError = signupNameErr; renderAuthView(); return; }
+  const signupPassErr = passwordRuleError(password);
+  if(signupPassErr){ authError = signupPassErr; renderAuthView(); return; }
 
   if(!isSyncConfigured()){
     authError = "Can't create an account — sync isn't set up yet on this device. See the README.";
@@ -5616,20 +5622,37 @@ function renderAdminUsersTab(){
   }
 }
 
+// These mirror the rules the Worker enforces (USERNAME_RE /
+// MIN_PASSWORD_LENGTH there). The server is what actually protects the
+// data — these exist so someone gets a useful message before the round
+// trip rather than a bare rejection afterwards.
+const USERNAME_RULE = /^[A-Za-z0-9._-]{3,30}$/;
+const MIN_PASSWORD_LENGTH = 8;
+function usernameRuleError(name){
+  if(!name) return 'Enter a username.';
+  if(!USERNAME_RULE.test(name)) return 'Usernames can be 3-30 characters: letters, numbers, dots, dashes and underscores only.';
+  return null;
+}
+function passwordRuleError(pw){
+  if(!pw || pw.length < MIN_PASSWORD_LENGTH) return `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  return null;
+}
+
 function renderAdminUsersList(){
   const content = document.getElementById('admin-tab-content');
   const users = [...loadUsers()].sort((a,b) => a.username.toLowerCase().localeCompare(b.username.toLowerCase()));
 
   content.innerHTML = `
     <div class="block-label">Add User</div>
-    <div class="field"><label>Username</label><input type="text" id="admin-new-username"></div>
-    <div class="field"><label>Password</label><input type="text" id="admin-new-password"></div>
+    <div class="field"><label>Username</label><input type="text" id="admin-new-username" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+    <div class="field"><label>Password</label><input type="password" id="admin-new-password" autocomplete="new-password"></div>
+    <p class="caption">Letters, numbers, dots, dashes and underscores in usernames. Passwords need at least ${MIN_PASSWORD_LENGTH} characters. New users start with no sections until you grant them.</p>
     <button class="primary-btn" id="admin-add-user-btn">Add User</button>
 
     <div class="block-label" style="margin-top:32px;">Users</div>
     <div id="admin-user-list">
       ${users.length ? users.map(u => `
-        <button class="user-list-row" data-username="${u.username}">
+        <button class="user-list-row" data-username="${escapeHtml(u.username)}">
           <span class="ulr-name">${escapeHtml(u.username)}</span>
           <span class="ulr-meta">${u.lastLogin ? `Last login: ${new Date(u.lastLogin).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</span>
         </button>
@@ -5640,7 +5663,10 @@ function renderAdminUsersList(){
   document.getElementById('admin-add-user-btn').addEventListener('click', async ()=>{
     const u = document.getElementById('admin-new-username').value.trim();
     const p = document.getElementById('admin-new-password').value;
-    if(!u || !p){ uiAlert('Enter a username and password.'); return; }
+    const nameErr = usernameRuleError(u);
+    if(nameErr){ uiAlert(nameErr); return; }
+    const passErr = passwordRuleError(p);
+    if(passErr){ uiAlert(passErr); return; }
     await refreshUsersFromServer();
     if(findUser(u)){ uiAlert('That username already exists.'); return; }
     const result = await upsertUserOnServer(u, { password: p, permissions: blankPermissions() });
@@ -5671,7 +5697,7 @@ function renderAdminUserDetail(){
 
   content.innerHTML = `
     <button class="back-btn" id="admin-user-detail-back"><span class="chev">${ico('chevronLeft')}</span> Users</button>
-    <div class="block-label">${user.username}</div>
+    <div class="block-label">${escapeHtml(user.username)}</div>
     <p class="caption">${user.lastLogin ? `Last login: ${new Date(user.lastLogin).toLocaleString([], {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'})}` : 'Never logged in'}</p>
 
     <div class="block-label" style="margin-top:24px;">Permissions</div>
@@ -5679,18 +5705,18 @@ function renderAdminUserDetail(){
       ${PERMISSION_KEYS.map(key => {
         const label = ADMIN_SECTIONS.find(s => s.key === key).name;
         const active = getUserPermissions(user)[key];
-        return `<button class="perm-chip ${active ? 'active' : ''}" data-username="${user.username}" data-perm="${key}">${label}</button>`;
+        return `<button class="perm-chip ${active ? 'active' : ''}" data-username="${escapeHtml(user.username)}" data-perm="${key}">${label}</button>`;
       }).join('')}
     </div>
 
     <div class="block-label" style="margin-top:24px;">Demo Account</div>
     <p class="caption">A demo account can see and use everything normally, but nothing it saves, changes, or deletes ever actually reaches the shared data — safe to hand to anyone for a look around.</p>
     <div class="perm-chip-row">
-      <button class="perm-chip ${user.isDemo ? 'active' : ''}" id="admin-toggle-demo-btn" data-username="${user.username}">${user.isDemo ? 'Demo Mode: ON' : 'Demo Mode: OFF'}</button>
+      <button class="perm-chip ${user.isDemo ? 'active' : ''}" id="admin-toggle-demo-btn" data-username="${escapeHtml(user.username)}">${user.isDemo ? 'Demo Mode: ON' : 'Demo Mode: OFF'}</button>
     </div>
 
-    <button class="ghost-btn admin-reset-btn" data-username="${user.username}" style="margin-top:24px;">Reset Password</button>
-    <button class="ghost-btn admin-remove-btn" data-username="${user.username}">Remove User</button>
+    <button class="ghost-btn admin-reset-btn" data-username="${escapeHtml(user.username)}" style="margin-top:24px;">Reset Password</button>
+    <button class="ghost-btn admin-remove-btn" data-username="${escapeHtml(user.username)}">Remove User</button>
   `;
 
   document.getElementById('admin-user-detail-back').addEventListener('click', ()=>{
@@ -5719,6 +5745,20 @@ function renderAdminUserDetail(){
       if(!u) return;
       const updatedPermissions = getUserPermissions(u);
       const newVal = !updatedPermissions[key];
+      // The Worker refuses these too — this just explains it sooner.
+      if(key === 'users' && !newVal){
+        if(isSameUser(username, getCurrentUser())){
+          uiAlert('You cannot remove your own Users access. Ask another admin to do it.');
+          return;
+        }
+        const otherAdmins = loadUsers().filter(other =>
+          !isSameUser(other.username, username) && getUserPermissions(other).users
+        ).length;
+        if(otherAdmins === 0){
+          uiAlert('This is the only account with Users access. Grant it to someone else first.');
+          return;
+        }
+      }
       updatedPermissions[key] = newVal;
       const result = await upsertUserOnServer(username, { permissions: updatedPermissions });
       if(!result.ok){
@@ -5733,8 +5773,15 @@ function renderAdminUserDetail(){
   });
   content.querySelector('.admin-reset-btn').addEventListener('click', async ()=>{
     const username = user.username;
-    const newPw = await uiPrompt(`New password for ${username}`, '', { confirmText:'Reset' });
+    const newPw = await uiPrompt(`New password for ${username} (at least ${MIN_PASSWORD_LENGTH} characters)`, '', { confirmText:'Next' });
     if(!newPw) return;
+    const pwErr = passwordRuleError(newPw);
+    if(pwErr){ uiAlert(pwErr); return; }
+    // Typed twice: a mistyped reset locks the person out of their own
+    // account, and there's no way to read it back to check.
+    const confirmPw = await uiPrompt(`Re-enter the new password for ${username}`, '', { confirmText:'Reset' });
+    if(!confirmPw) return;
+    if(confirmPw !== newPw){ uiAlert("Those didn't match. Nothing was changed."); return; }
     const result = await upsertUserOnServer(username, { password: newPw });
     if(!result.ok){
       uiAlert(`Couldn't reset the password — the server rejected it (${result.error || 'error ' + result.status}).`);
@@ -5747,6 +5794,19 @@ function renderAdminUserDetail(){
   });
   content.querySelector('.admin-remove-btn').addEventListener('click', async ()=>{
     const username = user.username;
+    if(isSameUser(username, getCurrentUser())){
+      uiAlert('You cannot delete your own account.');
+      return;
+    }
+    if(getUserPermissions(user).users){
+      const otherAdmins = loadUsers().filter(other =>
+        !isSameUser(other.username, username) && getUserPermissions(other).users
+      ).length;
+      if(otherAdmins === 0){
+        uiAlert('This is the only account with Users access. Grant it to someone else first.');
+        return;
+      }
+    }
     if(!(await uiConfirm(`Remove user "${username}"?`))) return;
     const result = await deleteUserOnServer(username);
     if(!result.ok){
@@ -11395,6 +11455,8 @@ function renderMyAccount(){
     const currentPassword = document.getElementById('my-account-current-pw').value;
     const newPassword = document.getElementById('my-account-new-pw').value;
     if(!currentPassword || !newPassword){ myAccountError = 'Fill in both fields.'; myAccountSuccess=''; renderMyAccount(); return; }
+    const myPwErr = passwordRuleError(newPassword);
+    if(myPwErr){ myAccountError = myPwErr; myAccountSuccess=''; renderMyAccount(); return; }
     const result = await updateMyAccount({ currentPassword, newPassword });
     if(result.ok){
       logActivity(username, 'Changed their own password');
